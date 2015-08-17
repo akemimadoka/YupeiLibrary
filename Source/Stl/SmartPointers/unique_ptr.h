@@ -415,7 +415,7 @@ namespace Yupei
 			typename = enable_if_t
 			<
 			_temp_copy_type<U, E>::value
-			&&	is_assginable<Deleter&, E&&>::value
+			&&	is_assignable<Deleter&, E&&>::value
 			>
 			>
 			unique_ptr& operator=(unique_ptr<U, E>&& u) noexcept

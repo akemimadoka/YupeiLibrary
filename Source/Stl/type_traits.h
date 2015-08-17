@@ -737,9 +737,9 @@ namespace Yupei
 
 	
 	template<typename From, typename To>
-	using is_convertible = bool_constant<
+	struct is_convertible : bool_constant<
 		__is_convertible_to(From, To)
-	>;
+	> {};
 
 	// 20.10.7.1, const-volatile modifications:
 	/*template <class T> struct remove_const;

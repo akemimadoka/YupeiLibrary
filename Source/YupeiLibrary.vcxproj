@@ -98,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stl\memory_resource.cpp" />
+    <ClCompile Include="Stl\shared_ptr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

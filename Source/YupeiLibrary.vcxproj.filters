@@ -110,6 +110,9 @@
     <ClCompile Include="Stl\memory_resource.cpp">
       <Filter>Stl\Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Stl\shared_ptr.cpp">
+      <Filter>Stl\Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

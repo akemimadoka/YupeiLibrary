@@ -35,7 +35,7 @@ namespace Yupei
 		T2 second_obj;
 
 		template<typename... Args>
-		explicit compress_pair(compress_value_initialize_first_arg_t,
+		constexpr explicit compress_pair(compress_value_initialize_first_arg_t,
 			Args&&... args)
 			:T1{},
 			second_obj{ Yupei::forward<Args>(args)... }

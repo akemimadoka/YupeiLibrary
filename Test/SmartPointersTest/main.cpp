@@ -74,11 +74,22 @@ using Ptr = Yupei::unique_ptr<T, deleter<T>&>;
 struct base { int i = 0; };
 
 struct derived : base { int j = 0; };
+
+struct Base 
+{
+	Base()
+	{
+	}
+	Yupei::unique_ptr<int> pi = Yupei::make_unique<int>();
+	virtual ~Base() {}
+};
+struct Derived : Base
+{
+	Yupei::unique_ptr<int> pi2 = Yupei::make_unique<int>();
+};
+
 int main()
 {
-	Yupei::compress_pair<
-		Yupei::allocator<int>,
-		int> p( Yupei::compress_value_initialize_first_arg,2);
 	{
 		auto ptr = Yupei::make_unique<int>(3);
 		std::cout << *ptr;
@@ -126,7 +137,24 @@ int main()
 
 	}
 	{
+		//_CrtSetBreakAlloc(203);
+		auto print_helper = [](auto& p1, auto& p2)
+		{
+			std::cout << p1.use_count() << '\n';
+			std::cout << p2.use_count() << '\n';
+		};
 		Yupei::unsynchronized_shared_ptr<int> sp{ new int() };
+		auto rpd = new Derived();
+		Yupei::unsynchronized_shared_ptr<Base> pb{ rpd };
+		Yupei::unsynchronized_shared_ptr<Derived> pd{ new Derived() };
+		print_helper(pb, pd);
+		pb = Yupei::move(pd);
+		print_helper(pb, pd);
+		//std::cout << Yupei::is_assignable<Yupei::default_delete<Base>&, Yupei::default_delete<Derived>&&>::value << '\n';
+		Yupei::unsynchronized_weak_ptr<Base> wptr{ pb };
+		std::cout << "wptr's " << wptr.use_count() << '\n';
+		auto npb = wptr.lock();
+		std::cout << "npb's " << npb.use_count() << '\n';
 	}
 	getchar();
 	_CrtDumpMemoryLeaks();

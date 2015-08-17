@@ -11,8 +11,8 @@ namespace Yupei
 
 		template<typename UType,
 			typename = enable_if_t <
-			is_convertible<Type*, UType*>::value >>
-			default_delete(const default_delete<UType>&) noexcept = default;
+			is_convertible<UType*, Type*>::value >>
+			default_delete(const default_delete<UType>&) noexcept {}
 
 		void operator()(Type* ptr) const noexcept
 		{
@@ -27,8 +27,8 @@ namespace Yupei
 
 		template<typename UType,
 			typename = enable_if_t <
-			is_convertible<Type(*)[], UType(*)[]>{} >>
-			default_delete(const default_delete<UType>&) noexcept = default;
+			is_convertible<UType(*)[], Type(*)[]>{} >>
+			default_delete(const default_delete<UType>&) noexcept {}
 
 		template<typename UType,
 			typename = enable_if_t <
