@@ -75,7 +75,7 @@ struct base { int i = 0; };
 
 struct derived : base { int j = 0; };
 
-struct Base 
+struct Base : Yupei::enable_unsynchronized_shared_from_this<Base>
 {
 	Base()
 	{
@@ -155,6 +155,14 @@ int main()
 		std::cout << "wptr's " << wptr.use_count() << '\n';
 		auto npb = wptr.lock();
 		std::cout << "npb's " << npb.use_count() << '\n';
+	}
+	{
+		auto spb = Yupei::make_unsynchronized_shared<const Base>();
+		auto spb2 = spb->shared_from_this();
+		Yupei::unsynchronized_shared_ptr<Base> spb3 = Yupei::make_unsynchronized_shared<Derived>();
+		auto spb4 = spb3->shared_from_this();
+		auto spb5 = Yupei::dynamic_pointer_cast<Derived>(spb3);
+		std::cout << spb4.use_count() << '\n';
 	}
 	getchar();
 	_CrtDumpMemoryLeaks();
