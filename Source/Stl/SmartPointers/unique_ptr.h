@@ -48,12 +48,12 @@ namespace Yupei
 
 	template<
 		typename T,
-		typename Deleter
+		typename DeleterT
 	>
 	struct unique_ptr_base
 	{
 	public:
-		using pointer = typename Internal::GetPtrForUniquePtr<T, Deleter>::type;
+		using pointer = typename Internal::GetPtrForUniquePtr<T, DeleterT>::type;
 		template<typename U>
 		unique_ptr_base(U&& u)
 			:internalData(Yupei::compress_value_initialize_first_arg,
@@ -71,12 +71,12 @@ namespace Yupei
 
 		}
 
-		Deleter& deleter() noexcept
+		DeleterT& deleter() noexcept
 		{
 			return internalData.first();
 		}
 
-		const Deleter& deleter() const noexcept
+		const DeleterT& deleter() const noexcept
 		{
 			return internalData.first();
 		}
@@ -92,28 +92,28 @@ namespace Yupei
 		}
 
 	private:
-		compress_pair<Deleter, pointer> internalData;
+		compress_pair<DeleterT, pointer> internalData;
 	};
 
 	template <class T,
-	class Deleter = Yupei::default_delete<T >>
+	class DeleterT = Yupei::default_delete<T >>
 	class unique_ptr :
-		public unique_ptr_base<T, Deleter>
+		public unique_ptr_base<T, DeleterT>
 	{
 	public:
 
 		typedef T element_type;
-		typedef Deleter deleter_type;
-		using base_type = unique_ptr_base<T, Deleter>;
-		using pointer = typename base_type::pointer;
+		typedef DeleterT deleter_type;
+		using BaseType = unique_ptr_base<T, DeleterT>;
+		using pointer = typename BaseType::pointer;
 		// 20.8.1.2.1, constructors
 		constexpr unique_ptr() noexcept
-			:base_type(pointer())
+			:BaseType(pointer())
 		{
 
 		}
 		explicit unique_ptr(pointer p) noexcept
-			: base_type(p)
+			: BaseType(p)
 		{
 
 		}
@@ -129,20 +129,20 @@ namespace Yupei
 			>;
 		unique_ptr(pointer p,
 			_lref_type_for_unique_ptr d1) noexcept
-			:base_type(p, d1)
+			:BaseType(p, d1)
 		{
 
 		}
 		unique_ptr(pointer p, Yupei::add_rvalue_reference_t <
-			Yupei::remove_reference_t<Deleter >> d2) noexcept
-			: base_type(p,
-				Yupei::forward<Deleter>(u.get_deleter()))
+			Yupei::remove_reference_t<DeleterT >> d2) noexcept
+			: BaseType(p,
+				Yupei::forward<DeleterT>(u.get_deleter()))
 		{
 
 		}
 		unique_ptr(unique_ptr&& u) noexcept
-			: base_type(u.release(),
-				Yupei::forward<Deleter>(u.get_deleter()))
+			: BaseType(u.release(),
+				Yupei::forward<DeleterT>(u.get_deleter()))
 		{
 
 		}
@@ -170,7 +170,7 @@ namespace Yupei
 			>::value >
 		>
 			unique_ptr(unique_ptr<U, E>&& u) noexcept
-			:base_type(u.release(), Yupei::forward<E>(u.get_deleter()))
+			:BaseType(u.release(), Yupei::forward<E>(u.get_deleter()))
 		{
 
 		}
@@ -272,19 +272,19 @@ namespace Yupei
 	};
 
 	template <class T,
-	class Deleter>
-	class unique_ptr<T[], Deleter> :
-		public unique_ptr_base<T, Deleter>
+	class DeleterT>
+	class unique_ptr<T[], DeleterT> :
+		public unique_ptr_base<T, DeleterT>
 	{
 	public:
 
 		typedef T element_type;
-		typedef Deleter deleter_type;
-		using base_type = unique_ptr_base<T, Deleter>;
-		using pointer = typename base_type::pointer;
+		typedef DeleterT deleter_type;
+		using BaseType = unique_ptr_base<T, DeleterT>;
+		using pointer = typename BaseType::pointer;
 		// 20.8.1.3.1, constructors
 		constexpr unique_ptr() noexcept
-			:base_type(pointer())
+			:BaseType(pointer())
 		{
 
 		}
@@ -301,7 +301,7 @@ namespace Yupei
 		template <typename U,
 			typename =typename _can_be_contructed<U>::type>
 			explicit unique_ptr(U p) noexcept
-			:base_type(p)
+			:BaseType(p)
 		{
 
 		}
@@ -326,15 +326,15 @@ namespace Yupei
 		template <class U,
 			typename = typename _can_be_contructed<U >::type>
 			unique_ptr(U p, add_rvalue_reference_t <
-				remove_reference_t<Deleter >> d2) noexcept
-			: base_type(p,
-				Yupei::forward<Deleter>(u.get_deleter()))
+				remove_reference_t<DeleterT >> d2) noexcept
+			: BaseType(p,
+				Yupei::forward<DeleterT>(u.get_deleter()))
 		{
 
 		}
 		unique_ptr(unique_ptr&& u) noexcept
-			: base_type(u.release(),
-				Yupei::forward<Deleter>(u.get_deleter()))
+			: BaseType(u.release(),
+				Yupei::forward<DeleterT>(u.get_deleter()))
 		{
 
 		}
@@ -387,7 +387,7 @@ namespace Yupei
 			>
 			>
 			unique_ptr(unique_ptr<U, E>&& u) noexcept
-			:base_type(u.release(),
+			:BaseType(u.release(),
 				Yupei::forward<E>(u.get_deleter()))
 		{
 
@@ -415,7 +415,7 @@ namespace Yupei
 			typename = enable_if_t
 			<
 			_temp_copy_type<U, E>::value
-			&&	is_assignable<Deleter&, E&&>::value
+			&&	is_assignable<DeleterT&, E&&>::value
 			>
 			>
 			unique_ptr& operator=(unique_ptr<U, E>&& u) noexcept

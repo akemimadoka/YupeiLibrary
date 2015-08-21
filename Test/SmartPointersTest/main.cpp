@@ -163,6 +163,7 @@ int main()
 		auto spb4 = spb3->shared_from_this();
 		auto spb5 = Yupei::dynamic_pointer_cast<Derived>(spb3);
 		std::cout << spb4.use_count() << '\n';
+		std::cout << (spb == spb2) << '\n';
 	}
 	getchar();
 	_CrtDumpMemoryLeaks();
