@@ -159,6 +159,7 @@ int main()
 	{
 		auto spb = Yupei::make_unsynchronized_shared<const Base>();
 		auto spb2 = spb->shared_from_this();
+		auto spb6 = Yupei::const_pointer_cast<Base>(spb2);
 		Yupei::unsynchronized_shared_ptr<Base> spb3 = Yupei::make_unsynchronized_shared<Derived>();
 		auto spb4 = spb3->shared_from_this();
 		auto spb5 = Yupei::dynamic_pointer_cast<Derived>(spb3);

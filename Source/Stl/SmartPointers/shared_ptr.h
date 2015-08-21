@@ -703,6 +703,27 @@ namespace Yupei
 		lhs.swap(rhs);
 	}
 
+	namespace Internal
+	{
+		template<
+			typename NewObjectT,
+			typename DeleterT>
+		struct DeleterRebind
+		{
+			using type = DeleterT;
+		};
+
+		template<
+			typename NewObjectT,
+			template<typename>
+		class DeleterT,
+			typename ObjectT>
+		struct DeleterRebind<NewObjectT, DeleterT<ObjectT>>
+		{
+			using type = DeleterT<NewObjectT>;
+		};
+
+	}
 	// 20.8.2.2.9, shared_ptr casts:
 	template<typename ObjectT,
 		typename IncRefPolicy,
@@ -727,14 +748,16 @@ namespace Yupei
 		else 
 			return shared_ptr<ObjectT, IncRefPolicy, DeleterT>();
 	}
+
 	template<typename ObjectT,
 		typename IncRefPolicy,
 		typename DeleterT,
 		typename ObjectRhsT>
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT>
+		auto
 		const_pointer_cast(const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& r) noexcept
 	{
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT> ptr{ r,const_cast<ObjectT*>(r.get()) };
+		using NewDeleterType = typename Internal::DeleterRebind<ObjectT,DeleterT>::type;
+		shared_ptr<ObjectT, IncRefPolicy, NewDeleterType> ptr{ r,const_cast<ObjectT*>(r.get()) };
 		return ptr;
 	}
 
@@ -887,7 +910,7 @@ namespace Yupei
 	namespace Internal
 	{
 		template<typename T>
-		struct DeleterRebind
+		struct DeleterAddConst
 		{
 			using type = T;
 		};
@@ -895,7 +918,7 @@ namespace Yupei
 			template<typename>
 		class T,
 		typename ObjectT>
-		struct DeleterRebind<T<ObjectT>>
+		struct DeleterAddConst<T<ObjectT>>
 		{
 			using type = T<const ObjectT>;
 		};
@@ -928,7 +951,7 @@ namespace Yupei
 			return SharedType(weakPtr);
 		}
 
-		using ReturnType = shared_ptr<const ObjectT, IncRefPolicy, typename Internal::DeleterRebind<DeleterT>::type>;
+		using ReturnType = shared_ptr<const ObjectT, IncRefPolicy, typename Internal::DeleterAddConst<DeleterT>::type>;
 		ReturnType shared_from_this() const
 		{
 			return ReturnType(weakPtr);
