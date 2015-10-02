@@ -6,41 +6,47 @@
 
 namespace Yupei
 {
-	template<typename Type>
-	void swap(Type& lhs, Type& rhs) noexcept(
-		is_nothrow_constructible<Type>::value&&
-		is_nothrow_move_assignable<Type>::value)
+	template<typename ObjectT>
+	void swap(
+		ObjectT& lhs, 
+		ObjectT& rhs) noexcept(
+		is_nothrow_move_constructible<ObjectT>::value&&
+		is_nothrow_move_assignable<ObjectT>::value)
 	{
-		Type temp = Yupei::move(lhs);
+		ObjectT temp(Yupei::move(lhs));
 		lhs = Yupei::move(rhs);
 		rhs = Yupei::move(temp);
 	}
 
-	template<class ForwardIterator1, class ForwardIterator2>
-	void iter_swap(ForwardIterator1 a, ForwardIterator2 b) noexcept(noexcept(swap(
-		*Yupei::declval<ForwardIterator1>(), 
-		*Yupei::declval<ForwardIterator2>())))
+	template<class ForwardIt1T, class ForwardIt2T>
+	void iter_swap(
+		ForwardIt1T a, 
+		ForwardIt2T b) noexcept(noexcept(swap(
+		*Yupei::declval<ForwardIt1T>(),
+		*Yupei::declval<ForwardIt1T>())))
 	{
 		swap(*a, *b);
 	}
 
-	template<class ForwardIterator1, class ForwardIterator2>
-	ForwardIterator2
-		swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
-			ForwardIterator2 first2) noexcept(noexcept(Yupei::iter_swap(
-				Yupei::declval<ForwardIterator1>(), 
-				Yupei::declval<ForwardIterator2>())))
+	template<class ForwardIt1T, class ForwardIt2T>
+	ForwardIt2T
+		swap_ranges(
+			ForwardIt1T first1, 
+			ForwardIt1T last1,
+			ForwardIt2T first2) noexcept(noexcept(Yupei::iter_swap(
+				Yupei::declval<ForwardIt1T>(),
+				Yupei::declval<ForwardIt2T>())))
 	{
 		for (;first1 != last1;++first1,static_cast<void>(++first2))
-		{
 			Yupei::iter_swap(first1, first2);
-		}
 	}
 
 
-	template<typename Type,
+	template<
+		typename ObjectT,
 		std::size_t N>
-		void swap(Type(&lhs)[N], Type(&rhs)[N]) noexcept(noexcept(swap(Yupei::declval<Type&>(), Yupei::declval<Type&>())))
+		void swap(ObjectT(&lhs)[N], ObjectT(&rhs)[N]) 
+		noexcept(noexcept(swap(Yupei::declval<ObjectT&>(), Yupei::declval<ObjectT&>())))
 	{
 		Yupei::swap_ranges(lhs, lhs + N, rhs);
 	}

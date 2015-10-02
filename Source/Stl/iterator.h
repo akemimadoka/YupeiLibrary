@@ -2,17 +2,22 @@
 
 #include <cstddef>
 #include <iosfwd>
+#include <iterator> // to be compatible with tags in std
 #include "traits_internal.h"
 #include "__addressof.h"
 #include "container_traits.h"
 
 namespace Yupei
 {
-	struct input_iterator_tag { };
-	struct output_iterator_tag { };
-	struct forward_iterator_tag : public input_iterator_tag { };
-	struct bidirectional_iterator_tag : public forward_iterator_tag { };
-	struct random_access_iterator_tag : public bidirectional_iterator_tag { };
+	using std::input_iterator_tag;
+	using std::output_iterator_tag;
+	using std::forward_iterator_tag;
+	using std::random_access_iterator_tag;
+	using std::bidirectional_iterator_tag;
+
+	struct contiguous_iterator_tag : random_access_iterator_tag {};
+
+	
 
 	namespace Internal
 	{
@@ -101,15 +106,17 @@ namespace Yupei
 
 	namespace Internal
 	{
-		template <class, class = void> struct iterator_category { };
-		template <class T> struct iterator_category<T*> 
+		template <typename, typename = void> 
+		struct iterator_category { };
+
+		template <typename T> 
+		struct iterator_category<T*,void> 
 		{
 			using type = random_access_iterator_tag;
 		};
-		template <class T>
-		struct iterator_category<T, 
-			void_t<typename T::iterator_category>
-		> 
+
+		template <typename T>
+		struct iterator_category<T,void_t<typename T::iterator_category>> 
 		{
 			using type = typename T::iterator_category;
 		};
@@ -126,6 +133,7 @@ namespace Yupei
 		{
 			using type = add_pointer_t<ReferenceType<I>>;
 		};
+
 
 		
 		template <class I>
@@ -197,6 +205,31 @@ namespace Yupei
 		typedef Category iterator_category;
 	};
 
+	template<typename IteratorT>
+	struct is_contiguous_iterator : is_same<IteratorCategory<IteratorT>, Yupei::contiguous_iterator_tag> {};
+
+	template<typename IteratorT>
+	struct realtype_traits
+	{
+		using type = IteratorT;
+	};
+
+	template<typename PtrT>
+	struct is_pod_ptr : false_type {};
+
+	template<typename ObjectT>
+	struct is_pod_ptr<ObjectT*> : is_pod<ObjectT> {};
+
+	template<bool IsContiguous, typename ItT>
+	struct is_pod_iterator_impl : false_type {};
+	
+	template<typename ItT>
+	struct is_pod_iterator_impl<true, ItT> : Yupei::is_pod<ValueType<ItT>> {};
+
+	template<typename ItT>
+	using is_pod_iterator = is_pod_iterator_impl<is_contiguous_iterator<ItT>::value, ItT>;
+
+
 	namespace Internal
 	{
 		template <class InputIterator, class Distance>
@@ -237,7 +270,7 @@ namespace Yupei
 	template <class InputIterator, class Distance>
 	void advance(InputIterator& i, Distance n)
 	{
-		return Internal::advance_impl(i, n, iterator_category_t<InputIterator>{});
+		return Internal::advance_impl(i, n, IteratorCategory<InputIterator>{});
 	}
 
 	namespace Internal
@@ -261,7 +294,7 @@ namespace Yupei
 	template <class InputIterator>
 	DifferenceType<InputIterator> distance(InputIterator first, InputIterator last)
 	{
-		return Internal::distance_impl(first, last, iterator_category_t<InputIterator>{});
+		return Internal::distance_impl(first, last, IteratorCategory<InputIterator>{});
 	}
 	template <class ForwardIterator>
 	ForwardIterator next(ForwardIterator x,
@@ -816,6 +849,132 @@ namespace Yupei
 	 private:
 		 std::basic_ostream<charT, traits>* out_stream; // exposition only
 		 const charT* delim; // exposition only
+	 };
+
+
+	 template<typename ObjectT>
+	 class temp_iterator : public Yupei::iterator<output_iterator_tag, void, void, void, void>
+	 {
+		 using MyType = temp_iterator<ObjectT>;
+	 public:
+		 using pointer = ObjectT*;
+
+		 temp_iterator(std::ptrdiff_t count = 0) noexcept
+		 {
+			 buf_.begin_ = {};
+			 buf_.cur_ = {};
+			 buf_.bufSize_ = count;
+			 buf_.unintializePos_ = {};
+			 pbuf_ = &buf_;
+		 }
+
+		 ~temp_iterator() noexcept
+		 {
+			 if (buf_.begin_ != pointer{})
+			 {
+				 for (auto i = buf_.begin_;i < buf_.unintializePos_;++i)
+					 i->~ObjectT();
+				 ::operator delete(buf_.begin_);
+			 }
+		 }
+
+		 temp_iterator(const MyType& rhs) noexcept
+		 {
+			 buf_ = {};
+			 pbuf_ = rhs.pbuf_;
+		 }
+
+		 MyType& operator = (const MyType& rhs) noexcept
+		 {
+			 pbuf_ = rhs.pbuf_;
+			 return *this;
+		 }
+
+		 MyType& operator=(const ObjectT& v)
+		 {
+			 assert(pbuf_->cur_ - pbuf_->begin_ <= pbuf_->bufSize_);
+			 if (pbuf_->cur_ < pbuf_->unintializePos_)
+				 *pbuf_->cur_++ = v;
+			 else
+			 {
+				 new (pbuf_->cur_) ObjectT(v);
+				 pbuf_->unintializePos_ = ++pbuf_->cur_;
+			 }
+			 return *this;
+		 }
+
+		 MyType& operator=(ObjectT&& v) noexcept
+		 {
+			 assert(pbuf_->cur_ - pbuf_->begin_ <= pbuf_->bufSize_);
+			 if (pbuf_->cur_ < pbuf_->unintializePos_)
+				 *pbuf_->cur_++ = Yupei::move(v);
+			 else
+			 {
+				 new (pbuf_->cur_) ObjectT(Yupei::move(v));
+				 pbuf_->unintializePos_ = ++pbuf_->cur_;
+			 }
+			 return *this;
+		 }
+
+		 MyType& operator*() noexcept
+		 {
+			 return *this;
+		 }
+
+		 MyType& operator++() noexcept
+		 {
+			 return *this;
+		 }
+
+		 MyType& operator++(int) noexcept
+		 {
+			 return *this;
+		 }
+
+		 MyType& init() noexcept
+		 {
+			 pbuf_->cur_ = pbuf_->begin_;
+			 return *this;
+		 }
+
+		 pointer begin() const noexcept
+		 {
+			 return  pbuf_->begin_;
+		 }
+
+		 pointer end() const noexcept
+		 {
+			 return pbuf_->cur_;
+		 }
+
+		 void allocate()
+		 {
+			 if (pbuf_->begin_ == pointer{} && pbuf_->bufSize_ > 0)
+			 {
+				 auto ptr = static_cast<pointer>(::operator new(pbuf_->bufSize_ * sizeof(ObjectT)));
+				 pbuf_->begin_ = ptr;
+				 pbuf_->cur_ = ptr;
+				 pbuf_->unintializePos_ = ptr;
+			 }
+		 }
+
+		 std::ptrdiff_t size() const
+		 {
+			 return pbuf_->bufSize_;
+		 }
+
+	 private:
+		 struct BufType
+		 {
+			 pointer begin_;
+			 std::ptrdiff_t bufSize_;
+			 pointer unintializePos_;
+			 pointer cur_;
+		 };
+		
+		 BufType buf_;
+		 BufType* pbuf_;
+		
 	 };
 	 
 }

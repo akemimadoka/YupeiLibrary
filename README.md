@@ -3,12 +3,12 @@
 
 
 + ##Basic Library##
-&emsp;&emsp; This part is a basic library which is a custom STL and combined with the C++ Technical Specification implement on Windows and provides
+&emsp;This part is a basic library which is a custom STL and combined with the C++ Technical Specification implementation on Windows and provides
 
   + Type traits,which is the foundation of the whole basic library;
   + Standard Containers (such as vector,list,etc.);
-  + Useful Algorithm with the abstract of iterators;
-  + Functional things like function;
+  + Useful Algorithm with the abstraction of iterators;
+  + function;
   + Smart pointers,which are very useful in GUI development,such as shared_ptr,unique_ptr,intrusive_ptr;
   + Allocators aimed for high performance;
   + Many useful extentions (like the C++ TS),such as filesystem,type-erased allocator,ranges and so on.
@@ -17,10 +17,11 @@
  | Headers          |    Status           |
  | :---------------:|:-------------------:|
  | `<type_traits>`  |  Complete           |
- | `<tuple>`		|  Most		  		  |
+ | `<tuple>`		    |  Most		  		      |
  | `<utility>`      |  Complete           |
- | `<memory>`       |                     |
+ | `<memory>`       |  Most               |
  | `<iterator>`     |  Complete           |
+ | `<algorithm>`    |  Complete           |
  
  
  

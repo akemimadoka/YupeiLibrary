@@ -124,7 +124,7 @@ namespace Yupei
 	template<class T, class Compare>
 	inline Yupei::pair<T, T> minmax(std::initializer_list<T> t, Compare comp)
 	{
-		auto res = Yupei::minmax_element(t.begin(), t.end());
+		auto res = Yupei::minmax_element(t.begin(), t.end(),comp);
 		return Yupei::make_pair(*res.first, *res.second);
 	}
 	template<class T>

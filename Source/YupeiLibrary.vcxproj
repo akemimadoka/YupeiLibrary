@@ -66,7 +66,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CLib\raw_memory.h" />
+    <ClInclude Include="CLib\stdlib.h" />
+    <ClInclude Include="Custom\Assert.h" />
+    <ClInclude Include="Custom\Owner.h" />
     <ClInclude Include="Custom\StopWatch.h" />
+    <ClInclude Include="Custom\string.h" />
     <ClInclude Include="Stl\algorithm.h" />
     <ClInclude Include="Stl\algorithm_internal.h" />
     <ClInclude Include="Stl\Auto.h" />
@@ -75,6 +80,7 @@
     <ClInclude Include="Stl\compare_funtor.h" />
     <ClInclude Include="Stl\compress_pair.h" />
     <ClInclude Include="Stl\container_traits.h" />
+    <ClInclude Include="Stl\contiguous_iterators.h" />
     <ClInclude Include="Stl\functional.h" />
     <ClInclude Include="Stl\iterator.h" />
     <ClInclude Include="Stl\math.h" />
@@ -93,6 +99,7 @@
     <ClInclude Include="Stl\__addressof.h" />
     <ClInclude Include="Stl\__allocator.h" />
     <ClInclude Include="Stl\__is_mem_func_obj.h" />
+    <ClInclude Include="Stl\__iterator_utility.h" />
     <ClInclude Include="Stl\__reference_wrapper.h" />
     <ClInclude Include="Stl\__swap.h" />
   </ItemGroup>

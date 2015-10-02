@@ -16,6 +16,9 @@
     <Filter Include="Stl\SmartPointers">
       <UniqueIdentifier>{02fb1ea8-e19c-4881-b3eb-a25f7f51a763}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CLib">
+      <UniqueIdentifier>{08c8b8c5-5fc0-4c69-a464-e660f928dea4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stl\__allocator.h">
@@ -104,6 +107,27 @@
     </ClInclude>
     <ClInclude Include="Stl\pointer_traits.h">
       <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\__iterator_utility.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom\string.h">
+      <Filter>Custom</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\contiguous_iterators.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CLib\stdlib.h">
+      <Filter>CLib</Filter>
+    </ClInclude>
+    <ClInclude Include="CLib\raw_memory.h">
+      <Filter>CLib</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom\Assert.h">
+      <Filter>Custom</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom\Owner.h">
+      <Filter>Custom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
