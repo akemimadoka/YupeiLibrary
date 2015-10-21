@@ -1,18 +1,22 @@
 #pragma once
 
 #include "..\type_traits.h"
-#include "..\utility_internal.h"
+#include "..\MemoryInternal.h"
 #include "..\__swap.h"
 #include "..\compress_pair.h"
 #include "default_delete.h"
 #include "..\compare_funtor.h"
 #include "unique_ptr.h"
+#include "..\atomic.h"
+
 #include <exception> //for std::exception
 #include <cassert>
 
 
 namespace Yupei
 {
+	//http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3920.html
+
 	class bad_weak_ptr
 		:public std::exception
 	{
@@ -25,112 +29,95 @@ namespace Yupei
 		}
 	};
 
-	template<typename ObjectT, typename Inc, typename DeleterT>
+	//no atomic increment support in this version of shared_ptr
+	//Use atomic_shared_ptr in multi-thread environment.
+
+	template<typename ObjectT>
 	class weak_ptr;
-
-	//This is an unsynchronized of std::shared_ptr called unsynchronized_ptr.
-	//IncRefPolicy should have following member functions:
-	//void IncreaseRefCount(std::ptrdiff_t&)
-	//bool DecreaseRefCount(std::ptrdiff_t& ref_count) (after the decreasing,if ref_count == 0,return true)
-	//bool TryIncreaseRefCount(std::ptrdiff_t& ref_count)
-	//Before we write the real ptr,we need some contracts on IncRefPolicy.
-	//Maybe we can't validate the signature because of the template functions.
-	//We could validate the signature by Expression SFINAE,but...
-	
-	template<typename Policy,typename = void>
-	struct IncRefPolicyContracts : false_type
-	{
-		
-	};
-
-	template<typename Policy>
-	struct IncRefPolicyContracts<Policy,
-		void_t<decltype(&Policy::IncreaseRefCount),
-		decltype(&Policy::DecreaseRefCount),
-		decltype(&Policy::TryIncreaseRefCount)>> : true_type
-	{
-
-	};
 
 	class RefCountBase
 	{
 	protected:
+
 		virtual void OnZeroWeak() noexcept = 0;
+
 		virtual void OnZeroShared() noexcept = 0;
-		virtual ~RefCountBase() {}
-	};
 
+		virtual ~RefCountBase() = default;
 
-	template<typename IncRefPolicy>
-	struct RefCount : public RefCountBase
-	{
 	public:
-		//static_assert(IncRefPolicyContracts<IncRefPolicy>::value, "The policy doesn't meet the require.");
-		RefCount()
-			:weakCount(1),
-			refCount(1)
+		RefCountBase() noexcept
+			:refCount_{1},
+			weakCount_{1}
 		{
+		}
 
-		}
-		void IncRefCount()
+		bool TryAddRef() noexcept
 		{
-			IncRefPolicy().IncreaseRefCount(refCount);
-		}
-		void DecRefCount()
-		{
-			if (IncRefPolicy().DecreaseRefCount(refCount))
+			auto oldRef = refCount_.load(memory_order::memory_order_relaxed);
+			for (;;)
 			{
-				this->OnZeroShared();
-				DecWeakCount();
+				if (oldRef == 0) return false;
+				if (atomic_compare_exchange_strong_explicit(
+					static_cast<volatile atomic<std::size_t>*>(&refCount_), 
+					&oldRef, 
+					oldRef + 1, 
+					memory_order::memory_order_release,
+					memory_order::memory_order_relaxed))
+					return true;
 			}
 		}
-		void IncWeakCount()
+
+		void AddRef() noexcept
 		{
-			IncRefPolicy().IncreaseRefCount(weakCount);
+			++refCount_;
 		}
-		void DecWeakCount()
+
+		void DecRef() noexcept
 		{
-			if (IncRefPolicy().DecreaseRefCount(weakCount))
+			--refCount_;
+			if (refCount_.load(memory_order::memory_order_relaxed) == 0)
 			{
-				this->OnZeroWeak();
+				OnZeroShared();
+				DecWeak();
 			}
 		}
-		std::ptrdiff_t GetWeakCount() const noexcept
+
+		void AddWeak() noexcept
 		{
-			return weakCount;
+			++weakCount_;
 		}
-		std::ptrdiff_t GetRefCount() const noexcept
+
+		void DecWeak() noexcept
 		{
-			return refCount;
+			--weakCount_;
+			if (refCount_.load(memory_order::memory_order_relaxed) == 0)
+				OnZeroWeak();
 		}
-		bool TryIncRefCount()
+
+		std::size_t GetRefCount() const noexcept
 		{
-			return IncRefPolicy().TryIncreaseRefCount(refCount);
+			return refCount_.load(memory_order::memory_order_relaxed);
 		}
+
 	private:
-		std::ptrdiff_t weakCount;
-		std::ptrdiff_t refCount;
+		atomic<std::size_t> refCount_;
+		atomic<std::size_t> weakCount_;
 	};
-	//IncRefPolicy should have following member functions:
-	//IncreaseRefCount
-	//DecreaseRefCount
-	//TryIncreaseRefCount
+	
 
-	template<
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectT>
-	class RefCountBasis :
-		public RefCount<IncRefPolicy>
+	template<typename ObjectT>
+	class RawRefCount :
+		public RefCountBase
 	{
 	public:
-		RefCountBasis(ObjectT* ptr)
+		RawRefCount(ObjectT* ptr)
 			:ptr_(ptr) {}
-	protected:
-		
+
+	protected:		
 		void OnZeroShared() noexcept override
 		{
-			DeleterT()(ptr_);
+			delete ptr_;
 		}
 		void OnZeroWeak() noexcept override
 		{
@@ -139,22 +126,58 @@ namespace Yupei
 	private:
 		ObjectT* ptr_;
 	};
+
+	template<typename ObjectT>
+	class RawRefCount<ObjectT[]> :
+		public RefCountBase
+	{
+	public:
+		RawRefCount(ObjectT* ptr)
+			:ptr_(ptr) {}
+
+	protected:
+		void OnZeroShared() noexcept override
+		{
+			delete[] ptr_;
+		}
+		void OnZeroWeak() noexcept override
+		{
+			delete this;
+		}
+	private:
+		ObjectT* ptr_;
+	};
+
+	template<typename ObjectT,typename DeleterT>
+	class RefCountDeleter :
+		public RefCountBase
+	{
+	public:
+		RefCountDeleter(ObjectT* ptr, DeleterT d)
+			:data_{ d, ptr } {}
+
+	protected:
+		void OnZeroShared() noexcept override
+		{
+			Yupei::invoke(d, ptr);
+		}
+		void OnZeroWeak() noexcept override
+		{
+			delete this;
+		}
+	private:
+		compress_pair<DeleterT, ObjectT*> data_;
+	};
 	
-	template<
-		typename IncRefPolicy,
-		typename ObjectT>
-	class RefCountAllocateOnce :
-		public RefCount<IncRefPolicy>
+	//We cannot specify deleter in make_shared
+	template<typename ObjectT>
+	class RefCountAllocateOnce : public RefCountBase
 	{
 	public:
 		template<typename... Args>
 		RefCountAllocateOnce(Args&&...)
-			:object_(Yupei::forward<Args>(args)...)
+			:object_{ Yupei::forward<Args>(args)... }
 		{
-		}
-		RefCount<IncRefPolicy>* GetRefCountPtr() noexcept
-		{
-			return static_cast<RefCount<IncRefPolicy>*>(this);
 		}
 		ObjectT* GetObjectPtr() noexcept
 		{
@@ -163,7 +186,7 @@ namespace Yupei
 	protected:
 		void OnZeroShared() noexcept override
 		{
-			object_.~ObjectT();
+			Yupei::destroy(GetObjectPtr());
 		}
 		void OnZeroWeak() noexcept override
 		{
@@ -174,616 +197,650 @@ namespace Yupei
 		ObjectT object_;
 	};
 
-	struct UnsynchronizedPolicy
+	template<typename ObjectT>
+	class RefCountAllocateOnce<ObjectT[]> : public RefCountBase
 	{
-		constexpr UnsynchronizedPolicy() noexcept = default;
-		void IncreaseRefCount(std::ptrdiff_t& num)
+	public:
+		RefCountAllocateOnce(ObjectT* ptr,std::size_t size)
+			: ptr_(ptr),
+			size_(size)
 		{
-			++num;
 		}
-		bool DecreaseRefCount(std::ptrdiff_t& num)
+	protected:
+		void OnZeroShared() noexcept override
 		{
-			if (--num == 0) return true;
-			return false;
+			for (std::size_t i = 0;i < size_;++i)
+			{
+				ptr_[i].~ObjectT();
+			}
 		}
-		//true means success
-		bool TryIncreaseRefCount(std::ptrdiff_t& num)
+		void OnZeroWeak() noexcept override
 		{
-			if (num == 0) return false;
-			else ++num;
-			return true;
+			::operator delete(this);
 		}
+
+	private:
+		ObjectT* ptr_;
+		std::size_t size_;
 	};
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT = default_delete<ObjectT >>
+	template<typename ObjectT,std::size_t N>
+	class RefCountAllocateOnce<ObjectT[N]> : public RefCountBase
+	{
+	public:
+		RefCountAllocateOnce(ObjectT* ptr) noexcept
+			:ptr_(ptr)
+		{
+		}
+	protected:
+		void OnZeroShared() noexcept override
+		{
+			for (std::size_t i = 0;i < N;++i)
+			{
+				ptr_[i].~ObjectT();
+			}
+		}
+		void OnZeroWeak() noexcept override
+		{
+			::operator delete(this);
+		}
+
+	private:
+		ObjectT* ptr_;
+		std::size_t size_;
+	};
+
+
+	namespace Internal
+	{
+		//modified from Boost, workaround for VS2015.
+
+		template<typename Y, typename T>
+		struct SpConvertible
+		{
+			using yes = char(&)[1];
+			using no = char(&)[2];
+
+			static yes f(T*);
+			static no f(...);
+
+			static constexpr bool value = sizeof(f(static_cast<Y*>(0))) == sizeof(yes);
+		};
+
+		template<typename Y, typename T>
+		struct SpConvertible<Y, T[]>
+		{
+			static constexpr bool value = false;
+		};
+
+		template<typename Y, typename T>
+		struct SpConvertible<Y[], T[]>
+		{
+			static constexpr bool value = SpConvertible<Y[1], T[1]>::value;
+		};
+
+		template<typename Y,std::size_t N,  typename T>
+		struct SpConvertible<Y[N], T[]>
+		{
+			static constexpr bool value = SpConvertible<Y[1], T[1]>::value;
+		};
+	}
+
+	template<typename ObjectT>
 	class enable_shared_from_this;
 
-	
-
-	template<typename ObjectT,
-		typename IncRefCountPolicy,
-		typename DeleterT
-		>
+	template<typename ObjectT>
 	class PtrBase
 	{
 	public:
 		
-		template<typename T,typename Inc,typename D>
+		template<typename RhsObjectT>
 		friend class PtrBase;
-		template<typename T, typename Inc, typename D>
+		template<typename T>
 		friend class weak_ptr;
 
 		using element_type = remove_extent_t<ObjectT>;
-		using ref_count_type = RefCount<IncRefCountPolicy>;
-		using inc_ref_policy = IncRefCountPolicy;
-		using deleter_type = DeleterT;
-
-		template<typename OtherT,typename OtherD>
-		using RealBaseType = PtrBase<OtherT, inc_ref_policy, OtherD>;
 
 		constexpr PtrBase() noexcept
-			:refCountObj(),
-			rawPtr()
+			:refCount_{},
+			rawPtr_{}
 		{
+		}
 
-		}
-		template<typename Y>
-		explicit PtrBase(Y* p)
-			:rawPtr(p)
+		PtrBase(PtrBase&& rhs) noexcept
+			:refCount_{rhs.refCount_},
+			rawPtr_{rhs.rawPtr_}
 		{
-			auto holder = Yupei::make_unique<RefCountBasis<inc_ref_policy, DeleterT, element_type>>(rawPtr);
-			refCountObj = holder.release();
+			rhs.refCount_ = {};
+			rhs.rawPtr_ = {};
 		}
-		PtrBase(PtrBase&& rhs)
-			:refCountObj(rhs.refCountObj),
-			rawPtr(rhs.rawPtr)
+
+		template<typename RhsObjectT>
+		PtrBase(PtrBase<RhsObjectT>&& rhs)
+			:refCount_{ rhs.refCount_ },
+			rawPtr_{ rhs.rawPtr_ }
 		{
-			rhs.refCountObj = nullptr;
-			rhs.rawPtr = nullptr;
+			rhs.refCount_ = {};
+			rhs.rawPtr_ = {};
 		}
-		template<typename OtherT,typename OtherD>
-		PtrBase(RealBaseType<OtherT,OtherD>&& r) noexcept
-			: refCountObj(r.refCountObj),
-			rawPtr(r.rawPtr)
-		{
-			r.refCountObj = nullptr;
-			r.rawPtr = nullptr;
-		}
+
 		std::size_t use_count() const noexcept
 		{
-			if (refCountObj) return refCountObj->GetRefCount();
+			if (refCount_) return refCount_->GetRefCount();
 			return{};
 		}
-		void swap(PtrBase& rhs)
-		{
-			Yupei::swap(refCountObj, rhs.refCountObj);
-			Yupei::swap(rawPtr, rhs.rawPtr);
-		}
+
+
 	protected:
-		template<typename OtherT,
-			typename OtherD>
-			void Reset(const RealBaseType<OtherT, OtherD>& otherPtr)
+		void Reset(element_type* p, RefCountBase* refCount, bool isThrow)
 		{
-			Reset(otherPtr.rawPtr, otherPtr.refCountObj);
-		}
-		template<typename OtherT,
-			typename OtherD,
-			typename OtherPtrT>
-			void Reset(const RealBaseType<OtherT, OtherD>& otherPtr,OtherPtrT* p)
-		{
-			Reset(p, otherPtr.refCountObj);
-		}
-		template<typename OtherT,
-			typename OtherD>
-			void Reset(const RealBaseType<OtherT, OtherD>& otherPtr, bool isThrow)
-		{
-			Reset(otherPtr.rawPtr, otherPtr.refCountObj, isThrow);
-		}
-		void Reset(element_type* p, ref_count_type* _ref_count, bool isThrow)
-		{
-			if (_ref_count && _ref_count->TryIncRefCount())
-				NakedReset(p, _ref_count);
-			else if(isThrow)
-				throw Yupei::bad_weak_ptr();
-		}
-		void NakedReset(element_type* p, ref_count_type* _ref_count)
-		{
-			if (this->refCountObj)
-				this->refCountObj->DecRefCount();
-			this->refCountObj = _ref_count;
-			this->rawPtr = p;
-		}
-		void Reset(element_type* p, ref_count_type* _ref_count)
-		{
-			if (_ref_count != nullptr)
+			if (refCount && refCount->TryAddRef())
 			{
-				_ref_count->IncRefCount();
+				DecRef();
+				refCount_ = refCount;
 			}
-			NakedReset(p, _ref_count);
+			else if(isThrow)
+				throw bad_weak_ptr();
 		}
-		template<typename OtherT,
-			typename OtherD>
-			void ResetW(const RealBaseType<OtherT, OtherD>& otherPtr)
+
+
+		void Swap(PtrBase& rhs) noexcept
 		{
-			ResetW(otherPtr.rawPtr, otherPtr.refCountObj);
+			using Yupei::swap;
+			swap(refCount_, rhs.refCount_);
+			swap(rawPtr_, rhs.rawPtr_);
 		}
+
+		//postcondition: refCount_ == nullptr
+		void Reset(element_type* p, RefCountBase* refCount)
+		{
+			if(refCount)
+				refCount->AddRef();
+			refCount_ = refCount;
+			rawPtr_ = p;
+		}
+
+		void DecRef() noexcept
+		{
+			if (refCount_)
+				refCount_->DecRef();
+		}
+
+		void AddRef() noexcept
+		{
+			if (refCount_)
+				refCount_->AddRef();
+		}
+
+		template<typename RhsObjectT>
+		void ResetW(const PtrBase<RhsObjectT>& otherPtr)
+		{
+			ResetW(otherPtr.rawPtr_, otherPtr.refCount_);
+		}
+
 		//这是为了enable_shared_from_this<T>:
 		//其内置的weak_ptr<T>为非const，当类为const时，不能将const T*赋值给T*
 		//故使用const_cast去掉const。
 		template<typename ObjectRhsT>
-		void ResetW(const ObjectRhsT* p, ref_count_type* ref_count)
+		void ResetW(const ObjectRhsT* p, RefCountBase* ref_count)
 		{
 			ResetW(const_cast<ObjectRhsT*>(p), ref_count);
 		}
+
 		template<typename ObjectRhsT>
-		void ResetW(ObjectRhsT* p, ref_count_type* _ref_count)
+		void ResetW(ObjectRhsT* p, RefCountBase* _ref_count)
 		{
-			if (this->refCountObj != nullptr)
-			{
-				this->refCountObj->DecWeakCount();
-			}
-			this->refCountObj = _ref_count;
-			this->rawPtr = p;
+			if (this->refCount_ != nullptr)
+				refCount_->DecWeak();	
 			if (_ref_count)
-				_ref_count->IncWeakCount();
+				_ref_count->AddWeak();
+			this->refCount_ = _ref_count;
+			this->rawPtr_ = p;			
 		}
-		void IncRef()
-		{
-			if (refCountObj)
-				refCountObj->IncRefCount();
-		}
-		bool TryIncRef()
-		{
-			return refCountObj->TryIncRefCount();
-		}
-		void DecRef()
-		{
-			if (refCountObj)
-				refCountObj->DecRefCount();
-		}
-		void DecWRef()
-		{
-			if (refCountObj)
-				refCountObj->DecWeakCount();
-		}
-		void IncWRef()
-		{
-			if (refCountObj)
-				refCountObj->IncWeakCount();
-		}
-		std::size_t UseCount() const noexcept
-		{
-			if (refCountObj)
-				return refCountObj->GetRefCount();
-			
-			return{};
-		}
+	
 	protected:
-		RefCount<IncRefCountPolicy>* refCountObj;
-		element_type* rawPtr;
+
+		RefCountBase* refCount_;
+		element_type* rawPtr_;
 	};
 
-	template<typename ObjectT,
-		typename IncRefCountPolicy,
-		typename DeleterT = default_delete<ObjectT>
-	>
-	class shared_ptr : public PtrBase<ObjectT, IncRefCountPolicy,DeleterT>
+	namespace Internal
+	{
+
+		template<typename T>
+		void ValueInitialize(T* obj, std::size_t count,true_type)
+		{
+			memset(static_cast<void*>(obj), 0, count * sizeof(T));
+		}
+
+		template<typename T>
+		void ValueInitialize(T* obj, std::size_t count,false_type)
+		{
+			for (std::size_t i = 0;i < count;++i)
+			{
+				void* p = obj + i;
+				new (p) T();
+			}
+		}
+		template<typename T>
+		void ValueInitialize(T* obj, std::size_t count)
+		{
+			return Internal::ValueInitialize(obj, count, is_pod<T>());
+		}
+	}
+
+	template<typename ObjectT>
+	class shared_ptr : public PtrBase<ObjectT>
 	{
 	public:
-		template<typename T,typename Inc,typename D>
+		template<typename T>
 		friend class shared_ptr;
 
-		using BaseType = PtrBase<ObjectT, IncRefCountPolicy, DeleterT >;
+		using BaseType = PtrBase<ObjectT>;
+		using ThisType = shared_ptr<ObjectT>;
 		using element_type = typename BaseType::element_type;
-		using inc_ref_policy = typename BaseType::inc_ref_policy;
-		using ThisType = shared_ptr<ObjectT, IncRefCountPolicy, DeleterT>;
-
-		template<typename OtherT,
-			typename OtherD>
-		using OtherPtrType = shared_ptr<OtherT, inc_ref_policy, OtherD>;
-		template<typename OtherT,
-			typename OtherD>
-		using OtherWeakPtrType = weak_ptr<OtherT, inc_ref_policy, OtherD>;
 
 		constexpr shared_ptr() noexcept = default;
 
-		template<typename Y,
-		typename = enable_if_t<
-			is_convertible<Y*,element_type*>::value>
-		>
+
+		//Y shall be a complete type. 
+		//The expression delete[] p, when T is an array type, or delete p, 
+		//when T is not an array type, shall be well-formed, shall have well defined behavior,
+		//and shall not throw exceptions. When T is U[N], Y(*)[N] shall be convertible to T*; 
+		//when T is U[], Y(*)[] shall be convertible to T*; otherwise, Y* shall be convertible to T*.
+		template<typename Y>
 		explicit shared_ptr(Y* p)
-			:PtrBase(p)
 		{
-			this->DoEnable(p);
+			rawPtr_ = p;
+			auto ref = make_unique<RawRefCount<ObjectT>>(p);
+			refCount_ = ref.release();
 		}
-		template<
-			typename OtherT,
-			typename OtherD
-		>
-			shared_ptr(const OtherPtrType<OtherT,OtherD>& r, element_type* p)
+
+		template<typename RhsObjectT,typename DeleterT>
+		shared_ptr(RhsObjectT* p, DeleterT deleter)
 		{
-			this->Reset(r,p);
+			rawPtr_ = p;
+			auto ref = make_unique<RefCountDeleter<ObjectT,DeleterT>>(p,deleter);
+			refCount_ = ref.release();
+		}
+
+		template<typename DeleterT>
+		shared_ptr(std::nullptr_t p, DeleterT deleter)
+			:shared_ptr(nullptr,deleter)
+		{
+		
+		}
+
+		template<typename RhsObjectT>
+		shared_ptr(const shared_ptr<RhsObjectT>& r, element_type* p)
+		{
+			this->Reset(p, r.refCount_);
 		}
 
 		shared_ptr(const shared_ptr& r) noexcept
 		{
-			this->Reset(r);
+			this->Reset(r.rawPtr_, r.refCount_);
 		}
-		template<typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-				is_convertible<OtherD, DeleterT>::value
-				&& is_convertible<OtherT*, element_type*>::value >
-		>
-			shared_ptr(const OtherPtrType<OtherT,OtherD>& r) noexcept
+
+		template<typename RhsObjectT,
+			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, ObjectT>::value>>
+		shared_ptr(const shared_ptr<RhsObjectT>& r) noexcept
 		{
-			this->Reset(r);
+			this->Reset(r.rawPtr_, r.refCount_);
 		}
+
 		shared_ptr(shared_ptr&& r) noexcept
 			:PtrBase(Yupei::move(r))
 		{
+		}
 
+		template<typename RhsObjectT,
+			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, ObjectT>::value>>
+		shared_ptr(shared_ptr<RhsObjectT>&& r) noexcept
+			:PtrBase(Yupei::move(r))
+		{			
 		}
-		template<typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_convertible<OtherD, DeleterT>::value
-			&& is_convertible<OtherT*, element_type*>::value >
-		>
-			shared_ptr(OtherPtrType<OtherT, OtherD>&& r) noexcept
-			:BaseType(Yupei::move(r))
+
+		
+		template<typename RhsObjectT,
+			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, ObjectT>::value>>
+		explicit shared_ptr(const weak_ptr<RhsObjectT>& r)
 		{
-			
+			this->Reset(r.rawPtr_,r.refCount_, true);
 		}
+		
 		constexpr shared_ptr(nullptr_t) noexcept
 			: shared_ptr()
 		{
+		}
 
-		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-				is_convertible<OtherT*,element_type*>::value
-				&& is_convertible<OtherD,DeleterT>::value>
-			>
-		explicit shared_ptr(const OtherWeakPtrType<OtherT,OtherD>& r)
+		~shared_ptr()
 		{
-			this->Reset(r, true);
+			if (refCount_)
+				refCount_->DecRef();
 		}
+
 		shared_ptr& operator=(const shared_ptr& r) noexcept
 		{
 			shared_ptr(r).swap(*this);
 			return *this;
 		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_convertible<OtherT*, element_type*>::value
-			&& is_assignable<DeleterT&,const OtherD&>::value>
-		>
-		shared_ptr& operator=(const OtherPtrType<OtherT,OtherD>& rhs) noexcept
+
+		template<typename RhsObjectT>
+		shared_ptr& operator=(const shared_ptr<RhsObjectT>& rhs) noexcept
 		{
 			shared_ptr(rhs).swap(*this);
 			return *this;
 		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_convertible<OtherT*, element_type*>::value
-			&& is_assignable<DeleterT&, OtherD&&>::value>
-		>
-		shared_ptr& operator=(OtherPtrType<OtherT, OtherD>&& r) noexcept
-		{
-			shared_ptr(Yupei::move(r)).swap(*this);
-			return *this;
-		}
+		
 		shared_ptr& operator=(shared_ptr&& r) noexcept
 		{
 			shared_ptr(Yupei::move(r)).swap(*this);
 			return *this;
 		}
+		
+		template<typename RhsObjectT>
+		shared_ptr& operator=(shared_ptr<RhsObjectT>&& r) noexcept
+		{
+			shared_ptr(Yupei::move(r)).swap(*this);
+			return *this;
+		}
+
+		void swap(shared_ptr& rhs)
+		{
+			this->Swap(rhs);
+		}
+
 		void reset() noexcept
 		{
 			shared_ptr().swap(*this);
 		}
+
 		template<typename Y>
 		void reset(Y* p)
 		{
 			shared_ptr(p).swap(*this);
 		}
+
+		template<typename Y,typename D>
+		void reset(Y* p, D d)
+		{
+			shared_ptr(p,d).swap(*this);
+		}
+
+		
 		element_type* get() const noexcept
 		{
-			return this->rawPtr;
+			return this->rawPtr_;
 		}
+
+		template<typename = enable_if_t<!is_array<ObjectT>::value && !is_void<remove_cv_t<ObjectT>>::value>>
 		element_type& operator*() const noexcept
 		{
 			assert(get() != 0);
 			return *get();
 		}
+
+		template<typename = enable_if_t<!is_array<ObjectT>::value && !is_void<remove_cv_t<ObjectT>>::value>>
 		element_type* operator->() const noexcept
 		{
 			assert(get() != 0);
 			return get();
 		}
-		std::size_t use_count() const noexcept
+
+		template<typename = enable_if_t<is_array<ObjectT>::value>>
+		element_type& operator[](std::ptrdiff_t i) const noexcept
 		{
-			return this->UseCount();
+			return get()[i];
 		}
+
 		bool unique() const noexcept
 		{
 			return use_count() == 1;
 		}
+
 		explicit operator bool() const noexcept
 		{
 			return get() != 0;
-		}
-		~shared_ptr()
+		}		
+		
+		template<
+			typename = enable_if_t<!is_array<ObjectT>::value>,
+			typename... Args>
+		static shared_ptr make_shared(Args&&... args)
 		{
-			this->DecRef();
-		}
-		// 20.8.2.2.6, shared_ptr creation
-		template<typename... Args>
-		static ThisType make_shared(Args&&... args)
-		{
-			auto holder = Yupei::make_unique<RefCountAllocateOnce<inc_ref_policy, element_type>>(Yupei::forward<Args>(args)...);
-			ThisType ptr{};
-			auto elePtr = holder->GetObjectPtr();
-			ptr.NakedReset(elePtr, holder.release());
-			ptr.DoEnable(elePtr);
+			auto holder = Yupei::make_unique<RefCountAllocateOnce<element_type>>(Yupei::forward<Args>(args)...);
+			shared_ptr ptr{};
+			ptr.rawPtr_ = holder->GetObjectPtr();
+			ptr.refCount_ = holder.release();
+			ptr.DoEnable(ptr.get());
 			return ptr;
 		}
+
+		template<typename = enable_if_t<is_array<ObjectT>::value && extent<ObjectT>::value == 0>>
+		static shared_ptr
+			make_shared(std::size_t n)
+		{
+			RefCountBase* ref;
+			element_type* ele;
+			AllocateArray(n, ref, ele);			
+			new (ref) RefCountAllocateOnce<ObjectT>(ele,n);
+			shared_ptr<ObjectT> ret;
+			ret.refCount_ = ref;
+			ret.rawPtr_ = ele;
+			return ret;
+		}
+
+		template<typename = enable_if_t<is_array<ObjectT>::value && extent<ObjectT>::value != 0>>
+		static shared_ptr
+			make_shared()
+		{
+			RefCountBase* ref;
+			element_type *ele;
+			AllocateArray(extent<ObjectT>::value, ref, ele);
+			new (ref) RefCountAllocateOnce<ObjectT>(ele);
+			shared_ptr<ObjectT> ret;
+			ret.refCount_ = ref;
+			ret.rawPtr_ = ele;
+			return ret;
+		}
+
 		private:
 			void DoEnable(const volatile void*) const
 			{
-
 			}
 
-			template<typename ObjectRhsT,
-				typename DeleterRhsT >
-			void DoEnable(const enable_shared_from_this<ObjectRhsT, inc_ref_policy, DeleterRhsT>* p) const;
+			template<typename ObjectRhsT>
+			void DoEnable(const enable_shared_from_this<ObjectRhsT>* p) const;
+
+			
+			static void AllocateArray(std::size_t n, RefCountBase*& ref,element_type*& ele)
+			{
+				constexpr auto alignSize = alignof(element_type);
+				auto n1 = sizeof(RefCountAllocateOnce<ObjectT>);
+				auto n2 = sizeof(element_type) * n;
+				auto n3 = n2 + alignSize;
+				auto p1 = ::operator new(n1 + n3);
+				void* p2 = static_cast<char*>(p1) + n1;
+				Yupei::align(alignSize, n2, p2, n3);
+				ref = static_cast<RefCountBase*>(p1);
+				ele = static_cast<element_type*>(p2);
+				Internal::ValueInitialize(ele, n);
+			}
 	};
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename... Args>
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT> make_shared(Args&&... args)
+	template<typename ObjectT,typename... Args>
+	shared_ptr<ObjectT> make_shared(Args&&... args)
 	{
-		return shared_ptr<ObjectT, IncRefPolicy, DeleterT>::make_shared(Yupei::forward<Args>(args)...);
+		return shared_ptr<ObjectT>::make_shared(Yupei::forward<Args>(args)...);
 	}
 
 	// 20.8.2.2.7, shared_ptr comparisons:
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator==(
-			const shared_ptr<ObjectT,IncRefPolicy,DeleterT>& lhs, 
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+	template<typename ObjectT,typename ObjectRhsT>
+	bool operator==(
+			const shared_ptr<ObjectT>& lhs, 
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return lhs.get() == rhs.get();
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator!=(
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator!=(
+			const shared_ptr<ObjectT>& lhs,
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return lhs.get() != rhs.get();
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator < (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator < (
+			const shared_ptr<ObjectT>& lhs,
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return Yupei::less<>()(lhs.get(), rhs.get());
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator > (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator > (
+			const shared_ptr<ObjectT>& lhs,
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return rhs < lhs;
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator <= (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator <= (
+			const shared_ptr<ObjectT>& lhs,
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return !(rhs < lhs);
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		bool operator >= (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& rhs) noexcept
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator >= (
+			const shared_ptr<ObjectT>& lhs,
+			const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return !(lhs < rhs);
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator == (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator == (
+			const shared_ptr<ObjectT>& lhs,
 			nullptr_t) noexcept
 	{
 		return lhs.get() == nullptr;
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator==(
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator==(
 			nullptr_t, 
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+			const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return nullptr == rhs.get();
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator!=(
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs, 
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator!=(
+			const shared_ptr<ObjectT>& lhs, 
 			nullptr_t) noexcept
 	{
 		return static_cast<bool>(lhs);
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator!=(
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator!=(
 			nullptr_t,
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+			const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return static_cast<bool>(rhs);
 	}
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator < (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs, 
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator < (
+			const shared_ptr<ObjectT>& lhs, 
 			nullptr_t) noexcept
 	{
-		return Yupei::less<>()(lhs.get(), nullptr);
+		return less<>()(lhs.get(), nullptr);
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator < (
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator < (
 			nullptr_t, 
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+			const shared_ptr<ObjectT>& rhs) noexcept
 	{
-		return Yupei::less<>()(nullptr, rhs.get());
+		return less<>()(nullptr, rhs.get());
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator > (
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs, 
+
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator > (
+			const shared_ptr<ObjectT>& lhs, 
 			nullptr_t) noexcept
 	{
 		return nullptr < lhs;
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-		bool operator > (
+	template<typename ObjectT, typename ObjectRhsT>
+	bool operator > (
 			nullptr_t, 
-			const shared_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+			const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return rhs < nullptr;
 	}
 
 
-	template<typename ObjectT,
-	typename IncRefPolicy,
-	typename DeleterT> 
+	template<typename ObjectT>
 	void swap(
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+		shared_ptr<ObjectT>& lhs,
+		shared_ptr<ObjectT>& rhs) noexcept
 	{
 		lhs.swap(rhs);
 	}
 
-	namespace Internal
-	{
-		template<
-			typename NewObjectT,
-			typename DeleterT>
-		struct DeleterRebind
-		{
-			using type = DeleterT;
-		};
-
-		template<
-			typename NewObjectT,
-			template<typename>
-		class DeleterT,
-			typename ObjectT>
-		struct DeleterRebind<NewObjectT, DeleterT<ObjectT>>
-		{
-			using type = DeleterT<NewObjectT>;
-		};
-
-	}
 	// 20.8.2.2.9, shared_ptr casts:
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-	shared_ptr<ObjectT, IncRefPolicy, DeleterT> 
-		static_pointer_cast(const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& r) noexcept
+	template<typename ObjectT,typename ObjectRhsT>
+	shared_ptr<ObjectT> 
+		static_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT> ptr{ r,static_cast<ObjectT*>(r.get()) };
+		shared_ptr<ObjectT> ptr{ r,static_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
 		return ptr;
 	}
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		shared_ptr<ObjectT, IncRefPolicy, DeleterT>
-		dynamic_pointer_cast(const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& r) noexcept
+
+	template<typename ObjectT,typename ObjectRhsT>
+	shared_ptr<ObjectT>
+		dynamic_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		auto rawPtr = dynamic_cast<ObjectT*>(r.get());
+		auto rawPtr = dynamic_cast<shared_ptr<ObjectT>::element_type*>(r.get());
 		if(rawPtr) 
-			return shared_ptr<ObjectT, IncRefPolicy, DeleterT>{r, rawPtr};
+			return shared_ptr<ObjectT>{r, rawPtr};
 		else 
-			return shared_ptr<ObjectT, IncRefPolicy, DeleterT>();
+			return shared_ptr<ObjectT>();
 	}
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT,
-		typename ObjectRhsT>
-		auto
-		const_pointer_cast(const shared_ptr<ObjectRhsT, IncRefPolicy, DeleterT>& r) noexcept
+	template<typename ObjectT, typename ObjectRhsT>
+	shared_ptr<ObjectT>
+		reinterpret_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		using NewDeleterType = typename Internal::DeleterRebind<ObjectT,DeleterT>::type;
-		shared_ptr<ObjectT, IncRefPolicy, NewDeleterType> ptr{ r,const_cast<ObjectT*>(r.get()) };
+		shared_ptr<ObjectT> ptr{ r,reinterpret_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
 		return ptr;
 	}
 
-	template<typename ObjectT,
-		typename IncRefCountPolicy,
-		typename DeleterT = default_delete<ObjectT>
-	>
-	class weak_ptr : public PtrBase<ObjectT,IncRefCountPolicy,DeleterT>
+	template<typename ObjectT,	typename ObjectRhsT>
+	auto
+		const_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
+	{
+		shared_ptr<ObjectT> ptr{ r,const_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
+		return ptr;
+	}
+
+	template<typename ObjectT>
+	class weak_ptr : public PtrBase<ObjectT>
 	{
 	public:
-		template<
-			typename ObjectRhsT,
-			typename IncRefPolicy,
-			typename DeleterRhsT>
+		template<typename ObjectRhsT>
 		friend class shared_ptr;
 
-		using BaseType = PtrBase<ObjectT, IncRefCountPolicy, DeleterT>;
+		using BaseType = PtrBase<ObjectT>;
 		using element_type = typename BaseType::element_type;
-		using inc_ref_policy = typename BaseType::inc_ref_policy;
-
-		template<typename OtherT,
-			typename OtherD>
-		using OtherSharedType = shared_ptr<OtherT, inc_ref_policy, OtherD>;
-		template<typename OtherT,
-			typename OtherD>
-			using OtherWeakType = weak_ptr<OtherT, inc_ref_policy, OtherD>;
 
 		constexpr weak_ptr() noexcept = default;
 
@@ -792,14 +849,9 @@ namespace Yupei
 			this->ResetW(rhs);
 		}
 
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-				is_convertible<OtherD, DeleterT>::value
-				&& is_convertible<OtherT*, element_type*>::value >
-		>
-			weak_ptr(const OtherSharedType<OtherT,OtherD>& r) noexcept
+		template<typename RhsObjectT,
+			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, element_type>::value>>
+		weak_ptr(const shared_ptr<RhsObjectT>& r) noexcept
 		{
 			this->ResetW(r);
 		}
@@ -807,190 +859,127 @@ namespace Yupei
 		weak_ptr(weak_ptr&& r) noexcept
 			:BaseType(Yupei::move(r))
 		{
-
 		}
 
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_convertible<OtherD, DeleterT>::value
-			&& is_convertible<OtherT*, element_type*>::value >
-		>
-			weak_ptr(OtherWeakType<OtherT,OtherD>&& r) noexcept
+		template<typename RhsObjectT,
+			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, element_type>::value>>
+		weak_ptr(weak_ptr<RhsObjectT>&& r) noexcept
 			:BaseType(Yupei::move(r))
 		{
-
 		}
-		// 20.8.2.3.2, destructor
+
+		
 		~weak_ptr()
 		{
-			this->DecWRef();
+			if (refCount_)
+				refCount_->DecWeak();
 		}
-		// 20.8.2.3.3, assignment
-		weak_ptr& operator=(const weak_ptr & r) noexcept
+		
+		weak_ptr& operator=(const weak_ptr& r) noexcept
 		{
 			weak_ptr(r).swap(*this);
 			return *this;
 		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_assignable<DeleterT&, const OtherD& >::value
-			&& is_convertible<OtherT*, element_type*>::value >
-		>
-		weak_ptr& operator=(const OtherWeakType<OtherT,OtherD>& r) noexcept
+
+		template<typename RhsObjectT>
+		weak_ptr& operator=(const weak_ptr<RhsObjectT>& r) noexcept
 		{
 			this->ResetW(r);
 			return *this;
 		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_assignable<DeleterT&, const OtherD& >::value
-			&& is_convertible<OtherT*, element_type*>::value >
-		>
-			weak_ptr& operator=(const OtherSharedType<OtherT,OtherD>& r) noexcept
+
+		template<typename RhsObjectT>
+		weak_ptr& operator=(const shared_ptr<RhsObjectT>& r) noexcept
 		{
 			this->ResetW(r);
 			return *this;
 		}
+
 		weak_ptr& operator=(weak_ptr&& r) noexcept
 		{
 			weak_ptr(Yupei::move(r)).swap(*this);
 			return *this;
 		}
-		template<
-			typename OtherT,
-			typename OtherD,
-			typename = enable_if_t<
-			is_assignable<DeleterT&, OtherD&& >::value
-			&& is_convertible<OtherT*, element_type*>::value >
-		>
-		weak_ptr& operator=(OtherWeakType<OtherT,OtherD>&& r) noexcept
+
+		template<typename RhsObjectT>
+		weak_ptr& operator=(weak_ptr<RhsObjectT>&& r) noexcept
 		{
 			weak_ptr(Yupei::move(r)).swap(*this);
 			return *this;
 		}
-		// 20.8.2.3.4, modifiers
-		//void swap(weak_ptr& r) noexcept;
+
 		void reset() noexcept
 		{
 			weak_ptr().swap(*this);
 		}
-		// 20.8.2.3.5, observers
-		long use_count() const noexcept
-		{
-			return this->UseCount();
-		}
+
 		bool expired() const noexcept
 		{
 			return use_count() == 0;
 		}
-		OtherSharedType<ObjectT,DeleterT> lock() const
+
+		shared_ptr<ObjectT> lock() const
 		{
-			OtherSharedType<ObjectT, DeleterT> ptr{};
-			ptr.Reset(*this,false);
+			shared_ptr<ObjectT> ptr{};
+			ptr.Reset(rawPtr_,refCount_,false);
 			return ptr;
+		}
+
+		void swap(weak_ptr<ObjectT>& rhs)
+		{
+			this->Swap(rhs);
 		}
 	};
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
+	template<typename ObjectT>
 		void swap(
-			weak_ptr<ObjectT, IncRefPolicy, DeleterT>& lhs,
-			weak_ptr<ObjectT, IncRefPolicy, DeleterT>& rhs) noexcept
+			weak_ptr<ObjectT>& lhs,
+			weak_ptr<ObjectT>& rhs) noexcept
 	{
 		lhs.swap(rhs);
 	}
 
-	namespace Internal
-	{
-		template<typename T>
-		struct DeleterAddConst
-		{
-			using type = T;
-		};
-		template<
-			template<typename>
-		class T,
-		typename ObjectT>
-		struct DeleterAddConst<T<ObjectT>>
-		{
-			using type = T<const ObjectT>;
-		};
-	}
-
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
+	template<typename ObjectT>
 	class enable_shared_from_this 
 	{
 	protected:
-		template<typename ObjectT,
-			typename IncRefPolicy,
-			typename DeleterT>
+		
+		template<typename T>
 		friend class shared_ptr;
 
-		using SharedType = shared_ptr<ObjectT, IncRefPolicy, DeleterT>;
-		using WeakType = weak_ptr<ObjectT, IncRefPolicy, DeleterT>;
-
 		constexpr enable_shared_from_this() noexcept = default;
-		enable_shared_from_this(enable_shared_from_this const&) noexcept = default;
+
+		enable_shared_from_this(const enable_shared_from_this&) noexcept = default;
+
 		enable_shared_from_this& operator=(enable_shared_from_this const&)
 		{
 			return *this;
 		}
+
 		~enable_shared_from_this() = default;
+
 	public:
-		SharedType shared_from_this()
+		shared_ptr<ObjectT> shared_from_this()
 		{
-			return SharedType(weakPtr);
+			return shared_ptr<ObjectT>(weakPtr);
 		}
 
-		using ReturnType = shared_ptr<const ObjectT, IncRefPolicy, typename Internal::DeleterAddConst<DeleterT>::type>;
-		ReturnType shared_from_this() const
+		shared_ptr<ObjectT> shared_from_this() const
 		{
-			return ReturnType(weakPtr);
+			return shared_ptr<ObjectT>(weakPtr);
 		}
 	private:
-		mutable WeakType weakPtr;
+		mutable weak_ptr<ObjectT> weakPtr;
 	};
 
-	template<typename ObjectT,
-		typename IncRefPolicy,
-		typename DeleterT>
-	template<typename ObjectRhsT,
-		typename DeleterRhsT>
-	void shared_ptr<ObjectT,IncRefPolicy,DeleterT>::DoEnable(const enable_shared_from_this<ObjectRhsT, IncRefPolicy, DeleterRhsT>* p) const
+	template<typename ObjectT>
+	template<typename ObjectRhsT>
+	void shared_ptr<ObjectT>::DoEnable(const enable_shared_from_this<ObjectRhsT>* p) const
 	{
 		if (p)
 		{
 			p->weakPtr.ResetW(*this);
 		}
-	}
-
-	
-
-	template<typename ObjectT, typename D = default_delete<ObjectT>>
-	using unsynchronized_shared_ptr = Yupei::shared_ptr<ObjectT, UnsynchronizedPolicy, D>;
-
-	template<typename ObjectT, typename D = default_delete<ObjectT>>
-	using unsynchronized_weak_ptr = Yupei::weak_ptr<ObjectT, UnsynchronizedPolicy, D>;
-
-	template<typename ObjectT, typename DeleterT = default_delete<ObjectT>>
-	using enable_unsynchronized_shared_from_this = Yupei::enable_shared_from_this<ObjectT, UnsynchronizedPolicy, DeleterT>;
-
-	template<typename ObjectT, 
-		typename DeleterT = default_delete<ObjectT>,
-		typename... Args
-	>
-		unsynchronized_shared_ptr<ObjectT, DeleterT> make_unsynchronized_shared(Args&&... args)
-	{
-		return Yupei::make_shared<ObjectT, UnsynchronizedPolicy, DeleterT>(Yupei::forward<Args>(args)...);
 	}
 }
 

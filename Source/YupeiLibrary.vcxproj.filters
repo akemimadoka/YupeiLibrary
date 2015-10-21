@@ -129,6 +129,12 @@
     <ClInclude Include="Custom\Owner.h">
       <Filter>Custom</Filter>
     </ClInclude>
+    <ClInclude Include="Stl\atomic.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\MemoryInternal.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stl\memory_resource.cpp">

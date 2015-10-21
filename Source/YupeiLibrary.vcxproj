@@ -74,6 +74,7 @@
     <ClInclude Include="Custom\string.h" />
     <ClInclude Include="Stl\algorithm.h" />
     <ClInclude Include="Stl\algorithm_internal.h" />
+    <ClInclude Include="Stl\atomic.h" />
     <ClInclude Include="Stl\Auto.h" />
     <ClInclude Include="Stl\basic.h" />
     <ClInclude Include="Stl\binary_search_tree.h" />
@@ -85,6 +86,7 @@
     <ClInclude Include="Stl\iterator.h" />
     <ClInclude Include="Stl\math.h" />
     <ClInclude Include="Stl\memory.h" />
+    <ClInclude Include="Stl\MemoryInternal.h" />
     <ClInclude Include="Stl\memory_resource.h" />
     <ClInclude Include="Stl\pointer_traits.h" />
     <ClInclude Include="Stl\SmartPointers\default_delete.h" />

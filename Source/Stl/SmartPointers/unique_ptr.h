@@ -508,10 +508,9 @@ namespace Yupei
 		return unique_ptr<T>(new remove_extent_t<T>[n]());
 	}
 
-	template <class T,
-	class... Args,
-		typename = enable_if_t<is_array<T>::value && sizeof(T) != 0 >>
-		T make_unique(Args&&...) = delete;
+	template <typename T, typename... Args>
+	enable_if_t<extent<T>::value != 0>
+		make_unique(Args&&...) = delete;
 
 	template<class T, class D>
 	void swap(unique_ptr<T, D>& x, unique_ptr<T, D>& y) noexcept

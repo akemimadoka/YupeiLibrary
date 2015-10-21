@@ -3,7 +3,9 @@
 
 struct Foo { int i = 0; };
 
-//LWG 2228
+using namespace Yupei;
+
+//http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4366.html
 template <class T>
 class deleter
 {
@@ -11,15 +13,23 @@ class deleter
 	unsigned count_ = 0;
 public:
 	// special members
-	~deleter() { count_ = std::numeric_limits<unsigned>::max(); }
+	~deleter() 
+	{ 
+		count_ = std::numeric_limits<unsigned>::max(); 
+	}
+
 	deleter() = default;
+
 	deleter(const deleter&) {}
+
 	deleter& operator=(const deleter&) { return *this; }
+
 	deleter(deleter&& d)
 		: count_(d.count_)
 	{
 		d.count_ = 0;
 	}
+
 	deleter& operator=(deleter&& d)
 	{
 		count_ = d.count_;
@@ -50,7 +60,10 @@ public:
 	}
 
 	// observers
-	unsigned count() const { return count_; }
+	unsigned count() const 
+	{ 
+		return count_; 
+	}
 
 	friend
 		std::ostream&
@@ -69,51 +82,55 @@ struct do_nothing
 };
 
 template <class T>
-using Ptr = Yupei::unique_ptr<T, deleter<T>&>;
+using Ptr = unique_ptr<T, deleter<T>&>;
 
 struct base { int i = 0; };
 
 struct derived : base { int j = 0; };
 
-struct Base : Yupei::enable_unsynchronized_shared_from_this<Base>
+struct Base : enable_shared_from_this<Base>
 {
 	Base()
 	{
 	}
-	Yupei::unique_ptr<int> pi = Yupei::make_unique<int>();
-	virtual ~Base() {}
+
+	unique_ptr<int> pi = make_unique<int>();
+
+	virtual ~Base()
+	{
+		std::cout << "destructor called\n";
+	}
 };
 struct Derived : Base
 {
-	Yupei::unique_ptr<int> pi2 = Yupei::make_unique<int>();
+	unique_ptr<int> pi2 = make_unique<int>();
 };
 
 int main()
 {
 	{
-		auto ptr = Yupei::make_unique<int>(3);
+		auto ptr = make_unique<int>(3);
 		std::cout << *ptr;
 		auto rptr = ptr.release();
-		Yupei::default_delete<int>{}(rptr);
+		default_delete<int>{}(rptr);
 	}
 	{
-		auto ptr = Yupei::make_unique<int[]>(3);
+		auto ptr = make_unique<int[]>(3);
 		std::cout << ptr[1];
 	}
 	{
-		//Yupei::unique_ptr<Foo const * const[]> ptr1(new Foo*[10]);
+		//unique_ptr<Foo const * const[]> ptr1(new Foo*[10]);
 	}
 	{
 		int i = 0;
-		Yupei::unique_ptr<int, do_nothing> p1(&i);
-		Yupei::unique_ptr<int> p2;
+		unique_ptr<int, do_nothing> p1(&i);
+		unique_ptr<int> p2;
 		p1 != p2;
-		// This mistakenly compiles:(Yupei's is OK!!!!!)
-		//static_assert(Yupei::is_assignable<decltype(p2), decltype(p1)>::value, "hahah");
+		// This mistakenly compiles:(Mine is OK!!!!!)
+		//static_assert(is_assignable<decltype(p2), decltype(p1)>::value, "hahah");
 
-		 //But this correctly does not compile:
-		//p2 = std::move(p1);
-
+		//But this correctly does not compile:
+	    //p2 = std::move(p1);
 	}
 	{
 		
@@ -123,11 +140,10 @@ int main()
 		std::cout << "db = " << db << '\n';
 		std::cout << "dd = " << dd << '\n';
 		{
-			using Yupei::swap;
 			Ptr<derived> pd(new derived, dd);
 			pd.reset(new derived);
 			Ptr<base> pb(nullptr, db);
-			pb = Yupei::move(pd);  // The converting move assignment!
+			pb = move(pd);  // The converting move assignment!
 			std::cout << "pb.get_deleter() = " << pb.get_deleter() << '\n';
 			std::cout << "pd.get_deleter() = " << pd.get_deleter() << '\n';
 			swap(pd, pd);
@@ -137,34 +153,43 @@ int main()
 
 	}
 	{
-		//_CrtSetBreakAlloc(203);
 		auto print_helper = [](auto& p1, auto& p2)
 		{
 			std::cout << p1.use_count() << '\n';
 			std::cout << p2.use_count() << '\n';
 		};
-		Yupei::unsynchronized_shared_ptr<int> sp{ new int() };
+		shared_ptr<int> sp{ new int() };
 		auto rpd = new Derived();
-		Yupei::unsynchronized_shared_ptr<Base> pb{ rpd };
-		Yupei::unsynchronized_shared_ptr<Derived> pd{ new Derived() };
+		shared_ptr<Base> pb{ rpd };
+		shared_ptr<Derived> pd{ new Derived() };
 		print_helper(pb, pd);
-		pb = Yupei::move(pd);
+		pb = move(pd);
 		print_helper(pb, pd);
-		//std::cout << Yupei::is_assignable<Yupei::default_delete<Base>&, Yupei::default_delete<Derived>&&>::value << '\n';
-		Yupei::unsynchronized_weak_ptr<Base> wptr{ pb };
+		weak_ptr<Base> wptr{ pb };
 		std::cout << "wptr's " << wptr.use_count() << '\n';
 		auto npb = wptr.lock();
 		std::cout << "npb's " << npb.use_count() << '\n';
 	}
 	{
-		auto spb = Yupei::make_unsynchronized_shared<const Base>();
-		auto spb2 = spb->shared_from_this();
-		auto spb6 = Yupei::const_pointer_cast<Base>(spb2);
-		Yupei::unsynchronized_shared_ptr<Base> spb3 = Yupei::make_unsynchronized_shared<Derived>();
-		auto spb4 = spb3->shared_from_this();
-		auto spb5 = Yupei::dynamic_pointer_cast<Derived>(spb3);
+		auto spb = make_shared<const Base>();//1
+		auto spb2 = spb->shared_from_this();//2
+		auto spb6 = const_pointer_cast<Base>(spb2);//3
+		shared_ptr<Base> spb3 = make_shared<Derived>();//1
+		auto spb4 = spb3->shared_from_this();//2
+		auto spb5 = dynamic_pointer_cast<Derived>(spb3);//3
 		std::cout << spb4.use_count() << '\n';
 		std::cout << (spb == spb2) << '\n';
+		//compile error
+		//spb[1];
+		
+	}
+	{
+		std::cout << '\n';
+		auto sp = make_shared<int[]>(4);
+		auto sp2 = make_shared<int[4]>();
+		auto sp3 = make_shared<Base[4]>();
+		//compile error
+		//sp.operator->();
 	}
 	getchar();
 	_CrtDumpMemoryLeaks();
