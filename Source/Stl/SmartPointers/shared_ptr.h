@@ -247,7 +247,6 @@ namespace Yupei
 
 	private:
 		ObjectT* ptr_;
-		std::size_t size_;
 	};
 
 
