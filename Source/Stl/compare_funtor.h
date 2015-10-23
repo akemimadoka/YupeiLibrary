@@ -29,7 +29,7 @@ namespace Yupei
 		typedef int is_transparent;\
 	};
 
-	DEFINE_COMP(equal_to, == )
+		DEFINE_COMP(equal_to, == )
 		DEFINE_COMP(not_equal_to, != )
 		DEFINE_COMP(greater, >)
 		DEFINE_COMP(less, <)

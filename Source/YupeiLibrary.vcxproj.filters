@@ -42,9 +42,6 @@
     <ClInclude Include="Stl\basic.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Stl\binary_search_tree.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Stl\container_traits.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
@@ -135,12 +132,12 @@
     <ClInclude Include="Stl\MemoryInternal.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Stl\integral_sequence.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stl\memory_resource.cpp">
-      <Filter>Stl\Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Stl\shared_ptr.cpp">
       <Filter>Stl\Sources</Filter>
     </ClCompile>
   </ItemGroup>

@@ -77,12 +77,12 @@
     <ClInclude Include="Stl\atomic.h" />
     <ClInclude Include="Stl\Auto.h" />
     <ClInclude Include="Stl\basic.h" />
-    <ClInclude Include="Stl\binary_search_tree.h" />
     <ClInclude Include="Stl\compare_funtor.h" />
     <ClInclude Include="Stl\compress_pair.h" />
     <ClInclude Include="Stl\container_traits.h" />
     <ClInclude Include="Stl\contiguous_iterators.h" />
     <ClInclude Include="Stl\functional.h" />
+    <ClInclude Include="Stl\integral_sequence.h" />
     <ClInclude Include="Stl\iterator.h" />
     <ClInclude Include="Stl\math.h" />
     <ClInclude Include="Stl\memory.h" />
@@ -107,7 +107,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stl\memory_resource.cpp" />
-    <ClCompile Include="Stl\shared_ptr.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

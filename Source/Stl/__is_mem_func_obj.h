@@ -4,6 +4,8 @@
 
 namespace Yupei
 {
+
+
 	//Why ?
 #define ADD_CDECL(FUNC,CV_OPT,REF_OPT)\
 	FUNC(_cdecl,CV_OPT,REF_OPT)

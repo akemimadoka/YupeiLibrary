@@ -3,6 +3,7 @@
 #include "traits_internal.h"
 #include "utility_internal.h"
 #include "__is_mem_func_obj.h"
+#include <type_traits>
 
 namespace Yupei
 {
@@ -434,9 +435,9 @@ namespace Yupei
 		bool_constant<Type(0) < Type(-1) > ::value>;
 
 	template<typename Type, typename... Args>
-	using is_constructible = bool_constant<
+	struct is_constructible : bool_constant<
 		__is_constructible(Type, Args...)
-	>;
+	> {};
 
 	// is_-
 	// constructible<T>::value
@@ -574,8 +575,7 @@ namespace Yupei
 	//internal error....
 	template<typename Type, typename... Args>
 	using is_nothrow_constructible = std::is_nothrow_constructible<Type, Args...>;
-		/*integral_constant<
-		bool,
+		/*bool_constant<
 		__is_nothrow_constructible(Type, Args...)>;*/
 	
 

@@ -10,9 +10,9 @@ namespace Yupei
 	struct allocator_arg_t {};
 	constexpr allocator_arg_t allocator_arg{};
 
-//Remarks:
-//
-//	automatically detects whether T has a nested allocator_type that is convertible from Alloc.
+	//Remarks:
+	//
+	//automatically detects whether T has a nested allocator_type that is convertible from Alloc.
 	//Meets the BinaryTypeTrait requirements(C++14 ¡ì20.10.1).The implementation shall 
 	//provide a definition that is derived from true_type if a type 
 	//T::allocator_type exists and either is_convertible_v<Alloc, T::allocator_type> != false or 
@@ -21,8 +21,8 @@ namespace Yupei
 	//derive from true_type for a user - defined type T that does not have a nested allocator_type 
 	//but nonetheless can be constructed with an allocator where either :
 	//¡ªthe first argument of a constructor has type allocator_arg_t and the second_obj argument has type Alloc or
-//		¡ªthe last argument of a constructor has type Alloc.
-//
+	//¡ªthe last argument of a constructor has type Alloc.
+	//
 
 
 	namespace Internal
