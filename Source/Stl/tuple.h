@@ -1,6 +1,5 @@
 #pragma once
 
-#include "__allocator.h"
 #include "type_traits.h"
 #include "utility.h"
 
@@ -22,6 +21,7 @@ namespace Yupei
 		struct StaticAnd<> : true_type
 		{
 		};	
+
 	}
 
 	struct tuple_alloc_t {};
@@ -40,13 +40,12 @@ namespace Yupei
 	class tuple_leaf;
 
 	template<std::size_t Index,
-		typename T,
-		bool B>
-	class tuple_leaf //cannot EBO
+		typename T>
+	class tuple_leaf<Index,T,false>//cannot EBO
 	{
 	public:
 
-		tuple_leaf() noexcept(
+		constexpr tuple_leaf() noexcept(
 			is_nothrow_default_constructible<T>::value)
 			:value_()
 		{
@@ -57,7 +56,7 @@ namespace Yupei
 		template<typename U,
 			typename = enable_if_t<!is_same<decay_t<U>,tuple_leaf>::value && 
 				is_constructible<T,U>::value>>
-			explicit tuple_leaf(U&& u) noexcept(
+		explicit constexpr tuple_leaf(U&& u) noexcept(
 				is_nothrow_constructible<T, U>::value)
 			:value_(Yupei::forward<U>(u))
 		{			
@@ -221,15 +220,15 @@ namespace Yupei
 
 	template<std::size_t Index,
 		typename... Args>
-		tuple_element_t<Index, tuple<Args...>>& get(tuple<Args...>&) noexcept;
+		constexpr tuple_element_t<Index, tuple<Args...>>& get(tuple<Args...>&) noexcept;
 
 	template<std::size_t Index,
 		typename... Args>
-		const tuple_element_t<Index, tuple<Args...>>& get(const tuple<Args...>&) noexcept;
+		constexpr const tuple_element_t<Index, tuple<Args...>>& get(const tuple<Args...>&) noexcept;
 
 	template<std::size_t Index,
 		typename... Args>
-		tuple_element_t<Index, tuple<Args...>>&& get(tuple<Args...>&&) noexcept;
+		constexpr tuple_element_t<Index, tuple<Args...>>&& get(tuple<Args...>&&) noexcept;
 
 	namespace Internal
 	{
@@ -318,7 +317,7 @@ namespace Yupei
 
 	template<std::size_t... Index,
 		typename... Args>
-	class tuple_impl<std::index_sequence<Index...>,Args...>
+	class tuple_impl<index_sequence<Index...>,Args...>
 		:public tuple_leaf<Index,Args>...
 	{
 	public:
@@ -329,9 +328,9 @@ namespace Yupei
 		template<
 			typename... ParamsT,
 			typename = enable_if_t<sizeof...(ParamsT) == sizeof...(Args)>>
-			tuple_impl(ParamsT&&... params) noexcept(
+		constexpr tuple_impl(ParamsT&&... params) noexcept(
 					Internal::StaticAnd<is_nothrow_constructible<Args, ParamsT>::value...>::value)
-			:tuple_impl(std::make_index_sequence<sizeof...(ParamsT)>(),tuple_types<ParamsT...>(),Yupei::forward<ParamsT>(params)...)
+			:tuple_impl(make_index_sequence<sizeof...(ParamsT)>(),tuple_types<ParamsT...>(),Yupei::forward<ParamsT>(params)...)
 			{
 				
 			}
@@ -339,16 +338,16 @@ namespace Yupei
 		template<std::size_t... Index1,typename... TArgs,
 				typename... ParamsT,
 					typename = enable_if_t<sizeof...(ParamsT) == sizeof...(Args)>>
-			tuple_impl(std::index_sequence<Index1...>, tuple_types<TArgs...>,
+			constexpr tuple_impl(index_sequence<Index1...>, tuple_types<TArgs...>,
 				ParamsT&&... params) noexcept(
 					Internal::StaticAnd<is_nothrow_constructible<TArgs, ParamsT>::value...>::value)
-			:tuple_leaf<Index1,TArgs>(Yupei::forward<TArgs>(params))...
+			:tuple_leaf<Index1,Args>(Yupei::forward<TArgs>(params))...
 		{
 		}
 
 		template<typename TupleT,
 			typename = enable_if_t<Internal::tuple_constructible<TupleT,tuple<Args...>>::value>>
-			tuple_impl(TupleT&& rhs) noexcept(Internal::StaticAnd<is_nothrow_constructible<Args,
+			constexpr tuple_impl(TupleT&& rhs) noexcept(Internal::StaticAnd<is_nothrow_constructible<Args,
 				tuple_element_t<Index,TupleT>>::value...>::value
 				)
 			:tuple_leaf<Index,Args>(Yupei::forward<tuple_element_t<Index,TupleT>>(get<Index>(rhs)))...
@@ -390,7 +389,7 @@ namespace Yupei
 	template<typename... Args>
 	class tuple
 	{
-		using BaseType = tuple_impl<std::make_index_sequence<sizeof...(Args)>, Args...>;
+		using BaseType = tuple_impl<make_index_sequence<sizeof...(Args)>, Args...>;
 		BaseType base_;
 	public:
 		static constexpr auto tuple_size = sizeof...(Args);
@@ -398,15 +397,15 @@ namespace Yupei
 	public:
 		template<std::size_t Index,
 			typename... UArgs>
-		friend tuple_element_t<Index, tuple<UArgs...>>& get(tuple<UArgs...>&) noexcept;
+		friend constexpr tuple_element_t<Index, tuple<UArgs...>>& get(tuple<UArgs...>&) noexcept;
 
 		template<std::size_t Index,
 			typename... UArgs>
-			friend const tuple_element_t<Index, tuple<UArgs...>>& get(const tuple<UArgs...>&) noexcept;
+			friend constexpr const tuple_element_t<Index, tuple<UArgs...>>& get(const tuple<UArgs...>&) noexcept;
 
 		template<std::size_t Index,
 			typename... UArgs>
-			friend tuple_element_t<Index, tuple<UArgs...>>&& get(tuple<UArgs...>&&) noexcept;
+			friend constexpr tuple_element_t<Index, tuple<UArgs...>>&& get(tuple<UArgs...>&&) noexcept;
 
 		template<typename = enable_if_t<Internal::StaticAnd<is_default_constructible<Args>::value...>::value>>
 		constexpr tuple() noexcept(
@@ -419,7 +418,7 @@ namespace Yupei
 			is_same<Dummy,void>::value
 			&& Internal::StaticAnd<is_copy_constructible<Args>::value...>::value &&
 			Internal::StaticAnd<is_convertible<const Args&,Args>::value...>::value,bool> = true>
-			tuple(const Args&... args) noexcept(
+		constexpr tuple(const Args&... args) noexcept(
 				is_nothrow_constructible<BaseType, const Args&...>::value)
 			:base_(args...)
 		{
@@ -431,7 +430,7 @@ namespace Yupei
 			is_same<Dummy, void>::value
 			&& Internal::StaticAnd<is_copy_constructible<Args>::value...>::value &&
 			!Internal::StaticAnd<is_convertible<const Args&, Args>::value...>::value,bool> = false>
-		explicit tuple(const Args&... args)
+		explicit constexpr tuple(const Args&... args)
 			noexcept(
 				is_nothrow_constructible<BaseType, const Args&...>::value)
 			:base_(args...)
@@ -439,20 +438,20 @@ namespace Yupei
 		}
 
 		template<typename... UArgs,
-			enable_if_t<sizeof...(Args) >= 1 && sizeof...(UArgs) == sizeof...(Args)
+			enable_if_t<sizeof...(Args) >= 1 && sizeof...(UArgs) == tuple_size
 				&& Internal::StaticAnd<is_constructible<Args,UArgs&&>::value...>::value 
 					&& Internal::StaticAnd<is_convertible<UArgs&&, Args>::value...>::value,bool> = false>
-			tuple(UArgs&&... args)noexcept(
+			constexpr tuple(UArgs&&... args)noexcept(
 				is_nothrow_constructible<BaseType, UArgs&&...>::value)
 			:base_(Yupei::forward<UArgs>(args)...)
 		{
 		}
 
 		template<typename... UArgs,
-			enable_if_t<tuple_size >= 1 && sizeof...(UArgs) == tuple_size
-			&& Internal::StaticAnd<is_constructible<Args, UArgs&&>::value...>::value &&
-			!Internal::StaticAnd<is_convertible<UArgs&&, Args>::value...>::value,bool> = true>
-		explicit tuple(UArgs&&... args)
+			enable_if_t<tuple_size >= 1 && sizeof...(UArgs) == tuple_size && 
+				Internal::StaticAnd<is_constructible<Args, UArgs&&>::value...>::value &&
+					!Internal::StaticAnd<is_convertible<UArgs&&, Args>::value...>::value,bool> = true>
+		explicit constexpr tuple(UArgs&&... args)
 			noexcept(
 				is_nothrow_constructible<BaseType,UArgs&&...>::value)
 			:base_(Yupei::forward<UArgs>(args)...)
@@ -463,10 +462,10 @@ namespace Yupei
 		tuple(tuple&&) = default;
 
 		template<typename... UArgs,
-		enable_if_t<Internal::StaticAnd<is_constructible<Args,const UArgs&>::value...>::value&&
-			 sizeof...(UArgs) == tuple_size &&
-			Internal::StaticAnd<is_convertible<const UArgs&,Args>::value...>::value,bool> = false>
-		constexpr tuple(const tuple<UArgs...>& rhs)
+			enable_if_t<sizeof...(UArgs) == tuple_size &&
+				Internal::StaticAnd<is_constructible<Args,const UArgs&>::value...>::value &&			 
+					Internal::StaticAnd<is_convertible<const UArgs&,Args>::value...>::value,bool> = false>
+			constexpr tuple(const tuple<UArgs...>& rhs)
 			noexcept(is_nothrow_constructible<BaseType,const tuple<UArgs...>&>::value)
 			:base_(rhs)
 		{
@@ -476,17 +475,17 @@ namespace Yupei
 			enable_if_t<Internal::StaticAnd<is_constructible<Args, const UArgs&>::value...>::value&&
 			sizeof...(UArgs) == tuple_size &&
 			!Internal::StaticAnd<is_convertible<const UArgs&, Args>::value...>::value,bool> = true>
-		constexpr explicit tuple(const tuple<UArgs...>& rhs)
+		explicit constexpr tuple(const tuple<UArgs...>& rhs)
 			noexcept(is_nothrow_constructible<BaseType, const tuple<UArgs...>&>::value)
 			:base_(rhs)
 		{
 		}
 
 		template<typename... UArgs,
-			enable_if_t<Internal::StaticAnd<is_constructible<Args, UArgs&&>::value...>::value&&
-			sizeof...(UArgs) == tuple_size &&
+			enable_if_t<sizeof...(UArgs) == tuple_size &&
+			Internal::StaticAnd<is_constructible<Args, UArgs&&>::value...>::value &&			
 			Internal::StaticAnd<is_convertible<UArgs&&, Args>::value...>::value,bool> = false>
-			constexpr tuple(tuple<UArgs...>&& rhs)
+		constexpr tuple(tuple<UArgs...>&& rhs)
 			noexcept(is_nothrow_constructible<BaseType, tuple<UArgs...>&&>::value)
 			:base_(Yupei::move(rhs))
 		{
@@ -496,7 +495,7 @@ namespace Yupei
 			enable_if_t<Internal::StaticAnd<is_constructible<Args, UArgs&&>::value...>::value&&
 			sizeof...(UArgs) == tuple_size &&
 			!Internal::StaticAnd<is_convertible<UArgs&&, Args>::value...>::value,bool> = false>
-			constexpr explicit tuple(tuple<UArgs...>&& rhs)
+		explicit constexpr tuple(tuple<UArgs...>&& rhs)
 			noexcept(is_nothrow_constructible<BaseType, tuple<UArgs...>&&>::value)
 			:base_(Yupei::move(rhs))
 		{
@@ -522,62 +521,132 @@ namespace Yupei
 		lhs.swap(rhs);
 	}
 
-	/*template<typename... Args,
-		typename... UArgs>
-	constexpr bool operator == (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
-	{
-		return lhs.Equal(rhs);
+	namespace Internal
+	{	
+		constexpr bool TupleAnd() noexcept
+		{
+			return true;
+		}
+
+		template<typename T = bool,typename... Args>
+		constexpr bool TupleAnd(T b, Args... args) noexcept
+		{
+			return b && TupleAnd(args...);
+		}
+
+		constexpr bool TupleCompare() noexcept
+		{
+			return false;
+		}
+
+		template<typename T = bool, typename... Args>
+		constexpr bool TupleCompare(T b, Args... args) noexcept
+		{
+			return b || TupleCompare(args...);
+		}
+
+		template<typename Index1T,
+			typename Tuple1T,
+			typename Index2T,
+			typename Tuple2T>
+		struct TupleIsEqualImp;
+
+		template<std::size_t... Index1,
+			typename... TArgs,
+			std::size_t... Index2,
+			typename... UArgs>
+		struct TupleIsEqualImp<index_sequence<Index1...>, tuple<TArgs...>, index_sequence<Index2...>, tuple<UArgs...>>
+		{
+			static constexpr bool IsEqual(const tuple<TArgs...>& t1, const tuple<UArgs...>& t2) noexcept
+			{
+				return TupleAnd((get<Index1>(t1) == get<Index2>(t2))...);
+			}
+		};
+
+		template<typename Tuple1T,typename Tuple2T>
+		struct TupleIsEqual : TupleIsEqualImp<make_index_sequence<tuple_size<Tuple1T>::value>, Tuple1T,
+			make_index_sequence<tuple_size<Tuple2T>::value>, Tuple2T> {};
+
+
+		template<typename Index1T,
+			typename Tuple1T,
+			typename Index2T,
+			typename Tuple2T>
+		struct TupleIsLessImp;
+
+		template<std::size_t... Index1,
+			typename... TArgs,
+			std::size_t... Index2,
+			typename... UArgs>
+		struct TupleIsLessImp<index_sequence<Index1...>, tuple<TArgs...>, index_sequence<Index2...>, tuple<UArgs...>>
+		{
+			static constexpr bool IsLess(const tuple<TArgs...>& t1, const tuple<UArgs...>& t2) noexcept
+			{
+				return TupleCompare((get<Index1>(t1) < get<Index2>(t2))...);
+			}
+		};
+
+		template<typename Tuple1T, typename Tuple2T>
+		struct TupleIsLess : TupleIsLessImp<make_index_sequence<tuple_size<Tuple1T>::value>, Tuple1T,
+			make_index_sequence<tuple_size<Tuple2T>::value>, Tuple2T> {};
 	}
 
 	template<typename... Args,
 		typename... UArgs>
-		constexpr bool operator < (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
+	constexpr bool operator == (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
 	{
-		return lhs.Less(rhs);
+		return Internal::TupleIsEqual<tuple<Args...>, tuple<UArgs...>>::IsEqual(lhs, rhs);
 	}
 
 	template<typename... Args,
 		typename... UArgs>
-		constexpr bool operator != (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
+		constexpr bool operator < (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
 	{
-		return !lhs.Equal(rhs);
+		return Internal::TupleIsLess<tuple<Args...>, tuple<UArgs...>>::IsLess(lhs, rhs);
+	}
+	
+	template<typename... Args,
+		typename... UArgs>
+		constexpr bool operator != (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
+	{
+		return !(lhs == rhs);
 	}
 
 	template<typename... Args,
 		typename... UArgs>
-		constexpr bool operator > (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
+		constexpr bool operator > (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
 	{
-		return rhs.Less(lhs);
+		return rhs < lhs;
 	}
 
 	template<typename... Args,
 		typename... UArgs>
-		constexpr bool operator <= (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
+		constexpr bool operator >= (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
 	{
-		return !rhs.Less(lhs);
+		return !(lhs < rhs);
 	}
 
 	template<typename... Args,
 		typename... UArgs>
-		constexpr bool operator >= (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs)
+		constexpr bool operator <= (const tuple<Args...>& lhs, const tuple<UArgs...>& rhs) noexcept
 	{
-		return !lhs.Less(rhs);
-	}*/
+		return !(rhs < lhs);
+	}
 
-	template< std::size_t I, typename... Args,typename = enable_if_t< (I < sizeof...(Args)) > >
-	inline constexpr tuple_element_t<I, tuple<Args...> >& get(tuple<Args...>&t)
+	template< std::size_t I, typename... Args>
+	constexpr tuple_element_t<I, tuple<Args...> >& get(tuple<Args...>&t) noexcept
 	{
 		return static_cast<tuple_leaf<I, tuple_element_t<I, tuple<Args...>>>&>(t.base_).get();
 	}
 
-	template< std::size_t I, typename... Args, typename = enable_if_t<( I < sizeof...(Args))>  >
-	inline constexpr const tuple_element_t<I, tuple<Args...> >& get(const tuple<Args...>& t)
+	template< std::size_t I, typename... Args>
+	constexpr const tuple_element_t<I, tuple<Args...> >& get(const tuple<Args...>& t) noexcept
 	{
 		return static_cast<const tuple_leaf<I, tuple_element_t<I, tuple<Args...>>>&>(t.base_).get();
 	}
 
-	template< std::size_t I, typename... Args, typename = enable_if_t< (I < sizeof...(Args)) >  >
-	inline constexpr tuple_element_t<I, tuple<Args...> >&& get(tuple<Args...>&& t)
+	template< std::size_t I, typename... Args>
+	constexpr tuple_element_t<I, tuple<Args...> >&& get(tuple<Args...>&& t) noexcept
 	{
 		return static_cast<tuple_leaf<I, tuple_element_t<I, tuple<Args...>>>&&>(t.base_).get();
 	}
@@ -647,6 +716,7 @@ namespace Yupei
 			static_assert(value != -1, "type not found.");
 		};
 	}
+
 	template< typename Type, typename... Args>
 	inline constexpr decltype(auto) get(tuple<Args...>&& t) noexcept
 	{
@@ -665,16 +735,17 @@ namespace Yupei
 		return  Yupei::get<Internal::get_tuple_by_type<Type, tuple<Args...>>::value >(t);
 	}
 
-	template<typename... Args>
-	inline constexpr decltype(auto) make_tuple(Args&&... t)
+	template<typename... Types>
+	inline constexpr decltype(auto) make_tuple(Types&&... t)
 	{
-		return tuple<Internal::tuple_ret_type<Args>...>(Yupei::forward<Args>(t)...);
+		return tuple<Internal::tuple_ret_type<Types>...>(Yupei::forward<Types>(t)...);
 	}
+
 
 	template<class... Args>
 	inline constexpr tuple<Args&&...> forward_as_tuple(Args&&... t) noexcept
 	{
-		return tuple<Args&&...>(Yupei::forward<Args>(t)...)
+		return tuple<Args&&...>(Yupei::forward<Args>(t)...);
 	}
 
 	template<typename T1,typename T2>
@@ -686,7 +757,7 @@ namespace Yupei
 			index_sequence<Indexes1...>,
 			index_sequence<Indexes2...>)
 		:first(Yupei::get<Indexes1>(t1)...),
-		second_obj(Yupei::get<Indexes2>(t2)...)
+		second(Yupei::get<Indexes2>(t2)...)
 	{
 
 	}

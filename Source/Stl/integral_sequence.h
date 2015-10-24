@@ -28,9 +28,7 @@ namespace Yupei
 
 	namespace Internal
 	{
-		template<std::size_t NowCount,
-			std::size_t Final,
-			typename NowType>
+		template<std::size_t NowCount,std::size_t Final,typename NowType>
 		struct integer_seq_impl;
 
 		template<std::size_t Final, typename T, T... I>
@@ -44,7 +42,6 @@ namespace Yupei
 		{
 			using type = typename integer_seq_impl<Now + 1, Final, integer_sequence<T, I..., Now>>::type;
 		};
-
 	}
 
 	template<size_t... I>

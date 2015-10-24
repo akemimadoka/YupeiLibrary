@@ -2,7 +2,6 @@
 
 #include "utility_internal.h"
 #include "__swap.h"
-#include "__allocator.h"
 #include "compress_pair.h"
 #include "compare_funtor.h"
 #include "iterator.h"

@@ -347,27 +347,6 @@ const T&, T&&> move_if_noexcept(T& x) noexcept;*/
 		return Internal::get_by_index_impl<I>::GetValue(Yupei::forward<pair<T1, T2>>(p));
 	}
 
-	template <class T>
-	constexpr T& get(pair<T, T>& p) noexcept
-	{
-		static_assert(false, "can't have the same type");
-		return p.first;
-	}
-
-	template <class T>
-	constexpr const T& get(const pair<T, T>& p) noexcept
-	{
-		static_assert(false, "can't have the same type");
-		return p.first;
-	}
-
-	template <class T>
-	constexpr T&& get(pair<T, T>&& p) noexcept
-	{
-		static_assert(false, "can't have the same type");
-		return p.first;
-	}
-
 	template <class T, class U>
 	constexpr T& get(pair<T, U>& p) noexcept
 	{

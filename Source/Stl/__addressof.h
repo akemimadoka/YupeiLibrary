@@ -18,7 +18,6 @@ namespace Yupei
 			return reinterpret_cast<T*>(
 				&const_cast<char&>(
 					reinterpret_cast<const volatile char&>(arg)));
-
 		}
 	}
 

@@ -7,9 +7,7 @@
 namespace Yupei
 {
 	template<typename ObjectT>
-	void swap(
-		ObjectT& lhs, 
-		ObjectT& rhs) noexcept(
+	void swap(ObjectT& lhs, ObjectT& rhs) noexcept(
 		is_nothrow_move_constructible<ObjectT>::value&&
 		is_nothrow_move_assignable<ObjectT>::value)
 	{
@@ -29,11 +27,8 @@ namespace Yupei
 	}
 
 	template<class ForwardIt1T, class ForwardIt2T>
-	ForwardIt2T
-		swap_ranges(
-			ForwardIt1T first1, 
-			ForwardIt1T last1,
-			ForwardIt2T first2) noexcept(noexcept(Yupei::iter_swap(
+	ForwardIt2T swap_ranges(ForwardIt1T first1, ForwardIt1T last1,ForwardIt2T first2) 
+		noexcept(noexcept(Yupei::iter_swap(
 				Yupei::declval<ForwardIt1T>(),
 				Yupei::declval<ForwardIt2T>())))
 	{
@@ -51,8 +46,8 @@ namespace Yupei
 		Yupei::swap_ranges(lhs, lhs + N, rhs);
 	}
 
-	/*template<typename Type>
+	template<typename Type>
 		using is_nothrow_swappable = bool_constant <
-		noexcept(swap(declval<Type&>(), declval<Type&>()))>;*/
+		noexcept(swap(declval<Type&>(), declval<Type&>()))>;
 
 }

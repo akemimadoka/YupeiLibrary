@@ -79,79 +79,39 @@ namespace Yupei
 	using is_null_pointer = is_same<remove_cv_t<Type>, std::nullptr_t>;
 
 	template<typename Type>
-	struct is_array : false_type
-	{
-
-	};
+	struct is_array : false_type {};
 
 	template<typename Type>
-	struct is_array<Type[]> : true_type
-	{
-
-	};
+	struct is_array<Type[]> : true_type {};
 
 	template<typename Type, std::size_t N>
-	struct is_array<Type[N]> : true_type
-	{
-
-	};
+	struct is_array<Type[N]> : true_type {};
 
 
 	template<typename Type>
-	struct is_lvalue_reference : false_type
-	{
-
-	};
+	struct is_lvalue_reference : false_type {};
 
 	template<typename Type>
-	struct is_lvalue_reference<Type&> : true_type
-	{
-
-	};
+	struct is_lvalue_reference<Type&> : true_type {};
 
 	template<typename Type>
-	struct is_rvalue_reference : false_type
-	{
-
-	};
+	struct is_rvalue_reference : false_type {};
 
 	template<typename Type>
-	struct is_rvalue_reference<Type&&> : true_type
-	{
+	struct is_rvalue_reference<Type&&> : true_type {};
 
-	};
-
-
-
-	/*Includes pointers to
-	functions but not pointers
-	to non-static members.*/
+	/*Includes pointers to functions but not pointers to non-static members.*/
 	template<typename Type>
-	struct is_pointer : false_type
-	{
-
-	};
+	struct is_pointer : false_type {};
 
 	template<typename Type>
-	struct is_pointer<Type*> : bool_constant<
-		!is_member_function_pointer<Type*>::value&&
-		!is_member_object_pointer<Type*>::value
-	>
-	{
+	struct is_pointer<Type*> : bool_constant<!is_member_object_pointer<Type*>::value> {};
 
-	};
+	using std::is_enum;
 
-	template<typename Type>
-	using is_enum = bool_constant< __is_enum(Type)>;
+	using std::is_union;
 
-	template<typename Type>
-	using is_union = bool_constant< __is_union(Type)>;
-
-	template<typename Type>
-	using is_class = bool_constant< __is_class(Type)>;
-
-	template<typename Type>
-	using is_function = typename Internal::IsFunctionHelper<Type>::BoolType;
+	using std::is_class;
 
 	// 20.10.4.2, composite type categories:
 	// template <class T> struct is_reference;
@@ -163,11 +123,7 @@ namespace Yupei
 	// template <class T> struct is_member_pointer;
 
 	template<typename Type>
-	using is_reference = integral_constant<
-		bool,
-		is_lvalue_reference<Type>::value ||
-		is_rvalue_reference<Type>::value
-	>;
+	using is_reference = bool_constant<is_lvalue_reference<Type>::value || is_rvalue_reference<Type>::value>;
 
 	//N3797 3.9.1 Fundamental types
 	template<typename Type>
@@ -254,29 +210,16 @@ namespace Yupei
 	// template <class T> struct has_virtual_destructor;
 
 	template<typename Type>
-	struct is_const : false_type
-	{
-
-	};
+	struct is_const : false_type {};
 
 	template<typename Type>
-	struct is_const<const Type> : true_type
-	{
-
-	};
+	struct is_const<const Type> : true_type {};
 
 	template<typename Type>
-	struct is_volatile : false_type
-	{
-
-	};
+	struct is_volatile : false_type {};
 
 	template<typename Type>
-	struct is_volatile<volatile Type> : true_type
-	{
-
-	};
-
+	struct is_volatile<volatile Type> : true_type {};
 
 	// A trivially copyable class is a class that:
 	// — has no non-trivial copy constructors (12.8),
@@ -286,19 +229,14 @@ namespace Yupei
 	// — has a trivial destructor (12.4).
 	//Scalar types, trivially copyable class types(Clause 9), arrays of such types, and non - volatile constqualified
 	// versions of these types (3.9.3) are collectively called trivially copyable types.
-	template<typename Type>
-	using is_trivially_copyable = bool_constant<
-		__is_trivially_copyable(Type)
-	>;
+
+	using std::is_trivially_copyable;
 
 
-	// A trivial class is a class that has a default constructor (12.1), has no non-trivial default constructors,
-	// and is trivially copyable.
-	// [ Note: In particular, a trivially copyable or trivial class does not have virtual functions or virtual base
-	// classes.—end note ]
+	// A trivial class is a class that has a default constructor (12.1), has no non-trivial default constructors, and is trivially copyable.
+	// [ Note: In particular, a trivially copyable or trivial class does not have virtual functions or virtual base classes.—end note ]
 
-	template<typename Type>
-	using is_trivial = bool_constant<__is_trivial(Type)>;
+	using std::is_trivial;
 
 	// 7 A standard-layout class is a class that:
 	// — has no non-static data members of type non-standard-layout class (or array of such types) or reference,
@@ -315,10 +253,7 @@ namespace Yupei
 	//Scalar types, standard-layout class types (Clause 9), arrays of such types and cv-qualified
 	// versions of these types (3.9.3) are collectively called standard-layout types.
 
-	template<typename Type>
-	using is_standard_layout = bool_constant<
-		__is_standard_layout(Type)
-	>;
+	using std::is_standard_layout;
 
 	// 10 A POD struct111 is a non-union class that is both a trivial class and a standard-layout class, and has no
 	// non-static data members of type non-POD struct, non-POD union (or array of such types). Similarly, a
@@ -347,10 +282,7 @@ namespace Yupei
 	// };
 	// —end example ]
 
-	template<typename Type>
-	using is_pod = bool_constant<
-		__is_pod(Type)
-	>;
+	using std::is_pod;
 
 	// An aggregate is an array or a class (Clause 9) with no user-provided constructors (12.1), no private or
 	// protected non-static data members (Clause 11), no base classes (Clause 10), and no virtual functions (10.3)
@@ -365,10 +297,7 @@ namespace Yupei
 	// that is not a copy or move constructor, and
 	// — all of its non-static data members and base classes are of non-volatile literal types.
 
-	template<typename Type>
-	using is_literal_type = bool_constant<
-		__is_literal_type(Type)
-	>;
+	using std::is_literal_type;
 
 	// T is a class type, but not a
 	// union type, with no
@@ -382,75 +311,43 @@ namespace Yupei
 	// false.
 
 	template<typename Type>
-	using is_empty = bool_constant<
-		__is_empty(Type)
-	>;
+	using is_empty = std::is_empty<Type>;
 
 	// Virtual functions support dynamic binding and object-oriented programming. A class that declares or
 	// inherits a virtual function is called a polymorphic class.
 
-	template<typename Type>
-	using is_polymorphic = bool_constant<
-		__is_polymorphic(Type)
-	>;
+	using std::is_polymorphic;
 
 	// An abstract class is a class that can be used only as a base class of some other class; no objects of an abstract
 	// class can be created except as subobjects of a class derived from it. A class is abstract if it has at least
 	// one pure virtual function.
 
-	template<typename Type>
-	using is_abstract = bool_constant<
-		__is_abstract(Type)
-	>;
+	using std::is_abstract;
 
-	template<typename Type>
-	using is_final = bool_constant<
-		__is_final(Type)
-	>;
 
-	// If is_-
-	// arithmetic<T>::value is
-	// true, the same result as
-	// integral_-
-	// constant<bool, T(-1) <
-	// T(0)>::value; otherwise,
-	// false
+	using std::is_final;
+
+
+	// If is_arithmetic<T>::value is true, the same result as integral_ constant<bool, T(-1) <T(0)>::value; otherwise,false
 
 	template<typename Type>
 	using is_signed = bool_constant <
 		is_arithmetic<Type>::value &&
 		bool_constant<Type(-1) < Type(0) > ::value>;
 
-	// If is_-
-	// arithmetic<T>::value is
-	// true, the same result as
-	// integral_-
-	// constant<bool, T(0) <
-	// T(-1)>::value;
-	// otherwise, false
+	// If is_arithmetic<T>::value is true, the same result as integral_constant<bool, T(0) <T(-1)>::value; otherwise, false
 
 	template<typename Type>
 	using is_unsigned = bool_constant <
 		is_arithmetic<Type>::value &&
 		bool_constant<Type(0) < Type(-1) > ::value>;
 
-	template<typename Type, typename... Args>
-	struct is_constructible : bool_constant<
-		__is_constructible(Type, Args...)
-	> {};
-
-	// is_-
-	// constructible<T>::value
-	// is true.
+	using std::is_constructible;
 
 	template<typename Type>
 	using is_default_constructible = is_constructible<Type>;
 
-	// For a referenceable type T,
-	// the same result as
-	// is_constructible<T,
-	// const T&>::value,
-	// otherwise false.
+	// For a referenceable type T, the same result asis_constructible<T,const T&>::value, otherwise false.
 
 	template<typename Type>
 	using is_copy_constructible = is_constructible<
@@ -478,150 +375,68 @@ namespace Yupei
 
 	namespace Internal
 	{
-		/*template<typename T, typename U, typename = void>
-		struct IsAssignableHelper : false_type
-		{
-
-		};
+		template<typename T, typename U, typename = void>
+		struct IsAssignableHelper : false_type {};
 
 		template<typename T, typename U>
-		struct IsAssignableHelper<T, U, void_t<
-			decltype(Yupei::declval<T>() = Yupei::declval<U>())>> : true_type
-		{
-
-		};*/
-
-		template<typename T,typename U>
-		struct IsAssignableHelper
-		{
-			template<typename T1,typename U1>
-			static false_type _Foo(WrapInt);
-			template<typename T1, typename U1>
-			static auto _Foo(int)->
-				decltype(
-					(void)(Yupei::declval<T1>() = Yupei::declval<U1>()), true_type{});
-			using type = decltype(_Foo<T,U>(0));
-		};
+		struct IsAssignableHelper<T,U,void_t<decltype(Yupei::declval<T>() = Yupei::declval<U>())>> : true_type{};
 	}
 
 	template<typename T, typename U>
-	struct is_assignable : Internal::IsAssignableHelper<T, U>::type
-	{
-
-	};
-
+	struct is_assignable : Internal::IsAssignableHelper<T, U>::type {};
 
 	template<typename Type>
-	using is_copy_assignable = is_assignable<
-		Type&,
-		const Type&
-	>;
+	using is_copy_assignable = is_assignable<Type&, const Type&>;
 
 	template<typename Type>
-	using is_move_assignable = is_assignable<
-		Type&,
-		Type&&
-	>;
+	using is_move_assignable = is_assignable<Type&, Type&&>;
+
+	using std::is_destructible;
+
+	using std::is_trivially_constructible;
 
 	template<typename Type>
-	using is_destructible = bool_constant<
-		__is_destructible(Type)
-	>;
-
-	template<typename Type, typename... Args>
-	using is_trivially_constructible = bool_constant<
-		__is_trivially_constructible(Type, Args...)
-	>;
+	using is_trivially_default_constructible = is_trivially_constructible<Type>;
 
 	template<typename Type>
-	using is_trivially_default_constructible = is_trivially_constructible<
-		Type
-	>;
+	using is_trivially_copy_constructible = is_trivially_constructible<Type, const Type&>;
 
 	template<typename Type>
-	using is_trivially_copy_constructible = is_trivially_constructible<
-		Type,
-		const Type&
-	>;
+	using is_trivially_move_constructible = is_trivially_constructible<Type, Type&&>;
+
+	using std::is_trivially_assignable;
 
 	template<typename Type>
-	using is_trivially_move_constructible = is_trivially_constructible<
-		Type,
-		Type&&
-	>;
-
-	template<typename T, typename U>
-	using is_trivially_assignable = bool_constant<
-		__is_trivially_assignable(T, U)
-	>;
+	using is_trivially_copy_assignable = is_trivially_assignable<Type&, const Type&>;
 
 	template<typename Type>
-	using is_trivially_copy_assignable = is_trivially_assignable<
-		Type&,
-		const Type&
-	>;
+	using is_trivially_move_assignable = is_trivially_assignable<Type&, Type&&>;
+
+	using std::is_trivially_destructible;
+
+	using std::is_nothrow_constructible;
 
 	template<typename Type>
-	using is_trivially_move_assignable = is_trivially_assignable<
-		Type&,
-		Type&&
-	>;
+	using is_nothrow_default_constructible = is_nothrow_constructible<Type>;
 
 	template<typename Type>
-	using is_trivially_destructible = bool_constant<
-		__has_trivial_destructor(Type)
-	>;
-
-	//internal error....
-	template<typename Type, typename... Args>
-	using is_nothrow_constructible = std::is_nothrow_constructible<Type, Args...>;
-		/*bool_constant<
-		__is_nothrow_constructible(Type, Args...)>;*/
-	
+	using is_nothrow_copy_constructible = is_nothrow_constructible<Type, const Type&>;
 
 	template<typename Type>
-	using is_nothrow_default_constructible = is_nothrow_constructible<
-		Type
-	>;
+	using is_nothrow_move_constructible = is_nothrow_constructible<Type, Type&&>;
+
+	template<typename T,typename U>
+	struct is_nothrow_assignable : bool_constant<is_assignable<T, U>::value && noexcept(declval<T>() = declval<U>())> {};
 
 	template<typename Type>
-	using is_nothrow_copy_constructible = is_nothrow_constructible<
-		Type,
-		const Type&
-	>;
+	using is_nothrow_copy_assignable = is_nothrow_assignable<Type&, const Type&>;
 
 	template<typename Type>
-	using is_nothrow_move_constructible = is_nothrow_constructible<
-		Type,
-		Type&&
-	>;
+	using is_nothrow_move_assignable = is_nothrow_assignable<Type&, Type&&>;
 
-	template<typename T, typename U>
-	using is_nothrow_assignable = bool_constant<
-		__is_nothrow_assignable(T, U)
-	>;
+	using std::is_nothrow_destructible;
 
-	template<typename Type>
-	using is_nothrow_copy_assignable = is_nothrow_assignable<
-		Type&,
-		const Type&
-	>;
-
-	template<typename Type>
-	using is_nothrow_move_assignable = is_nothrow_assignable<
-		Type&,
-		Type&&
-	>;
-
-	template<typename Type>
-	using is_nothrow_destructible = bool_constant<
-		__is_nothrow_destructible(Type)
-	>;
-
-	template<typename Type>
-	using has_virtual_destructor = bool_constant<
-		__has_virtual_destructor(Type)
-	>;
+	using std::has_virtual_destructor;
 
 	// 20.10.5, type property queries:
 	//template <class T> struct alignment_of;
@@ -629,104 +444,37 @@ namespace Yupei
 	//template <class T, unsigned I = 0> struct extent;
 
 	template<typename Type>
-	using alignment_of = integral_constant<
-		std::size_t,
-		alignof(Type)
-	>;
+	using alignment_of = integral_constant<std::size_t, alignof(Type)>;
 
 	template<typename Type>
-	struct rank : integral_constant<
-		std::size_t,
-		0
-	>
-	{
-
-	};
+	struct rank : integral_constant<std::size_t, 0> {};
 
 	template<typename Type, size_t N>
-	struct rank<Type[N]> : integral_constant<
-		std::size_t,
-		rank<Type>::value + 1
-	>
-	{
-
-	};
+	struct rank<Type[N]> : integral_constant<std::size_t, rank<Type>::value + 1> {};
 
 	template<typename Type>
-	struct rank<Type[]> : integral_constant<
-		std::size_t,
-		rank<Type>::value + 1
-	>
-	{
-
-	};
+	struct rank<Type[]> : integral_constant<std::size_t, rank<Type>::value + 1> {};
 
 	namespace Internal
 	{
-		template<typename Type,
-			unsigned I,
-			unsigned Now>
-		struct ExtentHelper : integral_constant<
-			std::size_t,
-			0
-		>
-		{
+		template<typename Type,unsigned I,unsigned Now>
+		struct ExtentHelper : integral_constant<std::size_t, 0> {};
 
-		};
+		template<typename Type,unsigned I,unsigned Now>
+		struct ExtentHelper<Type[], I, Now> :ExtentHelper<Type, I, Now + 1> {};
 
-		template<typename Type,
-			unsigned I,
-			unsigned Now>
-		struct ExtentHelper<Type[], I, Now> :
-			ExtentHelper<
-			Type,
-			I,
-			Now + 1>
-		{
+		template<typename Type, unsigned I>
+		struct ExtentHelper<Type[], I, I> :integral_constant<std::size_t, 0> {};
 
-		};
+		template<typename Type, unsigned I, unsigned Now, std::size_t N>
+		struct ExtentHelper<Type[N], I, Now> :ExtentHelper<Type, I, Now + 1> {};
 
-		template<typename Type,
-			unsigned I
-		>
-		struct ExtentHelper<Type[], I, I>
-			:integral_constant<
-			std::size_t,
-			0
-			>
-		{
-
-		};
-
-		template<typename Type,
-			unsigned I,
-			unsigned Now,
-			std::size_t N>
-		struct ExtentHelper<Type[N], I, Now>
-			:ExtentHelper<Type, I, Now + 1>
-		{
-
-		};
-
-		template<typename Type,
-			unsigned I,
-			std::size_t N>
-		struct ExtentHelper<Type[N], I, I>
-			:integral_constant<
-			std::size_t,
-			N
-			>
-		{
-
-		};
+		template<typename Type,unsigned I,std::size_t N>
+		struct ExtentHelper<Type[N], I, I>:integral_constant<std::size_t,N>{};
 	}
 
-	template<typename Type,
-		unsigned I = 0>
-	struct extent : Internal::ExtentHelper<Type, I, 0>
-	{
-
-	};
+	template<typename Type,unsigned I = 0>
+	struct extent : Internal::ExtentHelper<Type, I, 0>{};
 
 	// 20.10.6, type relations:
 	//template <class T, class U> struct is_same;
@@ -735,11 +483,9 @@ namespace Yupei
 
 	//is_same is in traits_internal.h
 
-	
-	template<typename From, typename To>
-	struct is_convertible : bool_constant<
-		__is_convertible_to(From, To)
-	> {};
+
+	template <typename F, typename T>
+	using is_convertible = std::is_convertible<F, T>;
 
 	// 20.10.7.1, const-volatile modifications:
 	/*template <class T> struct remove_const;
@@ -849,7 +595,7 @@ namespace Yupei
 			using type = Type;
 		};
 	}
-    
+
 	template<typename Type>
 	using remove_pointer = Internal::RemovePointerHelper<remove_cv_t<Type>>;
 
@@ -898,37 +644,32 @@ namespace Yupei
 	// using void_t = void;
 
 
-	template <std::size_t Len,
-		std::size_t Align = alignment_of<max_align_t>::value> 
+	template <std::size_t Len,std::size_t Align = alignment_of<max_align_t>::value>
 	struct aligned_storage
 	{
-		struct type 
-		{ 
+		struct type
+		{
 			alignas(Align) unsigned char data[Len];
 		};
 	};
 
-	template<std::size_t Len,
-		std::size_t Align = alignment_of<std::max_align_t>::value>
-		using aligned_storage_t = typename aligned_storage<Len, Align>::type;
+	template<std::size_t Len,std::size_t Align = alignment_of<std::max_align_t>::value>
+	using aligned_storage_t = typename aligned_storage<Len, Align>::type;
+
 	template<typename Type>
 	struct decay
 	{
 		using temp_type = remove_reference_t<Type>;
-		using type = conditional_t <
-			is_array<temp_type>::value,
+		using type = conditional_t <is_array<temp_type>::value,
 			remove_extent_t<temp_type>,
-			conditional_t <
-			is_function<temp_type>::value,
-			add_pointer_t<temp_type>,
-			remove_cv_t<temp_type>
+			conditional_t <is_function<temp_type>::value,
+				add_pointer_t<temp_type>,
+				remove_cv_t<temp_type>
 			>> ;
 	};
 
 	template<typename Type>
 	using decay_t = typename decay<Type>::type;
-
-
 
 	template <typename... Args>
 	struct common_type;
@@ -956,18 +697,15 @@ namespace Yupei
 		Type2,
 		Args...>
 	{
-		using type =
-			typename common_type<typename common_type<Type1, Type2>::type,
-			Args...>::type;
+		using type =typename common_type<typename common_type<Type1, Type2>::type,Args...>::type;
 	};
 
 	template<typename... Type>
 	using common_type_t = typename common_type<Type...>::type;
 
-	//no extended constexpr support
-	//static_max: fuck Visual C++ 2015 RC !
+
 	template<typename Type>
-	inline constexpr Type static_max(Type t)
+	inline constexpr Type static_max(Type t) noexcept
 	{
 		return t;
 	}
@@ -975,14 +713,12 @@ namespace Yupei
 	template<typename Type1,
 		typename Type2,
 		typename... Args>
-	inline constexpr Yupei::common_type_t<Type1,Type2,Args...> 
-		static_max(Type1 t1, Type2 t2, Args... args)
+		inline constexpr Yupei::common_type_t<Type1, Type2, Args...>
+		static_max(Type1 t1, Type2 t2, Args... args) noexcept
 	{
-		return static_max((t1 > t2 ?
-			t1
-			:t2), 
-			static_max(args)...);
+		return static_max((t1 > t2 ?t1: t2),static_max(args)...);
 	}
+
 	//Provides the member typedef type, which is a POD type of a size and 
 	//alignment suitable for use as uninitialized storage for an object of any 
 	//of the types listed in Types. The size of the storage is at least Len. 
@@ -991,40 +727,32 @@ namespace Yupei
 	//
 	//满足Types...中最严格的对齐要求，大小至少为Len。
 	//http://en.cppreference.com/w/cpp/types/aligned_union
+
 	template <std::size_t Len, typename... Types>
 	struct aligned_union
 	{
-		static constexpr std::size_t alignment_value = Yupei::static_max( alignof(Types)... );
+		static constexpr std::size_t alignment_value = Yupei::static_max(alignof(Types)...);
 
 		struct type
 		{
-			alignas(alignment_value) char _s[Yupei::static_max( Len, alignment_value )];
+			alignas(alignment_value) char _s[Yupei::static_max(Len, alignment_value)];
 		};
 	};
 
 	template <std::size_t Len, typename... Types>
 	using aligned_union_t = typename aligned_union<Len, Types...>::type;
 
-	template<typename Type>
-	struct underlying_type
-	{
-		typedef __underlying_type(Type) type;
-	};
+	using std::underlying_type;
 
 	template<typename Type>
 	using underlying_type_t = typename underlying_type<Type>::type;
 
 	namespace Internal
 	{
-
 		struct InvokeMemberFunc
 		{
-			template<typename F,
-				typename T1,
-				typename... Args
-			>
-				static decltype(auto) _Call
-				(F f, T1&& t1, Args&&... args)
+			template<typename F,typename T1,typename... Args>
+			static decltype(auto) _Call(F f, T1&& t1, Args&&... args)
 				//->decltype((Yupei::forward<T1>(t1).*f)(Yupei::forward<Args>(args)...))
 			{
 				return (Yupei::forward<T1>(t1).*f)(Yupei::forward<Args>(args)...);
@@ -1033,12 +761,8 @@ namespace Yupei
 
 		struct InvokeMemberFunc2
 		{
-			template<typename F,
-				typename T1,
-				typename... Args
-			>
-				static decltype(auto) _Call
-				(F f, T1&& t1, Args&&... args)
+			template<typename F,typename T1,typename... Args>
+			static decltype(auto) _Call(F f, T1&& t1, Args&&... args)
 				//->decltype(((*Yupei::forward<T1>(t1)).*f)(Yupei::forward<Args>(args)...))
 			{
 				return ((*Yupei::forward<T1>(t1)).*f)(Yupei::forward<Args>(args)...);
@@ -1047,11 +771,8 @@ namespace Yupei
 
 		struct GetMember
 		{
-			template<typename F,
-				typename T1
-			>
-				static decltype(auto) _Call
-				(F f, T1&& t1)
+			template<typename F,typename T1>
+			static decltype(auto) _Call(F f, T1&& t1)
 				//->decltype((Yupei::forward<T1>(t1)).*f)
 			{
 				return (Yupei::forward<T1>(t1)).*f;
@@ -1060,11 +781,8 @@ namespace Yupei
 
 		struct GetMember2
 		{
-			template<typename F,
-				typename T1
-			>
-				static decltype(auto) _Call
-				(F f, T1&& t1)
+			template<typename F,typename T1>
+			static decltype(auto) _Call(F f, T1&& t1)
 				//->decltype((*Yupei::forward<T1>(t1)).*f)
 			{
 				return (*Yupei::forward<T1>(t1)).*f;
@@ -1073,83 +791,62 @@ namespace Yupei
 
 		struct NormalCall
 		{
-			template<typename F,
-				typename... Args
-			>
-				static decltype(auto) _Call(F f, Args&&... args)
+			template<typename F,typename... Args>
+			static decltype(auto) _Call(F f, Args&&... args)
 				//->decltype(Yupei::forward<F>(f)(Yupei::forward<Args>(args)...))
 			{
 				return f(Yupei::forward<Args>(args)...);
 			}
 		};
 
-		template<typename DecayType,
-			typename T1,
-			bool IsMemberFunc = is_member_function_pointer<DecayType>::value,
-			bool IsMemberObj = is_member_object_pointer<DecayType>::value
-		>
+		template<typename DecayType,typename T1,bool IsMemberFunc = is_member_function_pointer<DecayType>::value,
+			bool IsMemberObj = is_member_object_pointer<DecayType>::value>
 		struct Invoker;
 
-		template<typename DecayType,
-			typename T1
-		>
+		template<typename DecayType,typename T1>
 		struct Invoker<DecayType, T1, true, false> :
-			conditional_t<
-			is_same<typename IsMemberFunctionHelper<DecayType>::ClassType,
-			decay_t<T1 >> ::value ||
-			is_base_of<
-			typename IsMemberFunctionHelper<DecayType>::ClassType,
-			decay_t<T1>
-			>::value,
+			conditional_t<is_same<typename is_member_function_pointer<DecayType>::class_type, decay_t<T1>>::value ||
+			is_base_of<typename is_member_function_pointer<DecayType>::class_type, decay_t<T1>>::value,
 			InvokeMemberFunc,
 			InvokeMemberFunc2>
 		{
 
 		};
 
-		template<typename DecayType,
-			typename T1
-		>
+		template<typename DecayType,typename T1>
 		struct Invoker<DecayType, T1, false, true> :
-			conditional_t<
-			is_same<
-			typename IsMemberObjectPointerHelper<DecayType>::ClassType,
-			decay_t<T1 >> ::value ||
-			is_base_of<
-			typename IsMemberObjectPointerHelper<DecayType>::ClassType,
-			decay_t<T1>
-			>::value,
+			conditional_t <is_same<typename is_member_object_pointer<DecayType>::class_type,decay_t<T1>> ::value ||
+			is_base_of<typename is_member_object_pointer<DecayType>::class_type,decay_t<T1>>::value,
 			GetMember,
 			GetMember2>
 		{
 
 		};
-		template<typename DecayType,
-			typename T1
-		>
-		struct Invoker<DecayType, T1, false, false> : NormalCall
-		{
-
-		};
+		template<typename DecayType,typename T1>
+		struct Invoker<DecayType, T1, false, false> : NormalCall{};
 
 		template<typename F,
 			typename...Args>
 		struct Invoker1;
 
 		template<typename F>
-		struct Invoker1<F> :NormalCall
-		{
+		struct Invoker1<F> :NormalCall	{};
 
-		};
-
-		template<typename F,
-			typename T1,
-			typename... Args>
-		struct Invoker1<F, T1, Args...> : Invoker<decay_t<F>, T1>
-		{
-
-		};
+		template<typename F,typename T1,typename... Args>
+		struct Invoker1<F, T1, Args...> : Invoker<decay_t<F>, T1>{};
 	}
+
+
+	/*(1.1) —(t1.*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is an object of
+		type T or a reference to an object of type T or a reference to an object of a type derived from T;
+	(1.2) —((*t1).*f)(t2, ..., tN) when f is a pointer to a member function of a class T and t1 is not one of
+		the types described in the previous item;
+	(1.3) — t1.*f when N == 1 and f is a pointer to member data of a class T and t1 is an object of type T or a
+		reference to an object of type T or a reference to an object of a type derived from T;
+	(1.4) —(*t1).*f when N == 1 and f is a pointer to member data of a class T and t1 is not one of the types
+		described in the previous item;
+	(1.5) — f(t1, t2, ..., tN) in all other cases.*/
+
 	// 20.9.3, invoke:	
 	//template <class F, class... Args> result_of_t<F && (Args&&...)> invoke(F&& f, Args&&... args);
 
@@ -1160,43 +857,24 @@ namespace Yupei
 	}
 
 
-	 //template <class> class result_of; // not defined
-	// template <class F, class... ArgTypes> class result_of<F(ArgTypes...)>;
+	//template <class> class result_of; // not defined
+   // template <class F, class... ArgTypes> class result_of<F(ArgTypes...)>;
 
-	//This is an Expression-SFINAE implement,which is not supported by VS2015 RC...
-	//template<typename Type,typename = void>
-	//struct result_of
-	//{
-	//	// no member type
-	//};
+   //This is an Expression-SFINAE implement,which is not supported by VS2015 ...
+   template<typename Type,typename = void>
+   struct result_of
+   {
+   	// no member type
+   };
 
-	//template<typename F,
-	//	typename... Args>
-	//struct result_of<F(Args...),
-	//	void_t < decltype(invoke(declval<F>(), declval<Args>()...)) >
-	//>
-	//{
-	//	using type =
-	//		decltype(invoke(declval<F>(), declval<Args>()...));
-	//};
-
-	template<typename Type>
-	struct result_of
-	{
-		// no member type
-	};
-
-	template<typename F,
-		typename... Args>
-	struct result_of<F(Args...)
-	>
-	{
-		using type =
-			decltype(Yupei::invoke(declval<F>(), declval<Args>()...));
-	};
+   template<typename F,typename... Args>
+   struct result_of<F(Args...),void_t<decltype(Yupei::invoke(declval<F>(), declval<Args>()...))>>
+   {
+   		using type = decltype(invoke(declval<F>(), declval<Args>()...));
+   };
 
 	template <typename Type>
 	using result_of_t = typename result_of<Type>::type;
 
-	
+
 }

@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Stl\__allocator.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Stl\__addressof.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
@@ -110,9 +107,6 @@
     </ClInclude>
     <ClInclude Include="Custom\string.h">
       <Filter>Custom</Filter>
-    </ClInclude>
-    <ClInclude Include="Stl\contiguous_iterators.h">
-      <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="CLib\stdlib.h">
       <Filter>CLib</Filter>

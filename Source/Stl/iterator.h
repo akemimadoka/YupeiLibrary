@@ -15,10 +15,6 @@ namespace Yupei
 	using std::random_access_iterator_tag;
 	using std::bidirectional_iterator_tag;
 
-	struct contiguous_iterator_tag : random_access_iterator_tag {};
-
-	
-
 	namespace Internal
 	{
 		template<typename Iterator,
@@ -29,9 +25,7 @@ namespace Yupei
 		};
 
 		template<typename Iterator>
-		struct value_type<Iterator,
-			void_t<typename Iterator::value_type>
-		>
+		struct value_type<Iterator,void_t<typename Iterator::value_type>>
 		{
 			using type = typename Iterator::value_type; //I have a value_type
 		};

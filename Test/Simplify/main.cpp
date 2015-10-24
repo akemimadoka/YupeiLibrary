@@ -66,13 +66,11 @@ int main()
 	remove_pointer<int *const>::type;
 	remove_cv_t<int*const>;
 	test t;
-	Internal::IsMemberFunctionHelper<decltype(&test::foo)>::ClassType;
 	//(*(&t)).foo();
 	is_member_function_pointer<decay_t<decltype(&test::foo)>>::value;
 	is_member_object_pointer<decay_t<decltype(&test::foo)>>::value;
 	is_member_object_pointer<decltype(&test::i)>::value;
 	is_member_function_pointer<decltype(&test::i)>::value;
-	Internal::IsMemberObjectPointerHelper<Yupei::decay_t<decltype(&test::i)>>::ClassType;
 	Yupei::result_of_t<S(int)>{};
 	invoke(S(), 1);
 	static_assert(sizeof(std::aligned_storage_t<5>) ==

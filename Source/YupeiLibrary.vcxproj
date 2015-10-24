@@ -80,7 +80,6 @@
     <ClInclude Include="Stl\compare_funtor.h" />
     <ClInclude Include="Stl\compress_pair.h" />
     <ClInclude Include="Stl\container_traits.h" />
-    <ClInclude Include="Stl\contiguous_iterators.h" />
     <ClInclude Include="Stl\functional.h" />
     <ClInclude Include="Stl\integral_sequence.h" />
     <ClInclude Include="Stl\iterator.h" />
@@ -99,7 +98,6 @@
     <ClInclude Include="Stl\utility.h" />
     <ClInclude Include="Stl\utility_internal.h" />
     <ClInclude Include="Stl\__addressof.h" />
-    <ClInclude Include="Stl\__allocator.h" />
     <ClInclude Include="Stl\__is_mem_func_obj.h" />
     <ClInclude Include="Stl\__iterator_utility.h" />
     <ClInclude Include="Stl\__reference_wrapper.h" />
