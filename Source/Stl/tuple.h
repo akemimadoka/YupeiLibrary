@@ -1,5 +1,12 @@
 #pragma once
 
+#ifdef _MSC_VER
+
+#error "Sorry,tuple.h doesn't support MSVC."
+
+#else
+
+
 #include "type_traits.h"
 #include "utility.h"
 
@@ -7,22 +14,6 @@ namespace Yupei
 {
 	//http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4387.html
 
-	namespace Internal
-	{
-		template<bool...B>
-		struct StaticAnd;
-
-		template<bool B, bool... Args>
-		struct StaticAnd<B,Args...> : bool_constant<B && StaticAnd<Args...>::value>
-		{		
-		};
-
-		template<>
-		struct StaticAnd<> : true_type
-		{
-		};	
-
-	}
 
 	struct tuple_alloc_t {};
 	constexpr tuple_alloc_t tuple_alloc{};
@@ -659,25 +650,16 @@ namespace Yupei
 
 	namespace Internal
 	{
-		template<typename TypeToFind,
-			typename Type,
-			std::size_t NowIndex>
+		template<typename TypeToFind,typename Type,std::size_t NowIndex>
 		struct get_tuple_by_type_checker;
 
-		template<typename TypeToFind,
-			typename Type,
-		std::size_t NowIndex>
+		template<typename TypeToFind,typename Type,std::size_t NowIndex>
 		struct get_tuple_by_type_impl;
 
-		template<typename TypeToFind,
-			typename Type
-		>
+		template<typename TypeToFind,typename Type>
 		struct get_tuple_by_type;
 
-		template<typename TypeToFind,
-			typename Type,
-			typename... Args,
-			std::size_t NowIndex>
+		template<typename TypeToFind,typename Type,typename... Args,std::size_t NowIndex>
 		struct get_tuple_by_type_impl < TypeToFind, tuple<Type, Args...>,NowIndex>
 		{
 			static constexpr std::size_t value = conditional_t <
@@ -687,26 +669,20 @@ namespace Yupei
 				>::value;
 		};
 
-		template<typename TypeToFind,
-			std::size_t NowIndex>
+		template<typename TypeToFind,std::size_t NowIndex>
 		struct get_tuple_by_type_impl < TypeToFind, tuple<>, NowIndex>
 		{
 			static constexpr std::size_t value = -1;
 		};
 
-
-		template<typename TypeToFind,
-			typename... Args,
-			std::size_t NowIndex>
+		template<typename TypeToFind,typename... Args,std::size_t NowIndex>
 		struct get_tuple_by_type_checker<TypeToFind,tuple<Args...>,NowIndex>
 		{
 			static_assert(get_tuple_by_type_impl<TypeToFind, tuple<Args...>, 0>::value == -1, "tuple get<>() type duplicate");
 			static constexpr std::size_t value = NowIndex;
 		};
 
-		template<typename TypeToFind,
-			typename... Args
-		>
+		template<typename TypeToFind,typename... Args>
 		struct get_tuple_by_type<TypeToFind, tuple<Args...>>
 		{
 			static constexpr std::size_t value = get_tuple_by_type_impl<
@@ -717,19 +693,19 @@ namespace Yupei
 		};
 	}
 
-	template< typename Type, typename... Args>
+	template<typename Type, typename... Args>
 	inline constexpr decltype(auto) get(tuple<Args...>&& t) noexcept
 	{
 		return Yupei::get<Internal::get_tuple_by_type<Type, tuple<Args...>>::value >(Yupei::forward<tuple<Args...>&&>(t));
 	}
 
-	template< typename Type, typename... Args >
+	template<typename Type, typename... Args >
 	inline constexpr decltype(auto) get(tuple<Args...>& t) noexcept
 	{
 		return  Yupei::get<Internal::get_tuple_by_type<Type, tuple<Args...>>::value >(t);
 	}
 
-	template< typename Type, typename... Args >
+	template<typename Type, typename... Args >
 	inline constexpr decltype(auto) get(const tuple<Args...>& t) noexcept
 	{
 		return  Yupei::get<Internal::get_tuple_by_type<Type, tuple<Args...>>::value >(t);
@@ -741,7 +717,6 @@ namespace Yupei
 		return tuple<Internal::tuple_ret_type<Types>...>(Yupei::forward<Types>(t)...);
 	}
 
-
 	template<class... Args>
 	inline constexpr tuple<Args&&...> forward_as_tuple(Args&&... t) noexcept
 	{
@@ -749,17 +724,16 @@ namespace Yupei
 	}
 
 	template<typename T1,typename T2>
-	template<class TupleType1,
-	class TupleType2,
+	template<typename TupleType1,
+		typename TupleType2,
 		std::size_t... Indexes1,
 		std::size_t... Indexes2>
-		pair<T1, T2>::pair(TupleType1& t1, TupleType2& t2,
+		pair<T1, T2>::pair(TupleType1 t1, TupleType2 t2,
 			index_sequence<Indexes1...>,
 			index_sequence<Indexes2...>)
-		:first(Yupei::get<Indexes1>(t1)...),
-		second(Yupei::get<Indexes2>(t2)...)
+		:first(get<Indexes1>(t1)...),
+		second(get<Indexes2>(t2)...)
 	{
-
 	}
 
 	template<class T1,
@@ -769,8 +743,10 @@ namespace Yupei
 		pair<T1, T2>::pair(piecewise_construct_t,
 			tuple<Args1...> Val1,
 			tuple<Args2...> Val2)
-		:pair(Val1, Val2, make_index_sequence<sizeof...(Args1)>{}, make_index_sequence<sizeof...(Args2)>{})
+		:pair(Val1, Val2, make_index_sequence<sizeof...(Args1)>(), make_index_sequence<sizeof...(Args2)>())
 	{	
 	}
 }
+
+#endif //_MSC_VER
    

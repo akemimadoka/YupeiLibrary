@@ -876,5 +876,21 @@ namespace Yupei
 	template <typename Type>
 	using result_of_t = typename result_of<Type>::type;
 
+	namespace Internal
+	{
+		template<bool...B>
+		struct StaticAnd;
+
+		template<bool B, bool... Args>
+		struct StaticAnd<B, Args...> : bool_constant<B && StaticAnd<Args...>::value>
+		{
+		};
+
+		template<>
+		struct StaticAnd<> : true_type
+		{
+		};
+
+	}
 
 }

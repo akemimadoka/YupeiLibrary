@@ -218,3 +218,7 @@ ModelManifest.xml
 *.exe
 *.out
 *.app
+
+#test files
+
+error.txt
