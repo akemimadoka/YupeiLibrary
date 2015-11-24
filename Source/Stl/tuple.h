@@ -1,12 +1,5 @@
 #pragma once
 
-#ifdef _MSC_VER
-
-#error "Sorry,tuple.h doesn't support MSVC."
-
-#else
-
-
 #include "type_traits.h"
 #include "utility.h"
 
@@ -748,5 +741,4 @@ namespace Yupei
 	}
 }
 
-#endif //_MSC_VER
    

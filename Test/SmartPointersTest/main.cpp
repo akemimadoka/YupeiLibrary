@@ -1,5 +1,6 @@
 #include "..\..\Source\Stl\memory.h"
 #include <iostream>
+#include <limits>
 
 struct Foo { int i = 0; };
 
@@ -126,6 +127,8 @@ int main()
 		unique_ptr<int, do_nothing> p1(&i);
 		unique_ptr<int> p2;
 		p1 != p2;
+		auto p3 = move(p1);
+		assert(p1 == nullptr);
 		// This mistakenly compiles:(Mine is OK!!!!!)
 		//static_assert(is_assignable<decltype(p2), decltype(p1)>::value, "hahah");
 
@@ -192,6 +195,6 @@ int main()
 		//sp.operator->();
 	}
 	getchar();
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 	return 0;
 }

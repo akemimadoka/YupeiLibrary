@@ -1,24 +1,10 @@
 #pragma once
 
+#include <type_traits>
+
 namespace Yupei
 {
-	template<typename T, T V>
-	struct integral_constant
-	{
-		static constexpr T value = V;
-		using value_type = T;
-		using type = integral_constant<T, V>;
-
-		constexpr operator value_type () const noexcept
-		{
-			return value;
-		}
-
-		constexpr value_type operator ()() const noexcept
-		{
-			return value;
-		}
-	};
+	using std::integral_constant;
 
 	//C++ 17 bool_constant
 	template<bool B>

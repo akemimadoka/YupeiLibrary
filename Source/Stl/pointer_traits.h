@@ -7,111 +7,46 @@ namespace Yupei
 {
 	namespace Internal
 	{
-		template<typename Type,
-			typename = void>
-		struct has_element_type : false_type
-		{
+		template<typename Ptr>
+		struct GetPtrFirstType;
 
-		};
+		template<template<typename...>class PtrT, typename FirstT,typename... Args>
+		struct GetPtrFirstType<PtrT<FirstT,Args...>>{ using type = FirstT; };
 
-		template<typename Type>
-		struct has_element_type<Type, void_t<typename Type::element_type>> : true_type
-		{
+		template<typename Ptr,typename U>
+		struct GetRebindPtrType;
 
-		};
+		template<template<typename...>class PtrT,typename U, typename FirstT, typename... Args>
+		struct GetRebindPtrType<PtrT<FirstT, Args...>,U> { using type = PtrT<U,Args...>; };
 
-		template<typename Type,
-			bool HasRebind = has_element_type<Type>::value>
-		struct get_element_type
-		{
-			//no rebind...
-			static_assert(has_element_type<Type>::value, "no element_type!");
-		};
+		template<typename PtrT,typename = void>
+		struct GetElementType : GetPtrFirstType<PtrT> {};
 
-		template<typename Type>
-		struct get_element_type
-			<
-			Type,
-			true
-			>
-		{
-			using type = typename Type::element_type;
-		};
+		template<typename PtrT>
+		struct GetElementType<PtrT, void_t<typename PtrT::element_type>> { using type = typename PtrT::element_type; };
 
-		template
-			<
-			template<typename, typename...> typename Type,
-			typename T1,
-			typename... Args
-			>
-		struct get_element_type<
-			Type<T1, Args...>,
-			false>
-		{
-			using type = T1;
-		};
-		template<typename Type,
-			typename UType,
-			typename = void>
-		struct has_rebind : false_type
-		{
-			//no rebind...
-		};
+		template<typename PtrT>
+		using PtrHasDifferenceType = typename PtrT::difference_type;
 
-		template<typename Type, typename UType>
-		struct has_rebind<Type,
-			UType,
-			void_t<typename Type::template rebind<UType>>
-		> : true_type
-		{
+		template<typename PtrT,typename U, typename = void>
+		struct GetPtrBindType : GetRebindPtrType<PtrT,U> {};
 
-		};
-
-		template<typename Type,
-			typename UType,
-			bool HasRebind = has_rebind<Type, UType>::value>
-		struct get_rebind
-		{
-			//no rebind...
-		};
-
-		template<typename Type, typename UType>
-		struct get_rebind
-			<
-			Type,
-			UType,
-			true
-			>
-		{
-			using type = typename Type::template rebind<UType>;
-		};
-
-		template<template<typename, typename...> typename Type,
-			typename T1,
-			typename... Args,
-			typename UType>
-		struct get_rebind<
-			Type<T1, Args...>, UType,
-			false>
-		{
-			using type = Type<UType, Args...>;
-		};
+		template<typename PtrT,typename U>
+		struct GetPtrBindType<PtrT,U, void_t<typename PtrT::template rebind<U>>> { using type = typename PtrT::template rebind<U>; };
 
 	}
 	
-
 	template<class Ptr>
 	struct pointer_traits
 	{
 		using pointer = Ptr;
-		using element_type = typename Internal::get_element_type<Ptr>::type;
-		using difference_type = get_difference_type_t<Ptr>;
-		template<class U>
-		using rebind = typename Internal::get_rebind<Ptr, U>::type;
+		using element_type = typename Internal::GetElementType<Ptr>::type;
+		using difference_type = deteced_or_t<std::ptrdiff_t, Internal::PtrHasDifferenceType, Ptr>;
 
-		static pointer pointer_to(conditional_t<is_void<element_type>::value,
-			void*,
-			element_type&> r)
+		template<class U>
+		using rebind = typename Internal::GetRebindPtrType<Ptr, U>;
+
+		static pointer pointer_to(conditional_t<is_void<element_type>::value,void*,element_type&> r)
 		{
 			return pointer::pointer_to(r);
 		}
@@ -123,12 +58,11 @@ namespace Yupei
 		using pointer = T*;
 		using element_type = T;
 		using difference_type = std::ptrdiff_t;
+
 		template<class U>
 		using rebind = U*;
 
-		static pointer pointer_to(conditional_t<is_void<element_type>::value,
-			void*,
-			element_type&> r) noexcept
+		static pointer pointer_to(conditional_t<is_void<element_type>::value,void*,element_type&> r) noexcept
 		{
 			return Yupei::addressof(r);
 		}

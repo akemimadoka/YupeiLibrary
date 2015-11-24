@@ -23,14 +23,11 @@ namespace Yupei
 	public:
 		bad_weak_ptr() noexcept {}
 
-		virtual const char* what() const override
+		const char* what() const noexcept override
 		{
 			return "bad_weak_ptr";
 		}
 	};
-
-	//no atomic increment support in this version of shared_ptr
-	//Use atomic_shared_ptr in multi-thread environment.
 
 	template<typename ObjectT>
 	class weak_ptr;
@@ -159,7 +156,7 @@ namespace Yupei
 	protected:
 		void OnZeroShared() noexcept override
 		{
-			Yupei::invoke(d, ptr);
+			Yupei::invoke(data_.first(), data_.second());
 		}
 		void OnZeroWeak() noexcept override
 		{
@@ -174,26 +171,31 @@ namespace Yupei
 	class RefCountAllocateOnce : public RefCountBase
 	{
 	public:
-		template<typename... Args>
-		RefCountAllocateOnce(Args&&...)
-			:object_{ Yupei::forward<Args>(args)... }
+		template<typename... ParamsT>
+		RefCountAllocateOnce(ParamsT&&... params)
+			:object_(Yupei::forward<ParamsT>(params)...)
 		{
 		}
+
 		ObjectT* GetObjectPtr() noexcept
 		{
 			return &object_;
 		}
+
 	protected:
+
 		void OnZeroShared() noexcept override
 		{
 			Yupei::destroy(GetObjectPtr());
 		}
+
 		void OnZeroWeak() noexcept override
 		{
 			::operator delete(this);
 		}
 		
 	private:
+
 		ObjectT object_;
 	};
 
@@ -407,24 +409,25 @@ namespace Yupei
 	{
 
 		template<typename T>
-		void ValueInitialize(T* obj, std::size_t count,true_type)
+		void ValueInitializeImp(T* obj, std::size_t count,true_type)
 		{
 			memset(static_cast<void*>(obj), 0, count * sizeof(T));
 		}
 
 		template<typename T>
-		void ValueInitialize(T* obj, std::size_t count,false_type)
+		void ValueInitializeImp(T* obj, std::size_t count,false_type)
 		{
 			for (std::size_t i = 0;i < count;++i)
 			{
-				void* p = obj + i;
-				new (p) T();
+				void* p = static_cast<void*>(obj + i);
+				::new (p) T();
 			}
 		}
+
 		template<typename T>
 		void ValueInitialize(T* obj, std::size_t count)
 		{
-			return Internal::ValueInitialize(obj, count, is_pod<T>());
+			return Internal::ValueInitializeImp(obj, count, is_pod<T>());
 		}
 	}
 
@@ -450,17 +453,17 @@ namespace Yupei
 		template<typename Y>
 		explicit shared_ptr(Y* p)
 		{
-			rawPtr_ = p;
+			this->rawPtr_ = p;
 			auto ref = make_unique<RawRefCount<ObjectT>>(p);
-			refCount_ = ref.release();
+			this->refCount_ = ref.release();
 		}
 
 		template<typename RhsObjectT,typename DeleterT>
 		shared_ptr(RhsObjectT* p, DeleterT deleter)
 		{
-			rawPtr_ = p;
+			this->rawPtr_ = p;
 			auto ref = make_unique<RefCountDeleter<ObjectT,DeleterT>>(p,deleter);
-			refCount_ = ref.release();
+			this->refCount_ = ref.release();
 		}
 
 		template<typename DeleterT>
@@ -489,14 +492,14 @@ namespace Yupei
 		}
 
 		shared_ptr(shared_ptr&& r) noexcept
-			:PtrBase(Yupei::move(r))
+			:BaseType(Yupei::move(r))
 		{
 		}
 
 		template<typename RhsObjectT,
 			typename = enable_if_t<Internal::SpConvertible<RhsObjectT, ObjectT>::value>>
 		shared_ptr(shared_ptr<RhsObjectT>&& r) noexcept
-			:PtrBase(Yupei::move(r))
+			:BaseType(Yupei::move(r))
 		{			
 		}
 
@@ -508,15 +511,15 @@ namespace Yupei
 			this->Reset(r.rawPtr_,r.refCount_, true);
 		}
 		
-		constexpr shared_ptr(nullptr_t) noexcept
+		constexpr shared_ptr(std::nullptr_t) noexcept
 			: shared_ptr()
 		{
 		}
 
 		~shared_ptr()
 		{
-			if (refCount_)
-				refCount_->DecRef();
+			if (this->refCount_)
+				this->refCount_->DecRef();
 		}
 
 		shared_ptr& operator=(const shared_ptr& r) noexcept
@@ -595,7 +598,7 @@ namespace Yupei
 
 		bool unique() const noexcept
 		{
-			return use_count() == 1;
+			return this->use_count() == 1;
 		}
 
 		explicit operator bool() const noexcept
@@ -661,7 +664,6 @@ namespace Yupei
 				auto n3 = n2 + alignSize;
 				auto p1 = ::operator new(n1 + n3);
 				void* p2 = static_cast<char*>(p1) + n1;
-				Yupei::align(alignSize, n2, p2, n3);
 				ref = static_cast<RefCountBase*>(p1);
 				ele = static_cast<element_type*>(p2);
 				Internal::ValueInitialize(ele, n);
@@ -674,123 +676,92 @@ namespace Yupei
 		return shared_ptr<ObjectT>::make_shared(Yupei::forward<Args>(args)...);
 	}
 
-	// 20.8.2.2.7, shared_ptr comparisons:
 	template<typename ObjectT,typename ObjectRhsT>
-	bool operator==(
-			const shared_ptr<ObjectT>& lhs, 
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator==(const shared_ptr<ObjectT>& lhs, const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return lhs.get() == rhs.get();
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator!=(
-			const shared_ptr<ObjectT>& lhs,
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator!=(const shared_ptr<ObjectT>& lhs,const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return lhs.get() != rhs.get();
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator < (
-			const shared_ptr<ObjectT>& lhs,
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator < (const shared_ptr<ObjectT>& lhs,const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return Yupei::less<>()(lhs.get(), rhs.get());
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator > (
-			const shared_ptr<ObjectT>& lhs,
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator > (const shared_ptr<ObjectT>& lhs,const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return rhs < lhs;
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator <= (
-			const shared_ptr<ObjectT>& lhs,
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator <= (const shared_ptr<ObjectT>& lhs,const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return !(rhs < lhs);
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator >= (
-			const shared_ptr<ObjectT>& lhs,
-			const shared_ptr<ObjectRhsT>& rhs) noexcept
+	bool operator >= (const shared_ptr<ObjectT>& lhs,const shared_ptr<ObjectRhsT>& rhs) noexcept
 	{
 		return !(lhs < rhs);
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator == (
-			const shared_ptr<ObjectT>& lhs,
-			nullptr_t) noexcept
+	bool operator == (const shared_ptr<ObjectT>& lhs,std::nullptr_t) noexcept
 	{
 		return lhs.get() == nullptr;
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator==(
-			nullptr_t, 
-			const shared_ptr<ObjectT>& rhs) noexcept
+	bool operator==(std::nullptr_t, const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return nullptr == rhs.get();
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator!=(
-			const shared_ptr<ObjectT>& lhs, 
-			nullptr_t) noexcept
+	bool operator!=(const shared_ptr<ObjectT>& lhs, std::nullptr_t) noexcept
 	{
 		return static_cast<bool>(lhs);
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator!=(
-			nullptr_t,
-			const shared_ptr<ObjectT>& rhs) noexcept
+	bool operator!=(std::nullptr_t,const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return static_cast<bool>(rhs);
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator < (
-			const shared_ptr<ObjectT>& lhs, 
-			nullptr_t) noexcept
+	bool operator < (const shared_ptr<ObjectT>& lhs, std::nullptr_t) noexcept
 	{
 		return less<>()(lhs.get(), nullptr);
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator < (
-			nullptr_t, 
-			const shared_ptr<ObjectT>& rhs) noexcept
+	bool operator < (std::nullptr_t,const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return less<>()(nullptr, rhs.get());
 	}
 
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator > (
-			const shared_ptr<ObjectT>& lhs, 
-			nullptr_t) noexcept
+	bool operator > (const shared_ptr<ObjectT>& lhs, std::nullptr_t) noexcept
 	{
 		return nullptr < lhs;
 	}
+
 	template<typename ObjectT, typename ObjectRhsT>
-	bool operator > (
-			nullptr_t, 
-			const shared_ptr<ObjectT>& rhs) noexcept
+	bool operator > (std::nullptr_t, const shared_ptr<ObjectT>& rhs) noexcept
 	{
 		return rhs < nullptr;
 	}
 
-
 	template<typename ObjectT>
-	void swap(
-		shared_ptr<ObjectT>& lhs,
-		shared_ptr<ObjectT>& rhs) noexcept
+	void swap(shared_ptr<ObjectT>& lhs,shared_ptr<ObjectT>& rhs) noexcept
 	{
 		lhs.swap(rhs);
 	}
@@ -800,7 +771,7 @@ namespace Yupei
 	shared_ptr<ObjectT> 
 		static_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		shared_ptr<ObjectT> ptr{ r,static_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
+		shared_ptr<ObjectT> ptr{ r,static_cast<typename shared_ptr<ObjectT>::element_type*>(r.get()) };
 		return ptr;
 	}
 
@@ -808,7 +779,7 @@ namespace Yupei
 	shared_ptr<ObjectT>
 		dynamic_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		auto rawPtr = dynamic_cast<shared_ptr<ObjectT>::element_type*>(r.get());
+		auto rawPtr = dynamic_cast<typename shared_ptr<ObjectT>::element_type*>(r.get());
 		if(rawPtr) 
 			return shared_ptr<ObjectT>{r, rawPtr};
 		else 
@@ -819,7 +790,7 @@ namespace Yupei
 	shared_ptr<ObjectT>
 		reinterpret_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		shared_ptr<ObjectT> ptr{ r,reinterpret_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
+		shared_ptr<ObjectT> ptr{ r,reinterpret_cast<typename shared_ptr<ObjectT>::element_type*>(r.get()) };
 		return ptr;
 	}
 
@@ -827,7 +798,7 @@ namespace Yupei
 	auto
 		const_pointer_cast(const shared_ptr<ObjectRhsT>& r) noexcept
 	{
-		shared_ptr<ObjectT> ptr{ r,const_cast<shared_ptr<ObjectT>::element_type*>(r.get()) };
+		shared_ptr<ObjectT> ptr{ r,const_cast<typename shared_ptr<ObjectT>::element_type*>(r.get()) };
 		return ptr;
 	}
 
@@ -870,8 +841,8 @@ namespace Yupei
 		
 		~weak_ptr()
 		{
-			if (refCount_)
-				refCount_->DecWeak();
+			if (this->refCount_)
+				this->refCount_->DecWeak();
 		}
 		
 		weak_ptr& operator=(const weak_ptr& r) noexcept
@@ -914,13 +885,13 @@ namespace Yupei
 
 		bool expired() const noexcept
 		{
-			return use_count() == 0;
+			return this->use_count() == 0;
 		}
 
 		shared_ptr<ObjectT> lock() const
 		{
 			shared_ptr<ObjectT> ptr{};
-			ptr.Reset(rawPtr_,refCount_,false);
+			ptr.Reset(this->rawPtr_,this->refCount_,false);
 			return ptr;
 		}
 

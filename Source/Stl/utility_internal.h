@@ -1,7 +1,6 @@
 #pragma once
 
 #include "traits_internal.h"
-#include "container_traits.h"
 
 namespace Yupei
 {
@@ -42,91 +41,5 @@ namespace Yupei
 	{
 		struct erased_type {};
 	}
-	// get or not series
-
-	template<typename Type,
-		typename = void>
-	struct get_pointer
-	{
-		using type = container_value_type<Type>*;
-	};
-
-	template<typename Type>
-	struct get_pointer<Type,
-		void_t<container_pointer<Type>>
-	>
-	{
-		using type = container_pointer<Type>;
-	};
-
-	template<typename Type>
-	using get_pointer_t = typename get_pointer<Type>::type;
-
-	template<typename Type,
-		typename = void>
-	struct get_reference
-	{
-		using type = container_value_type<Type>&;
-	};
-
-	template<typename Type>
-	struct get_reference<Type,
-		void_t<container_reference<Type>>
-	>
-	{
-		using type = container_reference<Type>;
-	};
-
-	template<typename Type>
-	using get_reference_t = typename get_reference<Type>::type;
-
-	template<typename Type,
-		typename = void>
-	struct get_const_reference
-	{
-		using type = const container_value_type<Type>&;
-	};
-
-	template<typename Type>
-	struct get_const_reference<Type,
-		void_t<container_reference<Type>>
-	>
-	{
-		using type = container_const_reference<Type>;
-	};
-
-	template<typename Type>
-	using get_const_reference_t = typename get_const_reference<Type>::type;
-
-	template<typename Type,
-		typename = void>
-	struct get_difference_type
-	{
-		using type = std::ptrdiff_t;
-	};
-
-	template<typename Type>
-	struct get_difference_type<Type,
-		void_t<container_difference_type<Type>>
-	>
-	{
-		using type = container_difference_type<Type>;
-	};
-
-	template<typename Type>
-	using get_difference_type_t = typename get_difference_type<Type>::type;
-
-
-	
-	template<typename ValueType>
-	struct container_utility
-	{
-		using value_type = ValueType;
-		using reference = value_type&;
-		using const_reference = const value_type&;
-		using pointer = value_type*;
-		using size_type = std::size_t;
-		using difference_type = std::ptrdiff_t;
-	};
 	
 }

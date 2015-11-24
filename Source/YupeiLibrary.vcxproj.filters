@@ -19,6 +19,9 @@
     <Filter Include="CLib">
       <UniqueIdentifier>{08c8b8c5-5fc0-4c69-a464-e660f928dea4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Stl\MemoryResource">
+      <UniqueIdentifier>{4c7935f0-152b-4cf7-8a48-60f4ce76a759}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stl\__addressof.h">
@@ -39,9 +42,6 @@
     <ClInclude Include="Stl\basic.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Stl\container_traits.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Stl\iterator.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
@@ -49,9 +49,6 @@
       <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Stl\memory.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Stl\memory_resource.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Stl\traits_constant.h">
@@ -70,9 +67,6 @@
       <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Stl\utility_internal.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Stl\math.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Stl\Auto.h">
@@ -129,13 +123,25 @@
     <ClInclude Include="Stl\integral_sequence.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Stl\memory_resource.cpp">
-      <Filter>Stl\Sources</Filter>
-    </ClCompile>
+    <ClInclude Include="Stl\numeric.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\MemoryReasource\memory_resource.h">
+      <Filter>Stl\MemoryResource</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\mutex.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom\Extensions.h">
+      <Filter>Custom</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Stl\MemoryReasource\memory_resource.cpp">
+      <Filter>Stl\Sources</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

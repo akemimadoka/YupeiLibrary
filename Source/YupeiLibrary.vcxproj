@@ -69,6 +69,7 @@
     <ClInclude Include="CLib\raw_memory.h" />
     <ClInclude Include="CLib\stdlib.h" />
     <ClInclude Include="Custom\Assert.h" />
+    <ClInclude Include="Custom\Extensions.h" />
     <ClInclude Include="Custom\Owner.h" />
     <ClInclude Include="Custom\StopWatch.h" />
     <ClInclude Include="Custom\string.h" />
@@ -79,14 +80,14 @@
     <ClInclude Include="Stl\basic.h" />
     <ClInclude Include="Stl\compare_funtor.h" />
     <ClInclude Include="Stl\compress_pair.h" />
-    <ClInclude Include="Stl\container_traits.h" />
     <ClInclude Include="Stl\functional.h" />
     <ClInclude Include="Stl\integral_sequence.h" />
     <ClInclude Include="Stl\iterator.h" />
-    <ClInclude Include="Stl\math.h" />
     <ClInclude Include="Stl\memory.h" />
     <ClInclude Include="Stl\MemoryInternal.h" />
-    <ClInclude Include="Stl\memory_resource.h" />
+    <ClInclude Include="Stl\MemoryReasource\memory_resource.h" />
+    <ClInclude Include="Stl\mutex.h" />
+    <ClInclude Include="Stl\numeric.h" />
     <ClInclude Include="Stl\pointer_traits.h" />
     <ClInclude Include="Stl\SmartPointers\default_delete.h" />
     <ClInclude Include="Stl\SmartPointers\shared_ptr.h" />
@@ -104,10 +105,10 @@
     <ClInclude Include="Stl\__swap.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Stl\memory_resource.cpp" />
+    <None Include="..\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\README.md" />
+    <ClCompile Include="Stl\MemoryReasource\memory_resource.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -50,8 +50,8 @@ namespace Yupei
 	template<typename Type>
 	using remove_all_extents_t = typename remove_all_extents<Type>::type;
 
-	// 20.10.4.1, primary type categories:
-	/*template <class T> struct is_void;
+	/*20.10.4.1, primary type categories:
+	template <class T> struct is_void;
 	template <class T> struct is_null_pointer;
 	template <class T> struct is_integral;
 	template <class T> struct is_floating_point;
@@ -310,8 +310,7 @@ namespace Yupei
 	// is_empty<B>::value is
 	// false.
 
-	template<typename Type>
-	using is_empty = std::is_empty<Type>;
+	using std::is_empty;
 
 	// Virtual functions support dynamic binding and object-oriented programming. A class that declares or
 	// inherits a virtual function is called a polymorphic class.
@@ -892,5 +891,55 @@ namespace Yupei
 		};
 
 	}
+
+	struct nonesuch
+	{
+		nonesuch() = delete;
+		~nonesuch() = delete;
+		nonesuch(const nonesuch&) = delete;
+		void operator=(const nonesuch&) = delete;
+	};
+
+	template<typename DefaultT,
+		typename, // always void
+		template<typename...>class Op,
+		typename... Args>
+	struct detector
+	{
+		using value_t = false_type;
+		using type = DefaultT;
+	};
+
+	template<typename DefaultT,
+		template<typename...>class Op,
+		typename... Args>
+	struct detector<DefaultT, void_t<Op<Args...>>, Op, Args...>
+	{
+		using value_t = true_type;
+		using type = Op<Args...>;
+	};
+
+	template<template<typename...>class Op,typename... Args>
+	using is_detected = typename detector<void, void, Op, Args...>::value_t;
+
+	template<template<typename...>class Op, typename... Args>
+	using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+	template<typename DefaultT,template<typename...>class Op,typename... Args>
+	using detected_or = detector<DefaultT, void, Op, Args...>;
+
+	template<typename DefaultT,template<typename...>class Op,typename... Args>
+	using deteced_or_t = typename detected_or<DefaultT, Op, Args...>::type;
+
+	template<typename Expected, template<typename...>class Op, typename... Args>
+	using is_deteced_exact = is_same<detected_t<Op, Args...>,Expected>;
+
+#if __cpp_variable_templates
+	template<template<typename...>class Op, typename... Args>
+	constexpr bool is_detected_v = is_detected<Op, Args...>::value;
+
+	template<typename Expected, template<typename...>class Op, typename... Args>
+	constexpr bool is_deteced_exact_v = is_deteced_exact<Expected, Op, Args...>::value;
+#endif
 
 }
