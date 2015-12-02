@@ -1,6 +1,3 @@
-#ifndef _MSC_VER
-
-
 #include "..\..\Source\Stl\tuple.h"
 #include "..\..\Source\Stl\utility.h"
 
@@ -101,15 +98,3 @@ int main()
 
 	return 0;
 }
-
-#else
-
-#include <iostream>
-
-int main()
-{
-	std::cout << "You really should try GCC or Clang.\n";
-	return 0;
-}
-
-#endif

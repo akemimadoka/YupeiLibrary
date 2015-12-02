@@ -576,21 +576,23 @@ namespace Yupei
 			return this->rawPtr_;
 		}
 
-		template<typename = enable_if_t<!is_array<ObjectT>::value && !is_void<remove_cv_t<ObjectT>>::value>>
+		template<typename Dummy = ObjectT,
+			typename = enable_if_t<!is_array<Dummy>::value && !is_void<remove_cv_t<Dummy>>::value>>
 		element_type& operator*() const noexcept
 		{
 			assert(get() != 0);
 			return *get();
 		}
 
-		template<typename = enable_if_t<!is_array<ObjectT>::value && !is_void<remove_cv_t<ObjectT>>::value>>
+		template<typename Dummy = ObjectT, 
+			typename = enable_if_t<!is_array<Dummy>::value && !is_void<remove_cv_t<Dummy>>::value>>
 		element_type* operator->() const noexcept
 		{
 			assert(get() != 0);
 			return get();
 		}
 
-		template<typename = enable_if_t<is_array<ObjectT>::value>>
+		template<typename Dummy = ObjectT, typename = enable_if_t<is_array<Dummy>::value>>
 		element_type& operator[](std::ptrdiff_t i) const noexcept
 		{
 			return get()[i];
@@ -607,7 +609,8 @@ namespace Yupei
 		}		
 		
 		template<
-			typename = enable_if_t<!is_array<ObjectT>::value>,
+			typename Dummy = ObjectT,
+			typename = enable_if_t<!is_array<Dummy>::value>,
 			typename... Args>
 		static shared_ptr make_shared(Args&&... args)
 		{
@@ -619,7 +622,8 @@ namespace Yupei
 			return ptr;
 		}
 
-		template<typename = enable_if_t<is_array<ObjectT>::value && extent<ObjectT>::value == 0>>
+		template<typename Dummy = ObjectT, 
+			typename = enable_if_t<is_array<Dummy>::value && extent<Dummy>::value == 0>>
 		static shared_ptr
 			make_shared(std::size_t n)
 		{
@@ -633,7 +637,8 @@ namespace Yupei
 			return ret;
 		}
 
-		template<typename = enable_if_t<is_array<ObjectT>::value && extent<ObjectT>::value != 0>>
+		template<typename Dummy = ObjectT,
+			typename = enable_if_t<is_array<Dummy>::value && extent<Dummy>::value != 0>>
 		static shared_ptr
 			make_shared()
 		{
@@ -919,7 +924,7 @@ namespace Yupei
 
 		constexpr enable_shared_from_this() noexcept = default;
 
-		enable_shared_from_this(const enable_shared_from_this&) noexcept = default;
+		enable_shared_from_this(const enable_shared_from_this&) = default;
 
 		enable_shared_from_this& operator=(enable_shared_from_this const&)
 		{

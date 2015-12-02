@@ -126,7 +126,7 @@ int main()
 		int i = 0;
 		unique_ptr<int, do_nothing> p1(&i);
 		unique_ptr<int> p2;
-		p1 != p2;
+		assert(p1 != p2);
 		auto p3 = move(p1);
 		assert(p1 == nullptr);
 		// This mistakenly compiles:(Mine is OK!!!!!)

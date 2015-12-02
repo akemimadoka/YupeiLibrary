@@ -511,7 +511,7 @@ namespace Yupei
 		struct SignedHelper
 		{
 			static_assert(
-				is_integral<Type>::value || is_enum<Type>::value
+				(is_integral<Type>::value || is_enum<Type>::value)
 				&& !is_same<Type, bool>::value,
 				"Hahahahahahahahahaha,non-integral type & bool are disallowed ! hahahahaha");
 			//if..else

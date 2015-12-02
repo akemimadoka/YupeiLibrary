@@ -144,7 +144,7 @@ namespace Yupei
 	struct tuple_types {};
 
 	template<std::size_t Index,typename TupleT>
-	class tuple_element;
+	struct tuple_element;
 
 	template<std::size_t Index,
 		typename TupleT>
@@ -391,7 +391,8 @@ namespace Yupei
 			typename... UArgs>
 			friend constexpr tuple_element_t<Index, tuple<UArgs...>>&& get(tuple<UArgs...>&&) noexcept;
 
-		template<typename = enable_if_t<Internal::StaticAnd<is_default_constructible<Args>::value...>::value>>
+		template<typename Dummy = void, 
+			typename = enable_if_t<is_same<Dummy,void>::value && Internal::StaticAnd<is_default_constructible<Args>::value...>::value>>
 		constexpr tuple() noexcept(
 			is_nothrow_default_constructible<BaseType>::value)
 		{}

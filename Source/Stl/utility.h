@@ -308,10 +308,10 @@ namespace Yupei
 	}
 
 	template<typename Type>
-	class tuple_size;
+	struct tuple_size;
 	
 	template<std::size_t Id,typename Type>
-	class tuple_element;
+	struct tuple_element;
 
 	template<std::size_t Id,typename T>
 	using tuple_element_t = typename tuple_element<Id, T>::type;

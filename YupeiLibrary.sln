@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YupeiLibrary", "Source\YupeiLibrary.vcxproj", "{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}"
 EndProject
@@ -37,7 +37,7 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Debug|Win32.Build.0 = Debug|Win32
-		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Debug|x64.ActiveCfg = Debug|Win32
+		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Debug|x64.ActiveCfg = Debug|x64
 		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Release|Win32.ActiveCfg = Release|Win32
 		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Release|Win32.Build.0 = Release|Win32
 		{7C7BE4F3-E155-4FD0-A1B0-CB8BC94C22BC}.Release|x64.ActiveCfg = Release|Win32

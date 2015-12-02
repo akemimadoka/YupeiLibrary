@@ -221,7 +221,7 @@ namespace Yupei
 				cursor_ = {};
 			}
 
-			void Deallocate(void* ptr, size_type size, size_type alignment)
+			void Deallocate(void* ptr)
 			{
 				//no-op
 			}
@@ -265,19 +265,21 @@ namespace Yupei
 			SimplePoolManager(memory_resource_ptr upstream)
 				:headBlock_{}, upstream_{ upstream } {}
 
-			void* Allocate(size_type size, size_type alignment);
+			void* Allocate(size_type size, size_type alignment = alignof(std::max_align_t));
 
-			void Deallocate(void* ptr, size_type size, size_type alignment)
+			void Deallocate(void* ptr)
 			{
 				//no-op
 			}
 
+			memory_resource_ptr GetUpstream() const noexcept
+			{
+				return upstream_;
+			}
+
 			void Release();
 
-			~SimplePoolManager()
-			{
-				Release();
-			}
+			~SimplePoolManager() = default;
 
 			DISABLECOPY(SimplePoolManager)
 
@@ -302,7 +304,7 @@ namespace Yupei
 	public:
 
 		explicit monotonic_buffer_resource(memory_resource_ptr upstream)
-			:poolManager_(upstream)
+			:poolManager_{ upstream }
 		{
 		}
 
@@ -313,7 +315,8 @@ namespace Yupei
 		}
 
 		monotonic_buffer_resource(void* buffer, size_type bufferSize, memory_resource_ptr upstream)
-			:bufferManager_{buffer,bufferSize}
+			:bufferManager_{buffer,bufferSize},
+			poolManager_{upstream}
 		{
 			auto nextSize = Internal::GetFinalSize(bufferSize) << 1;
 
@@ -322,32 +325,23 @@ namespace Yupei
 			nextBufferSize_ = nextSize;
 		}
 
+		void release()
+		{
+			nextBufferSize_ = {};
+			bufferManager_.Release();
+			poolManager_.Release();
+		}
+
 		DISABLECOPY(monotonic_buffer_resource)
 
-		~monotonic_buffer_resource() = default;
+		~monotonic_buffer_resource()
+		{
+			release();
+		}
 
 	protected:
 
-		void* do_allocate(size_type bytes, size_type alignment) override
-		{
-			auto buffer = bufferManager_.Allocate(bytes, alignment);
-
-			if (buffer != nullptr) return buffer;
-
-			const auto size = Internal::GetFinalSize(bytes, alignment);
-
-			if (nextBufferSize_ < size) nextBufferSize_ = size;
-
-			buffer = poolManager_.Allocate(nextBufferSize_,alignof(std::max_align_t));
-
-			bufferManager_.ReplaceBuffer(buffer, nextBufferSize_);
-
-			nextBufferSize_ <<= 1;
-
-			if (nextBufferSize_ > MaxBufferSize) nextBufferSize_ = MaxBufferSize;
-
-			return bufferManager_.Allocate(bytes, alignment);
-		}
+		void* do_allocate(size_type bytes, size_type alignment) override;
 
 		void do_deallocate(void* , size_type , size_type ) override
 		{
@@ -360,12 +354,147 @@ namespace Yupei
 		}
 
 	private:
-		size_type nextBufferSize_;
+		size_type nextBufferSize_ = {};
 		Internal::BufferManager bufferManager_;
 		Internal::SimplePoolManager poolManager_;
 	};
-	
-	
+
+	namespace Internal
+	{
+
+		class Pool
+		{
+		public:
+			using size_type = std::size_t;
+
+			const size_type blockSize_;
+
+			const size_type realBlockSize_;
+
+			const size_type maxBlocks_;
+
+			size_type currentChunkSize_;
+
+			struct alignas(std::max_align_t) Link
+			{
+				Link* nextBlock_;
+			};
+
+			SimplePoolManager poolManager_;
+
+			Link* freeList_ = {};
+
+		private:
+			using ByteType = unsigned char;
+
+			static constexpr size_type initialBlocksCount = 1;
+
+			static constexpr size_type maxBlocksCount = 64;
+
+			void ReAllocateChunk();
+
+		public:
+			ByteType* chunkBegin_ = {};
+			ByteType* chunkEnd_ = {};
+
+		public:
+			Pool(memory_resource_ptr upstream,size_type blockSize, size_type maxBlocks)
+				:blockSize_{blockSize},
+				realBlockSize_{GetFinalSize(blockSize)},
+				maxBlocks_{maxBlocks == 0 ? maxBlocksCount : maxBlocks},
+				currentChunkSize_{ initialBlocksCount },
+				poolManager_{upstream}
+			{
+			}
+
+			Pool(size_type blockSize, size_type maxBlocks)
+				:Pool({},blockSize,maxBlocks)
+			{
+			}
+
+			void* Allocate(size_type bytes,size_type alignment = alignof(std::max_align_t));
+
+			void Deallocate(void* address);
+
+			void Release();
+
+			DISABLECOPY(Pool)
+
+			size_type GetBlockSize() const noexcept
+			{
+				return blockSize_;
+			}
+
+		};
+	}
+
+	struct pool_options
+	{
+		std::size_t max_blocks_per_chunk = 0;
+		std::size_t largest_required_pool_block = 0;
+	};
+
+	class unsynchronized_pool_resource : public memory_resource
+	{
+	public:
+		unsynchronized_pool_resource(const pool_options& opts, memory_resource_ptr upstream);
+
+		unsynchronized_pool_resource()
+			:unsynchronized_pool_resource(pool_options(), {}) {}
+
+		unsynchronized_pool_resource(const pool_options& opts)
+			:unsynchronized_pool_resource(opts, {}) {}
+
+		~unsynchronized_pool_resource()
+		{
+			release();
+		}
+
+		DISABLECOPY(unsynchronized_pool_resource)
+
+		void release()
+		{
+			for (size_type i{};i < poolsCount_;++i)
+				pools_[i].Release();
+			::operator delete(pools_);
+			pools_ = {};
+			poolManager_.Release();
+		}
+
+		memory_resource_ptr upstream_resource() const noexcept
+		{
+			return poolManager_.GetUpstream();
+		}
+
+		//pool_options options() const;
+
+	protected:
+		void* do_allocate(size_type bytes, size_type alignment) override;
+
+		void do_deallocate(void* p, size_type bytes, size_type alignment) override;
+
+		bool do_is_equal(const memory_resource& other) const noexcept override;
+
+	private:
+
+		Internal::Pool* pools_;
+
+		size_type poolsCount_;
+
+		size_type maxBlockSize_;
+
+		Internal::SimplePoolManager poolManager_;
+
+		size_type FindPool(size_type bytes) const noexcept
+		{
+			constexpr auto maxAlign = alignof(std::max_align_t);
+			return (bytes + maxAlign - 1) / maxAlign - 1;
+		}
+
+	private:
+		static constexpr size_type maxPoolSize = 256;
+		static constexpr size_type initialPoolSize = alignof(std::max_align_t);
+	};
 }
 
 

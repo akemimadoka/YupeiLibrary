@@ -43,6 +43,7 @@ namespace Yupei
 		{
 			return this == &other;
 		}
+		
 	};
 
 	class NullMemoryResource : public memory_resource
@@ -117,7 +118,7 @@ namespace Yupei
 			return oldBuffer;
 		}
 
-		void* SimplePoolManager::Allocate(size_type size, size_type alignment)
+		void* SimplePoolManager::Allocate(size_type size, size_type alignment )
 		{
 			if (size == 0) return nullptr;
 
@@ -144,6 +145,116 @@ namespace Yupei
 		}
 	}
 
+	void * monotonic_buffer_resource::do_allocate(size_type bytes, size_type alignment)
+	{
+		auto buffer = bufferManager_.Allocate(bytes, alignment);
+
+		if (buffer != nullptr) return buffer;
+
+		const auto size = Internal::GetFinalSize(bytes, alignment);
+
+		if (nextBufferSize_ < size) nextBufferSize_ = size;
+
+		buffer = poolManager_.Allocate(nextBufferSize_, alignof(std::max_align_t));
+
+		bufferManager_.ReplaceBuffer(buffer, nextBufferSize_);
+
+		nextBufferSize_ <<= 1;
+
+		if (nextBufferSize_ > MaxBufferSize) nextBufferSize_ = MaxBufferSize;
+
+		return bufferManager_.Allocate(bytes, alignment);
+	}
+
+	namespace Internal
+	{
+		void Pool::ReAllocateChunk()
+		{
+			chunkBegin_ = static_cast<ByteType*>(poolManager_.Allocate(currentChunkSize_ * realBlockSize_));
+			chunkEnd_ = chunkBegin_ + currentChunkSize_ * realBlockSize_;
+
+			currentChunkSize_ <<= 1;
+
+			if (currentChunkSize_ > maxBlocks_) currentChunkSize_ = maxBlocks_;
+		}
+
+		void* Pool::Allocate(size_type bytes,size_type alignment)
+		{
+			if (chunkBegin_ == chunkEnd_)
+			{
+				if (freeList_)
+				{
+					auto p = freeList_;
+					freeList_ = p->nextBlock_;
+					p->nextBlock_ = {};
+					return static_cast<void*>(p);
+				}
+				ReAllocateChunk();
+			}
+
+			auto p = chunkBegin_;
+			chunkBegin_ += realBlockSize_;
+			return static_cast<void*>(p);
+		}
+
+		void Pool::Deallocate(void* address)
+		{
+			auto p = static_cast<Link*>(address);
+			p->nextBlock_ = freeList_;
+			freeList_ = p;
+		}
+
+		void Pool::Release()
+		{
+			freeList_ = {};
+			chunkBegin_ = {};
+			chunkEnd_ = {};
+			currentChunkSize_ = {};
+			poolManager_.Release();
+		}
+	}
+
+	unsynchronized_pool_resource::unsynchronized_pool_resource(const pool_options& opts, memory_resource_ptr upstream)
+		:poolManager_{upstream}
+	{
+		auto required = opts.largest_required_pool_block;
+		if (required == 0 || required > maxPoolSize)
+			required = maxPoolSize;
+		required = Internal::GetFinalSize(required);
+		poolsCount_ = required >> 3;
+		maxBlockSize_ = required;
+
+		pools_ = static_cast<Internal::Pool*>(::operator new(sizeof(Internal::Pool) * poolsCount_));
+
+		for (size_type i{};i < poolsCount_;++i)
+		{
+			::new (pools_ + i) Internal::Pool(((i+1) << 3), opts.max_blocks_per_chunk);
+		}
+	}
+
+	void * unsynchronized_pool_resource::do_allocate(size_type bytes, size_type alignment)
+	{
+		auto finalSize = Internal::GetFinalSize(bytes, alignment);
+		if (finalSize > maxBlockSize_)
+		{
+			return poolManager_.Allocate(bytes, alignment);
+		}
+		const auto poolIndex = FindPool(bytes);
+		return pools_[poolIndex].Allocate(bytes, alignment);
+	}
+
+	void unsynchronized_pool_resource::do_deallocate(void * p, size_type bytes, size_type alignment)
+	{
+		auto finalSize = Internal::GetFinalSize(bytes, alignment);
+		if (finalSize > maxBlockSize_) return poolManager_.Deallocate(p);
+		const auto poolIndex = FindPool(bytes);
+		return pools_[poolIndex].Deallocate(p);
+	}
+
+	bool unsynchronized_pool_resource::do_is_equal(const memory_resource& other) const noexcept
+	{
+		return this == dynamic_cast<const unsynchronized_pool_resource*>(&other);
+	}
 }
 
 
