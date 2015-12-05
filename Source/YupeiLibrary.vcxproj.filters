@@ -135,6 +135,9 @@
     <ClInclude Include="Custom\Extensions.h">
       <Filter>Custom</Filter>
     </ClInclude>
+    <ClInclude Include="Stl\variant.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\README.md" />

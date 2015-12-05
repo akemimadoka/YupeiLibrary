@@ -13,6 +13,9 @@ namespace Yupei
 	using true_type = bool_constant<true>;
 	using false_type = bool_constant<false>;
 
+	template<std::size_t N>
+	using size_constant = integral_constant<std::size_t, N>;
+
 	namespace Internal
 	{
 		struct WrapInt
