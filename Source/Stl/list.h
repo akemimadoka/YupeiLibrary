@@ -16,8 +16,7 @@ namespace Yupei
 		template<typename T>
 		struct list_node_base
 		{
-		private:
-			using T = int;
+		private:			
 			using pointer = list_node<T>*;
 			using const_pointer = const list_node<T>*;
 
@@ -46,7 +45,6 @@ namespace Yupei
 		struct list_node : public list_node_base<U>
 		{
 		public:
-			using U = int;
 			U item_;
 
 			template<typename... Args>
@@ -188,7 +186,6 @@ public:
 	{
 
 	public:
-		using T = int;
 		CONTAINER_DEFINE(T)
 		using iterator = list_iterator<T>;
 		using const_iterator = list_const_iterator<T>;
@@ -232,6 +229,12 @@ public:
 		list& operator=(list&& other) noexcept
 		{
 			list(Yupei::move(other)).swap(*this);
+			return *this;
+		}
+
+		list& operator=(const list& other) noexcept
+		{
+			list(other).swap(*this);
 			return *this;
 		}
 
