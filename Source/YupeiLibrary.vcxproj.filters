@@ -96,9 +96,6 @@
     <ClInclude Include="Stl\pointer_traits.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Stl\__iterator_utility.h">
-      <Filter>Stl\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Custom\string.h">
       <Filter>Custom</Filter>
     </ClInclude>
@@ -136,6 +133,15 @@
       <Filter>Custom</Filter>
     </ClInclude>
     <ClInclude Include="Stl\variant.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\vector.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\list.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\HelperMacros.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
   </ItemGroup>

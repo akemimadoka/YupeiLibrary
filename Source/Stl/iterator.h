@@ -5,7 +5,8 @@
 #include "__addressof.h"
 
 #include <cstddef>
-#include <iterator> 
+#include <iterator>
+#include <cassert>
 
 namespace Yupei
 {
@@ -49,6 +50,12 @@ namespace Yupei
 		struct DifferentImp<T*>
 			:enable_if<is_object<T>::value, std::ptrdiff_t> {};
 
+		template<typename T>
+		using ReferenceOp = typename T::reference;
+
+		template<typename T>
+		using PointerOp = typename T::pointer;
+
 	}
 	template<typename T>
 	using iterator_category_t = typename Internal::IteratorCategoryImp<remove_cv_t<T>>::type;
@@ -57,13 +64,13 @@ namespace Yupei
 	using value_type_t = typename IteratorT::value_type;
 
 	template<typename T>
-	using reference_t = decltype(*Yupei::declval<T&>());
+	using reference_t = deteced_or_t<value_type_t<T>&, Internal::ReferenceOp, T>;
 
 	template<typename T>
 	using difference_t = typename Internal::DifferentImp<decay_t<T>>::type;
 
 	template<typename T>
-	using pointer_t = deteced_or_t<decltype(Yupei::declval<T>().operator->()), reference_t, T>;
+	using pointer_t = deteced_or_t<value_type_t<T>*, Internal::PointerOp, T>;
 
 	namespace Internal
 	{
