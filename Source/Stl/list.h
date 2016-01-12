@@ -5,34 +5,75 @@
 #include "HelperMacros.h"
 #include "MemoryInternal.h"
 #include "iterator.h"
+#include "utility.h"
 
 namespace Yupei
 {
 	namespace Internal
 	{
-		template<typename U>
+		template<typename T>
 		struct list_node;
+
+		template<typename T>
+		struct list_node_base;
+
+		template<typename T>
+		struct NodeTraits
+		{			
+			using NodeBaseType = list_node_base<T>;
+			using NodeType = list_node<T>;
+			using LinkPointer = NodeBaseType*;
+			using NodePointer = NodeType*;
+
+			static auto AsNode(list_node_base<T>* p) noexcept
+				-> NodePointer
+			{
+				return reinterpret_cast<list_node<T>*>(p);
+			}
+
+			static auto AsNode(const list_node_base<T>* p) noexcept
+				-> NodePointer
+			{
+				return reinterpret_cast<list_node<T>*>(const_cast<list_node<T>*>(p));
+			}
+
+			static auto AsNode(list_node<T>* p) noexcept
+				-> NodePointer
+			{
+				return p;
+			}
+		};
 
 		template<typename T>
 		struct list_node_base
 		{
-		private:			
-			using pointer = list_node<T>*;
-			using const_pointer = const list_node<T>*;
+		private:						
+			using LinkPointer = typename NodeTraits<T>::LinkPointer;
+			using NodePointer = typename NodeTraits<T>::NodePointer;
+			using NodeBaseType = typename NodeTraits<T>::NodeBaseType;
 
 		public:
-			pointer prev_;
-			pointer next_;
+			LinkPointer prev_;
+			LinkPointer next_;			
 
-			//TODO: fix the reinterpret_cast
-			pointer self() noexcept
+			LinkPointer self() noexcept
 			{
-				return reinterpret_cast<pointer>(this);
+				return this;
 			}
 
-			pointer self() const noexcept
+			LinkPointer self() const noexcept
 			{
-				return reinterpret_cast<pointer>(const_cast<list_node_base*>(this));
+				return const_cast<LinkPointer>(this);
+			}
+
+			NodePointer AsNode() const noexcept
+			{
+				return NodeTraits<T>::AsNode(this);
+			}
+
+			NodePointer AsNode() noexcept
+			{
+				return NodeTraits<T>::AsNode(this);
 			}
 
 			list_node_base() noexcept
@@ -41,16 +82,24 @@ namespace Yupei
 			{}
 		};
 
-		template<typename U>
-		struct list_node : public list_node_base<U>
+		template<typename T>
+		struct list_node : public list_node_base<T>
 		{
+		private:
+			using NodePointer = typename NodeTraits<T>::NodePointer;
+
 		public:
-			U item_;
+			T item_;
 
 			template<typename... Args>
 			list_node(Args&&... args)
 				:item_(Yupei::forward<Args>(args)...)
 			{
+			}
+
+			NodePointer AsNode() noexcept
+			{
+				return NodeTraits<T>::AsNode(this);
 			}
 		};
 
@@ -59,9 +108,11 @@ namespace Yupei
 	template<typename T>
 	class list_iterator : public iterator<bidirectional_iterator_tag,T>
 	{
-		using node_pointer = Internal::list_node<T>*;
-		using base_type = iterator<bidirectional_iterator_tag, T>;
-		node_pointer cur_;
+		using NodePointer = typename Internal::NodeTraits<T>::NodePointer;
+		using BaseType = iterator<bidirectional_iterator_tag, T>;
+		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
+
+		LinkPointer cur_;
 
 		template<typename U>
 		friend class list;
@@ -69,50 +120,57 @@ namespace Yupei
 		template<typename U>
 		friend class list_const_iterator;
 
-		explicit list_iterator(node_pointer p) noexcept
+		explicit list_iterator(LinkPointer p) noexcept
 			:cur_{p}
 		{}
 
+	public:
 		constexpr list_iterator() noexcept
 			:cur_{}
 		{}
-public:
-		reference_t<base_type> operator*() const { return cur_->item_; }
 
-		pointer_t<base_type> operator->() const { return &cur_->item_; }
+		reference_t<BaseType> operator*() const noexcept
+		{ 
+			return Internal::NodeTraits<T>::AsNode(cur_)->item_; 
+		}
 
-		list_iterator& operator++()
+		pointer_t<BaseType> operator->() const noexcept
+		{ 
+			return Yupei::addressof(Internal::NodeTraits<T>::AsNode(cur_)->item_); 
+		}
+
+		list_iterator& operator++() noexcept
 		{
 			cur_ = cur_->next_;
 			return *this;
 		}
 
-		list_iterator operator++(int)
+		list_iterator operator++(int) noexcept
 		{
 			auto tmp = *this;
 			++*this;
 			return tmp;
 		}
 
-		list_iterator& operator--()
+		list_iterator& operator--() noexcept
 		{
 			cur_ = cur_->prev_;
 			return *this;
 		}
 
-		list_iterator operator--(int)
+		list_iterator operator--(int) noexcept
 		{
 			auto tmp = *this;
 			--*this;
 			return tmp;
 		}
 
-		bool operator==(const list_iterator& rhs) noexcept
+		bool operator==(const list_iterator& rhs) const noexcept
 		{
 			return cur_ == rhs.cur_;
 		}
 
-		bool operator!=(const list_iterator& rhs) noexcept
+		bool operator!=(const list_iterator& rhs) const noexcept
 		{
 			return cur_ != rhs.cur_;
 		}
@@ -121,14 +179,15 @@ public:
 	template<typename T>
 	class list_const_iterator : public iterator<bidirectional_iterator_tag, T, std::ptrdiff_t, const T*, const T&>
 	{
-		using node_pointer = Internal::list_node<T>*;
-		using base_type = iterator<bidirectional_iterator_tag, T, std::ptrdiff_t, const T*, const T&>;
-		node_pointer cur_;
+		using NodePointer = Internal::list_node<T>*;
+		using BaseType = iterator<bidirectional_iterator_tag, T, std::ptrdiff_t, const T*, const T&>;
+		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
+		LinkPointer cur_;
 
 		template<typename T>
 		friend class list;
 
-		explicit list_const_iterator(node_pointer p) noexcept
+		list_const_iterator(LinkPointer p) noexcept
 			:cur_{ p }
 		{}
 
@@ -136,46 +195,52 @@ public:
 			: cur_{}
 		{}
 
-		list_const_iterator(list_iterator<T> it)
+		explicit list_const_iterator(list_iterator<T> it) noexcept
 			:cur_{it.cur_}
 		{}
 	public:
-		reference_t<base_type> operator*() const { return cur_->item_; }
+		reference_t<BaseType> operator*() const noexcept
+		{ 
+			return Internal::NodeTraits<T>::AsNode(cur_)->item_; 
+		}
 
-		pointer_t<base_type> operator->() const { return &cur_->item_; }
+		pointer_t<BaseType> operator->() const noexcept
+		{ 
+			return Yupei::addressof(Internal::NodeTraits<T>::AsNode(cur_)->item_);
+		}
 
-		list_const_iterator& operator++()
+		list_const_iterator& operator++() noexcept
 		{
 			cur_ = cur_->next_;
 			return *this;
 		}
 
-		list_const_iterator operator++(int)
+		list_const_iterator operator++(int) noexcept
 		{
 			auto tmp = *this;
 			++*this;
 			return tmp;
 		}
 
-		list_const_iterator& operator--()
+		list_const_iterator& operator--() noexcept
 		{
 			cur_ = cur_->prev_;
 			return *this;
 		}
 
-		list_const_iterator operator--(int)
+		list_const_iterator operator--(int) noexcept
 		{
 			auto tmp = *this;
 			--*this;
 			return tmp;
 		}
 
-		bool operator==(const list_const_iterator& rhs) noexcept
+		bool operator==(const list_const_iterator& rhs) const noexcept
 		{
 			return cur_ == rhs.cur_;
 		}
 
-		bool operator!=(const list_const_iterator& rhs) noexcept
+		bool operator!=(const list_const_iterator& rhs) const noexcept
 		{
 			return cur_ != rhs.cur_;
 		}
@@ -192,9 +257,10 @@ public:
 		using allocator_type = polymorphic_allocator<Internal::list_node<T>>;
 
 	private:
-		using node_type = Internal::list_node<T>;
-		using node_base_type = Internal::list_node_base<T>;
-		using node_pointer = node_type*;
+		using NodeType = typename Internal::NodeTraits<T>::NodeType;
+		using NodeBaseType = typename Internal::NodeTraits<T>::NodeBaseType;
+		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
+		using NodePointer = NodeType*;
 
 	public:
 
@@ -214,8 +280,9 @@ public:
 		}
 
 		list(const list& other)
+			:list()
 		{
-			insert(end(), other.begin(), other.end());
+			insert(cend(), other.begin(), other.end());
 		}
 
 		list(list&& other) noexcept
@@ -232,7 +299,7 @@ public:
 			return *this;
 		}
 
-		list& operator=(const list& other) noexcept
+		list& operator=(const list& other) 
 		{
 			list(other).swap(*this);
 			return *this;
@@ -248,25 +315,25 @@ public:
 		reference front()
 		{
 			if (count_ != 0)
-				return head_.next_->item_;
+				return head_.next_->AsNode()->item_;
 		}
 
 		const_reference front() const
 		{
 			if (count_ != 0)
-				return head_.next_->item_;
+				return head_.next_->AsNode()->item_;
 		}
 
 		reference back()
 		{
 			if (count_ != 0)
-				return head_.prev_->item_;
+				return head_.prev_->AsNode()->item_;
 		}
 
 		const_reference back() const
 		{
 			if (count_ != 0)
-				return head_.prev_->item_;
+				return head_.prev_->AsNode()->item_;
 		}
 
 		void swap(list& other) noexcept
@@ -290,8 +357,8 @@ public:
 		template<typename ...Args>
 		auto MakeNode(Args&&... args)
 		{
-			auto deleteFn = [this](node_pointer p) {this->deallocate(p, 1);};
-			unique_ptr<node_type, decltype(deleteFn)> holder{ this->allocate(1),deleteFn };
+			auto deleteFn = [this](NodePointer p) {this->deallocate(p, 1);};
+			unique_ptr<NodeType, decltype(deleteFn)> holder{ this->allocate(1),deleteFn };
 			auto node = holder.get();
 			Yupei::construct(Yupei::addressof(node->item_), Yupei::forward<Args>(args)...);
 			return holder;
@@ -300,22 +367,22 @@ public:
 	public:
 		void push_back(const value_type& v)
 		{
-			insert(end(), v);			
+			insert(cend(), v);			
 		}
 
 		void push_back(value_type&& v)
 		{
-			insert(end(), Yupei::move(v));
+			insert(cend(), Yupei::move(v));
 		}
 
 		void push_front(const value_type& v)
 		{
-			insert(begin(), v);
+			insert(cbegin(), v);
 		}
 
 		void push_front(value_type&& v)
 		{
-			insert(begin(), Yupei::move(v));
+			insert(cbegin(), Yupei::move(v));
 		}
 
 		template<typename... Args>
@@ -358,8 +425,13 @@ public:
 		template<typename InputItT>
 		iterator insert(const_iterator position, InputItT first, InputItT last)
 		{
+			if (first == last) return iterator{ position.cur_ };
+			auto firstNode = MakeNode(*first).release()->AsNode();
+			InsertInterval(position.cur_, firstNode, firstNode);
+			auto it = iterator{ firstNode };
 			for (;first != last;++first)
 				insert(position, *first);
+			return it;
 		}
 
 		iterator erase(const_iterator position)
@@ -376,19 +448,21 @@ public:
 		{
 			if (position != last)
 			{
-				auto start = position.cur_;
+				auto start = position.cur_->AsNode();
 				auto lastNode = last.cur_;
-				UnlinkNode(start, lastNode->prev_);
+				UnlinkNode(start, lastNode->prev_->AsNode());
 				size_type n = {};
 				while (start != lastNode)
 				{
-					auto next = start->next_;
+					auto next = start->next_->AsNode();
 					DeallocateNode(start);
 					start = next;
 					++n;
 				}
 				count_ -= n;
-			}			
+				return iterator{ lastNode };
+			}	
+			return iterator{ position.cur_ };
 		}
 
 		void clear() noexcept
@@ -454,10 +528,10 @@ public:
 		{			
 			if (other.count_ >= 1)
 			{
-				auto cur = i.cur_;
+				auto cur = i.cur_->AsNode();
 				other.UnlinkNode(cur, cur);
 				auto pos = position.cur_;
-				InsertInterval(pos, cur, cur);
+				InsertInterval(pos->AsNode(), cur, cur);
 				other.count_ -= 1;
 				count_ += 1;
 			}			
@@ -465,12 +539,12 @@ public:
 
 		void splice(const_iterator position, list& other, const_iterator first, const_iterator last)
 		{
-			auto firstNode = first.cur_;
-			auto lastNode = last.cur_;
+			auto firstNode = first.cur_->AsNode();
+			auto lastNode = last.cur_->AsNode();
 			auto n = Yupei::distance(first, last);
-			auto prev = lastNode->prev_;
+			auto prev = lastNode->prev_->AsNode();
 			other.UnlinkNode(firstNode, prev);
-			auto pos = position.cur_;
+			auto pos = position.cur_->AsNode();
 			InsertInterval(pos, firstNode, prev);			
 			other.count_ -= n;
 			count_ += n;
@@ -478,7 +552,7 @@ public:
 
 		void reverse() noexcept
 		{
-			node_pointer cur = head_.next_;
+			auto cur = head_.next_;
 			auto head = head_.self();
 			while (cur != head)
 			{
@@ -492,10 +566,10 @@ public:
 		template<typename CompareT>
 		void merge(list& x, CompareT comp)
 		{
-			auto first1 = begin();
-			auto last1 = end();
-			auto first2 = x.begin();
-			auto last2 = x.end();
+			auto first1 = cbegin();
+			auto last1 = cend();
+			auto first2 = x.cbegin();
+			auto last2 = x.cend();
 
 			while (first1 != last1 && first2 != last2)
 			{
@@ -556,7 +630,7 @@ public:
 		Internal::list_node_base<T> head_;
 		size_type count_;
 
-		void DeallocateNode(node_pointer node)
+		void DeallocateNode(NodePointer node)
 		{
 			Yupei::destroy(Yupei::addressof(node->item_));
 			this->deallocate(node, 1);
@@ -578,7 +652,7 @@ public:
 		}
 
 		//[first,last]
-		void InsertInterval(node_type* position, node_type* first, node_type* last)
+		void InsertInterval(LinkPointer position, LinkPointer first, LinkPointer last)
 		{
 			auto prev = position->prev_;
 			position->prev_ = last;
@@ -587,14 +661,12 @@ public:
 			first->prev_ = prev;
 		}
 
-		void UnlinkNode(const node_base_type* first, const node_base_type* last) noexcept
+		void UnlinkNode(const NodeBaseType* first, const NodeBaseType* last) noexcept
 		{			
 			auto prev = first->prev_;
 			first->prev_->next_ = last->next_;
 			last->next_->prev_ = prev;
-		}
-
-		
+		}		
 	};
 }
 
