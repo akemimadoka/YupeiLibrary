@@ -268,7 +268,7 @@ namespace Yupei
 			:count_{}
 		{}
 
-		list(memory_resource_ptr pmr)
+		explicit list(memory_resource_ptr pmr)
 			:count{},
 			allocator_type{pmr}
 		{}
