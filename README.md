@@ -14,15 +14,17 @@
   + Many useful extentions (like the C++ TS),such as filesystem,type-erased allocator,ranges and so on.
 
 
- | Headers          |    Status           |
- | :---------------:|:-------------------:|
- | `<type_traits>`  |  Complete           |
- | `<tuple>`		    |  Most		  		      |
- | `<utility>`      |  Complete           |
- | `<memory>`       |  Most               |
- | `<iterator>`     |  Complete           |
- | `<algorithm>`    |  Complete           |
- 
+ |		Headers				|			Status							|
+ |:------------------------:|:-----------------------------------------:|
+ |	 `<type_traits>`		|	  Complete								|
+ |	 `<tuple>`				|	  Partial(`tuple_cat`)					|
+ |	 `<utility>`			|	  Complete								|
+ |	 `<memory>`				|	  Partial(`intrusive_ptr`)				|
+ |	 `<iterator>`			|	  Complete								|
+ |	 `<algorithm>`			|	  Complete								|
+ |	 `<memory_resource>`	|	  Partial(`synchronized_pool_resource`)	|
+ |	 `<list>`				|	  Complete								|
+ |	 `<vector>`				|	  Complete								|
  
  
 + ##GUI Part##

@@ -212,20 +212,20 @@ namespace Yupei
 	}
 
 	template<typename InputItT, typename ObjectT>
-	inline DifferenceType<InputItT>
+	inline difference_t<InputItT>
 		count(InputItT first, InputItT last, const ObjectT& value)
 	{
-		DifferenceType<InputItT> res{};
+		difference_t<InputItT> res{};
 		for (;first != last;++first)
 			if (*first == value) ++res;
 		return res;
 	}
 
 	template<typename InputItT, typename PredT>
-	inline DifferenceType<InputItT>
+	inline difference_t<InputItT>
 		count_if(InputItT first, InputItT last, PredT pred)
 	{
-		DifferenceType<InputItT> res{};
+		difference_t<InputItT> res{};
 		for (;first != last;++first)
 			if (pred(*first)) ++res;
 		return res;
@@ -561,8 +561,8 @@ namespace Yupei
 	{
 
 		template<typename It1T,typename It2T>
-			using could_use_memmove = bool_constant<is_same<remove_cv_t<ValueType<It1T>>, remove_cv_t<ValueType<It2T>>>::value &&
-			is_pod<ValueType<It1T>>::value && is_pod<ValueType<It2T>>::value &&
+			using could_use_memmove = bool_constant<is_same<remove_cv_t<value_type_t<It1T>>, remove_cv_t<value_type_t<It2T>>>::value &&
+			is_pod<value_type_t<It1T>>::value && is_pod<value_type_t<It2T>>::value &&
 			is_pointer<It1T>::value && is_pointer<It2T>::value>;
 
 		template<typename InputItT,typename OutputItT>
@@ -606,7 +606,7 @@ namespace Yupei
 				OutputItT result,
 				true_type)
 		{
-			Yupei::memmove(static_cast<void*>(result), static_cast<const void*>(first), n * sizeof(ValueType<InputItT>));
+			Yupei::memmove(static_cast<void*>(result), static_cast<const void*>(first), n * sizeof(value_type_t<InputItT>));
 			return result + n;
 		}
 
@@ -652,7 +652,7 @@ namespace Yupei
 				true_type)
 		{
 			std::ptrdiff_t dist = last - first;
-			Yupei::memmove(static_cast<void*>(result - dist), static_cast<const void*>(first), dist * sizeof(ValueType<BidIt1T>));
+			Yupei::memmove(static_cast<void*>(result - dist), static_cast<const void*>(first), dist * sizeof(value_type_t<BidIt1T>));
 			return result - dist;
 		}
 
@@ -719,7 +719,7 @@ namespace Yupei
 				true_type)
 		{
 			std::ptrdiff_t dist = last - first;
-			Yupei::memmove(static_cast<void*>(result - dist), static_cast<const void*>(first), dist * sizeof(ValueType<BidIt1T>));
+			Yupei::memmove(static_cast<void*>(result - dist), static_cast<const void*>(first), dist * sizeof(value_type_t<BidIt1T>));
 			return result - dist;
 		}
 
@@ -943,7 +943,7 @@ namespace Yupei
 		{
 			if (first != last)
 			{
-				ValueType<InputItT> temp(*first);
+				value_type_t<InputItT> temp(*first);
 				*result = temp;
 				++result;
 				for (++first;first != last;++first)
@@ -1105,9 +1105,9 @@ namespace Yupei
 		template<typename RandomItT>
 		inline void RotateCycle(
 			RandomItT first, RandomItT last, RandomItT initial, 
-			DifferenceType<RandomItT> shift)
+			difference_t<RandomItT> shift)
 		{
-			ValueType<RandomItT> v(Yupei::move(*initial));
+			value_type_t<RandomItT> v(Yupei::move(*initial));
 			auto ptr1 = initial;
 			auto ptr2 = ptr1 + shift;
 			while (ptr2 != initial)
@@ -1137,7 +1137,7 @@ namespace Yupei
 	template<typename ForwardItT>
 	inline ForwardItT rotate(ForwardItT first,ForwardItT middle,ForwardItT last)
 	{
-		return Internal::RotateImp(first, middle, last, IteratorCategory<ForwardItT>());
+		return Internal::RotateImp(first, middle, last, iterator_category_t<ForwardItT>());
 	}
 
 	template<typename ForwardItT,typename OutputItT>
@@ -1271,7 +1271,7 @@ namespace Yupei
 		{
 			for (auto nextIt = first;++nextIt != last;)
 			{
-				ValueType<BidItT> temp(Yupei::move(*nextIt));
+				value_type_t<BidItT> temp(Yupei::move(*nextIt));
 				auto nextIt2 = nextIt;
 				if (pred(temp, *first))
 				{
@@ -1319,7 +1319,7 @@ namespace Yupei
 	inline void push_heap(RandomItT first, RandomItT last, CompT comp)
 	{
 		auto v = Yupei::move(last[-1]);
-		return Internal::PushHeapImp(first, last - first - 1, DifferenceType<RandomItT>(0), Yupei::move(v), comp);
+		return Internal::PushHeapImp(first, last - first - 1, difference_t<RandomItT>(0), Yupei::move(v), comp);
 	}
 
 	template<typename RandomItT>
@@ -1339,7 +1339,7 @@ namespace Yupei
 				CompT comp)
 		{
 			auto topIndex = holeIndex;
-			DifferenceType<RandomItT> childIndex = 2 * holeIndex + 2;
+			difference_t<RandomItT> childIndex = 2 * holeIndex + 2;
 			while (childIndex < len)
 			{
 				if (comp(first[childIndex], first[childIndex - 1])) --childIndex;
@@ -1361,7 +1361,7 @@ namespace Yupei
 		inline void PopHeapImp(RandomItT first, RandomItT last, RandomItT result, ObjectT&& v, CompareT comp)
 		{
 			*result = Yupei::move(*first);
-			return Internal::AdjustHeap(first, DifferenceType<RandomItT>(0), last - first - 1, Yupei::move(v), comp);
+			return Internal::AdjustHeap(first, difference_t<RandomItT>(0), last - first - 1, Yupei::move(v), comp);
 		}
 	}
 
@@ -1407,7 +1407,7 @@ namespace Yupei
 		//compare each child with its parent
 		if (len >= 2)
 		{
-			for (DifferenceType<RandomItT> off = 0;++off < len;)
+			for (difference_t<RandomItT> off = 0;++off < len;)
 				if (comp(first[(off - 1) / 2], first[off])) return first + off;
 		}
 		return last;
@@ -1557,8 +1557,8 @@ namespace Yupei
 		void ChunkMerge(
 				BidirectT first,BidirectT last,
 				OutputItT dest,
-				DifferenceType<BidirectT> chunk,
-				DifferenceType<BidirectT> count,
+				difference_t<BidirectT> chunk,
+				difference_t<BidirectT> count,
 				CompareT comp)
 		{
 			//merge two groups ,each group has chunk elements
@@ -1586,9 +1586,9 @@ namespace Yupei
 		template<typename BidItT,typename PredT>
 		void BufferedMerge(
 				BidItT first,BidItT mid,BidItT last,
-				DifferenceType<BidItT> count1,
-				DifferenceType<BidItT> count2,
-				temp_iterator<ValueType<BidItT>>& buf,
+				difference_t<BidItT> count1,
+				difference_t<BidItT> count2,
+				temp_iterator<value_type_t<BidItT>>& buf,
 				PredT pred)
 		{
 			if (count1 == 0 || count2 == 0)
@@ -1613,8 +1613,8 @@ namespace Yupei
 		template<typename BidItT,typename CompT>
 			void BufferedMergeSort(
 				BidItT first, BidItT last, 
-				DifferenceType<BidItT> count,
-				temp_iterator<ValueType<BidItT>>& buf, 
+				difference_t<BidItT> count,
+				temp_iterator<value_type_t<BidItT>>& buf, 
 				CompT comp)
 		{
 			auto mid = first;
@@ -1640,8 +1640,8 @@ namespace Yupei
 		template<typename BidItT,typename PredT>
 		inline void StableSortImp(
 				BidItT first,BidItT last,
-				DifferenceType<BidItT> count,
-				temp_iterator<ValueType<BidItT>>& buf,
+				difference_t<BidItT> count,
+				temp_iterator<value_type_t<BidItT>>& buf,
 				PredT pred)
 		{
 			if (count <= kInsertionSortCutOff)
@@ -1662,8 +1662,8 @@ namespace Yupei
 		{
 			if (start != end)
 			{
-				DifferenceType<RandomItT> dist = Yupei::distance(start, end);
-				auto buf = temp_iterator<ValueType<RandomItT>>{ (dist + 1) / 2 };
+				difference_t<RandomItT> dist = Yupei::distance(start, end);
+				auto buf = temp_iterator<value_type_t<RandomItT>>{ (dist + 1) / 2 };
 				Internal::StableSortImp(start, end, dist, buf, pred);
 			}
 		}
@@ -1706,9 +1706,9 @@ namespace Yupei
 		}
 
 		template<typename RandomItT,typename PredT>
-		void SortImp(RandomItT first, RandomItT last, DifferenceType<RandomItT> ideal, PredT pred)
+		void SortImp(RandomItT first, RandomItT last, difference_t<RandomItT> ideal, PredT pred)
 		{
-			DifferenceType<RandomItT> count;
+			difference_t<RandomItT> count;
 			for (;kInsertionSortCutOff < (count = last - first) && ideal > 0;)
 			{
 				//partition
@@ -1799,7 +1799,7 @@ namespace Yupei
 		auto dist = Yupei::distance(first, last);
 		if (dist == 0) return first;
 		if (dist == 1) return pred(*first) ? last : first;
-		auto buf = temp_iterator<ValueType<BidItT>>{ dist };
+		auto buf = temp_iterator<value_type_t<BidItT>>{ dist };
 		buf.allocate();
 		auto tmp = first;
 		for (;first != last;++first)
@@ -1976,7 +1976,7 @@ namespace Yupei
 		for (;first != last;++first)
 		{
 			if (comp(*first, *result_first))
-				Internal::AdjustHeap(result_first, DifferenceType<RandItT>(0), mid2 - result_first, ValueType<RandItT>(*first), comp);
+				Internal::AdjustHeap(result_first, difference_t<RandItT>(0), mid2 - result_first, value_type_t<RandItT>(*first), comp);
 		}
 		Yupei::sort_heap(result_first, mid2, comp);
 		return mid2;

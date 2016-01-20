@@ -126,7 +126,7 @@ namespace Yupei
 		using value_type = T;
 		using size_type = std::size_t;
 
-		polymorphic_allocator() noexcept = default;
+		constexpr polymorphic_allocator() noexcept = default;
 
 		polymorphic_allocator(memory_resource_ptr r)
 			:resource_{r}

@@ -30,6 +30,21 @@ namespace Yupei
 
 	namespace Internal
 	{
+        template<typename IteratorT, bool IsPointer = is_pointer<IteratorT>::value>
+        struct ValueTypeImp;
+
+        template<typename IteratorT>
+        struct ValueTypeImp<IteratorT, false>
+        {
+            using type = typename IteratorT::value_type;
+        };
+
+        template<typename IteratorT>
+        struct ValueTypeImp<IteratorT, true>
+        {
+            using type = remove_reference_t<decltype(*Yupei::declval<IteratorT>())>;
+        };
+
 		template<typename T>
 		struct IteratorCategoryImp
 		{
@@ -61,7 +76,7 @@ namespace Yupei
 	using iterator_category_t = typename Internal::IteratorCategoryImp<remove_cv_t<T>>::type;
 
 	template<typename IteratorT>
-	using value_type_t = typename IteratorT::value_type;
+    using value_type_t = typename Internal::ValueTypeImp<IteratorT>::type;
 
 	template<typename T>
 	using reference_t = deteced_or_t<value_type_t<T>&, Internal::ReferenceOp, T>;
@@ -255,7 +270,7 @@ namespace Yupei
 			 }
 		 }
 
-		 std::ptrdiff_t size() const
+		 std::ptrdiff_t size() const noexcept
 		 {
 			 return pbuf_->bufSize_;
 		 }

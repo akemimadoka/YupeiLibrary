@@ -12,7 +12,7 @@ namespace Yupei
 	}
 
 	template<typename ObjectT>
-	void destroy(ObjectT* ptr) noexcept
+	void destroy(const ObjectT* ptr) noexcept
 	{
 		ptr->~ObjectT();
 	}
@@ -40,10 +40,11 @@ namespace Yupei
 	}
 
 	template<typename ObjectT,typename... ParamT>
-	void construct_n(ObjectT* ptr, std::size_t count,ParamT&&... param)
+	ObjectT* construct_n(ObjectT* ptr, std::size_t count,ParamT&&... param)
 	{
 		for (std::size_t i{};i < count;++i)
 			Yupei::construct(ptr + i, Yupei::forward<ParamT>(param)...);
+        return ptr + count;
 	}
 }
 

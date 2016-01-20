@@ -20,7 +20,7 @@ int main()
 {
 	int i;
 	Yupei::IteratorCategory<int*>{};
-	Yupei::ValueType<int*>{};
+	Yupei::value_type_t<int*>{};
 	Yupei::iterator_traits<int*>::difference_type{};
 	Yupei::iterator_traits<int*>::pointer x{};
 	Yupei::iterator_traits<std::vector<int>::iterator>::reference ri = i;
