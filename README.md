@@ -25,6 +25,8 @@
  |	 `<memory_resource>`	|	  Partial(`synchronized_pool_resource`)	|
  |	 `<list>`				|	  Complete								|
  |	 `<vector>`				|	  Complete								|
+ |	 `<hash>`				|	  Complete								|
+ |	 `<unoredered_meow>`	|	  In Progress							|
  
  
 + ##GUI Part##
