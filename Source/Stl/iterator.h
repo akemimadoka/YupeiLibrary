@@ -133,6 +133,33 @@ namespace Yupei
 	template<typename ObjectT>
 	struct is_pod_ptr<ObjectT*> : is_pod<remove_cv_t<ObjectT>> {};
 
+    //http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4183.pdf
+    template<typename T>
+    constexpr auto do_pointer_from(T* ptr) noexcept -> T*
+    {
+        return ptr;
+    }
+
+    template<typename ContiguousIterator>
+    constexpr auto pointer_from(ContiguousIterator i)
+        noexcept(noexcept(do_pointer_from(i)))
+        -> decltype(do_pointer_from(i)) // necessary for SFINAE
+    {
+        return do_pointer_from(i); //ADL
+    }
+
+    namespace Internal
+    {
+        template<typename IteratorT,typename = void>
+        struct IsContiguousIterator : false_type {};
+
+        template<typename IteratorT>
+        struct IsContiguousIterator<IteratorT, void_t<decltype(Yupei::pointer_from(Yupei::declval<IteratorT>()))>> : true_type {};
+    }
+
+    template<typename IteratorT>
+    using is_contiguous_iterator = Internal::IsContiguousIterator<IteratorT>;
+
 	using std::distance;
 
 	using std::advance;

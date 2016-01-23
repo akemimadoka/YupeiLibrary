@@ -96,9 +96,6 @@
     <ClInclude Include="Stl\pointer_traits.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Custom\string.h">
-      <Filter>Custom</Filter>
-    </ClInclude>
     <ClInclude Include="CLib\stdlib.h">
       <Filter>CLib</Filter>
     </ClInclude>
@@ -142,6 +139,12 @@
       <Filter>Stl\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Stl\HelperMacros.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\_HashTable.h">
+      <Filter>Stl\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stl\hash.h">
       <Filter>Stl\Headers</Filter>
     </ClInclude>
   </ItemGroup>

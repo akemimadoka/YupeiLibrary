@@ -25,6 +25,12 @@ namespace Yupei
             template<typename U>
             friend class Yupei::vector;
 
+            template<typename T>
+            friend constexpr auto do_pointer_from(vector_iterator<T> it) noexcept -> T*
+            {
+                return it.current_;
+            }
+
             template<typename U>
             friend class vector_const_iterator;
 
@@ -159,6 +165,12 @@ namespace Yupei
             friend class Yupei::vector;
 
             using ContainerType = Yupei::vector<T>;
+
+            template<typename T>
+            friend constexpr auto do_pointer_from(vector_const_iterator<T> it) noexcept -> T*
+            {
+                return it.current_;
+            }
 
             const T* current_;
             const ContainerType* container_;
@@ -705,6 +717,7 @@ namespace Yupei
 
     namespace Internal
     {
+
         template<typename T>
         auto vector_iterator<T>::operator += (vector_iterator<T>::difference_type n) noexcept
             -> vector_iterator<T>&

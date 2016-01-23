@@ -326,6 +326,8 @@ namespace Yupei
 
 	using std::is_final;
 
+    using std::is_enum;
+
 
 	// If is_arithmetic<T>::value is true, the same result as integral_ constant<bool, T(-1) <T(0)>::value; otherwise,false
 
