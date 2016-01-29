@@ -319,16 +319,21 @@ namespace Yupei
 			:storage_{}, size_{}, capacity_{}
 		{}
 
-        vector(size_type n)
-            :vector()
+        vector(size_type n, memory_resource_ptr resource = {})
+            :vector{n, {}, resource}
+        {            
+        }
+
+        vector(size_type n, const value_type& v, memory_resource_ptr resource = {})
+            :vector{resource}
         {
             Reserve(n);
             for (size_type i{}; i < n; ++i)
-                AddElementAtLast();
+                AddElementAtLast(v);
             size_ = n;
         }
 
-        vector(memory_resource_ptr resource)
+        explicit vector(memory_resource_ptr resource)
             :allocator_type{resource}, storage_ {}, size_{}, capacity_{}
         {}
 
