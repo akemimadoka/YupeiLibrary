@@ -1,5 +1,6 @@
 #include "memory_resource.h"
 #include "..\mutex.h"
+#include "..\MemoryInternal.h"
 #include <new> //for ::operator new/delete
 #include <cstdint>
 
@@ -11,12 +12,12 @@ namespace Yupei
 	{
 	}
 
-	void * memory_resource::allocate(size_type bytes, size_type alignment)
+	void* memory_resource::allocate(size_type bytes, size_type alignment)
 	{
 		return do_allocate(bytes, alignment);
 	}
 
-	void memory_resource::deallocate(void * p, size_type bytes, size_type alignment)
+	void memory_resource::deallocate(void * p, size_type bytes, size_type alignment) noexcept
 	{
 		do_deallocate(p, bytes, alignment);
 	}
@@ -34,7 +35,7 @@ namespace Yupei
 			return ::operator new(Internal::GetFinalSize(bytes, alignment));
 		}
 
-		void do_deallocate(void* p, size_type bytes, size_type alignment) override
+		void do_deallocate(void* p, size_type bytes, size_type alignment) noexcept override
 		{
 			return ::operator delete(p, Internal::GetFinalSize(bytes, alignment));
 		}
@@ -55,7 +56,7 @@ namespace Yupei
 			throw std::bad_alloc();
 		}
 
-		void do_deallocate(void* p, size_type bytes, size_type alignment) override
+		void do_deallocate(void* p, size_type bytes, size_type alignment) noexcept override
 		{
 			//no-op
 		}
@@ -102,13 +103,13 @@ namespace Yupei
 		void* BufferManager::Allocate(size_type size, size_type alignment)
 		{
 			const auto offset = GetFinalOffset(static_cast<const void*>(buffer_ + cursor_), alignment);
-			if (cursor_ + offset + size > bufferSize_) return nullptr;
-			void* result = buffer_ + cursor_ + offset;
+            if (cursor_ + offset + size > bufferSize_) return {};
+			void* result = static_cast<void*>(buffer_ + cursor_ + offset);
 			cursor_ += (size + offset);
 			return result;
 		}
 
-		auto BufferManager::ReplaceBuffer(void * newBuffer, size_type newBufferSize) -> ByteType*
+		auto BufferManager::ReplaceBuffer(void * newBuffer, size_type newBufferSize) noexcept -> ByteType*
 		{
 			auto oldBuffer = buffer_;
 			buffer_ = static_cast<ByteType*>(newBuffer);
@@ -118,9 +119,9 @@ namespace Yupei
 			return oldBuffer;
 		}
 
-		void* SimplePoolManager::Allocate(size_type size, size_type alignment )
+		void* SimplePoolManager::Allocate(size_type size, size_type alignment)
 		{
-			if (size == 0) return nullptr;
+            if (size == 0) return {};
 
 			const auto totalSize = size + sizeof(Block);
 
@@ -134,7 +135,7 @@ namespace Yupei
 
 		}
 
-		void SimplePoolManager::Release()
+		void SimplePoolManager::Release() noexcept
 		{
 			while (headBlock_)
 			{
@@ -145,24 +146,16 @@ namespace Yupei
 		}
 	}
 
-	void * monotonic_buffer_resource::do_allocate(size_type bytes, size_type alignment)
+	void* monotonic_buffer_resource::do_allocate(size_type bytes, size_type alignment)
 	{
 		auto buffer = bufferManager_.Allocate(bytes, alignment);
-
 		if (buffer != nullptr) return buffer;
-
 		const auto size = Internal::GetFinalSize(bytes, alignment);
-
 		if (nextBufferSize_ < size) nextBufferSize_ = size;
-
 		buffer = poolManager_.Allocate(nextBufferSize_, alignof(std::max_align_t));
-
 		bufferManager_.ReplaceBuffer(buffer, nextBufferSize_);
-
 		nextBufferSize_ <<= 1;
-
 		if (nextBufferSize_ > MaxBufferSize) nextBufferSize_ = MaxBufferSize;
-
 		return bufferManager_.Allocate(bytes, alignment);
 	}
 
@@ -178,7 +171,7 @@ namespace Yupei
 			if (currentChunkSize_ > maxBlocks_) currentChunkSize_ = maxBlocks_;
 		}
 
-		void* Pool::Allocate(size_type bytes,size_type alignment)
+		void* Pool::Allocate(size_type bytes, size_type alignment)
 		{
 			if (chunkBegin_ == chunkEnd_)
 			{
@@ -197,14 +190,14 @@ namespace Yupei
 			return static_cast<void*>(p);
 		}
 
-		void Pool::Deallocate(void* address)
+		void Pool::Deallocate(void* address) noexcept
 		{
 			auto p = static_cast<Link*>(address);
 			p->nextBlock_ = freeList_;
 			freeList_ = p;
 		}
 
-		void Pool::Release()
+		void Pool::Release() noexcept
 		{
 			freeList_ = {};
 			chunkBegin_ = {};
@@ -227,14 +220,12 @@ namespace Yupei
 		pools_ = static_cast<Internal::Pool*>(::operator new(sizeof(Internal::Pool) * poolsCount_));
 
 		for (size_type i{};i < poolsCount_;++i)
-		{
-			::new (pools_ + i) Internal::Pool(((i+1) << 3), opts.max_blocks_per_chunk);
-		}
+            Yupei::construct(pools_ + i, (i + 1) << 3, opts.max_blocks_per_chunk);
 	}
 
-	void * unsynchronized_pool_resource::do_allocate(size_type bytes, size_type alignment)
+	void* unsynchronized_pool_resource::do_allocate(size_type bytes, size_type alignment)
 	{
-		auto finalSize = Internal::GetFinalSize(bytes, alignment);
+		const auto finalSize = Internal::GetFinalSize(bytes, alignment);
 		if (finalSize > maxBlockSize_)
 		{
 			return poolManager_.Allocate(bytes, alignment);
@@ -243,12 +234,12 @@ namespace Yupei
 		return pools_[poolIndex].Allocate(bytes, alignment);
 	}
 
-	void unsynchronized_pool_resource::do_deallocate(void * p, size_type bytes, size_type alignment)
+	void unsynchronized_pool_resource::do_deallocate(void * p, size_type bytes, size_type alignment) noexcept
 	{
 		auto finalSize = Internal::GetFinalSize(bytes, alignment);
 		if (finalSize > maxBlockSize_) return poolManager_.Deallocate(p);
 		const auto poolIndex = FindPool(bytes);
-		return pools_[poolIndex].Deallocate(p);
+		pools_[poolIndex].Deallocate(p);
 	}
 
 	bool unsynchronized_pool_resource::do_is_equal(const memory_resource& other) const noexcept

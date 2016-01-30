@@ -10,24 +10,16 @@ namespace Yupei
 	{
 		static constexpr std::size_t max_align = alignof(std::max_align_t);
 		
-	public:
-		
-		using size_type = std::size_t;
-
-		virtual ~memory_resource();
-
+	public:		
+		using size_type = std::size_t;		
 		void* allocate(size_type bytes, size_type alignment = max_align);
-
-		void deallocate(void* p, size_type bytes, size_type alignment = max_align);
-
+		void deallocate(void* p, size_type bytes, size_type alignment = max_align) noexcept;
 		bool is_equal(const memory_resource& other) const noexcept;
+        virtual ~memory_resource();
 
 	protected:
-
 		virtual void* do_allocate(size_type bytes, size_type alignment) = 0;
-
-		virtual void do_deallocate(void* p, size_type bytes, size_type alignment) = 0;
-
+		virtual void do_deallocate(void* p, size_type bytes, size_type alignment) noexcept = 0;
 		virtual bool do_is_equal(const memory_resource& other) const noexcept = 0;
 
 	};
@@ -59,22 +51,22 @@ namespace Yupei
 
 	public:
 		memory_resource_ptr() noexcept
-			: resource_(get_default_resource()) 
+            : resource_{get_default_resource()} 
 		{}
 
 		memory_resource_ptr(std::nullptr_t) noexcept
-			: resource_(get_default_resource()) 
+            : resource_{get_default_resource()} 
 		{}
 
 		explicit memory_resource_ptr(memory_resource* p) noexcept
-			: resource_(p ? p : get_default_resource()) 
+            : resource_{p ? p : get_default_resource()}
 		{}
 
 		memory_resource_ptr(const memory_resource_ptr&) noexcept = default;
 
 		 ~memory_resource_ptr() = default;
 
-		memory_resource& operator=(const memory_resource_ptr&) = delete;
+		memory_resource& operator =(const memory_resource_ptr&) = delete;
 
 		void reset(memory_resource* p) noexcept
 		{
@@ -107,12 +99,12 @@ namespace Yupei
 		}
 	};
 
-	inline bool operator==(memory_resource_ptr a, memory_resource_ptr b) 
+	inline bool operator==(memory_resource_ptr a, memory_resource_ptr b) noexcept
 	{ 
 		return a.get() == b.get(); 
 	}
 
-	inline bool operator!=(memory_resource_ptr a, memory_resource_ptr b) 
+	inline bool operator!=(memory_resource_ptr a, memory_resource_ptr b) noexcept
 	{ 
 		return a.get() != b.get(); 
 	}
@@ -126,7 +118,7 @@ namespace Yupei
 		using value_type = T;
 		using size_type = std::size_t;
 
-		constexpr polymorphic_allocator() noexcept = default;
+		polymorphic_allocator() noexcept = default;
 
 		polymorphic_allocator(memory_resource_ptr r)
 			:resource_{r}
@@ -140,7 +132,7 @@ namespace Yupei
 			return static_cast<value_type*>(resource_->allocate(n * sizeof(value_type), alignof(value_type)));
 		}
 
-		void deallocate(value_type* p, size_type n)
+		void deallocate(value_type* p, size_type n) noexcept
 		{
 			resource_->deallocate(p, n * sizeof(value_type), alignof(value_type));
 		}
@@ -148,13 +140,13 @@ namespace Yupei
 		template <typename U>
 		polymorphic_allocator(const polymorphic_allocator<U>& other) noexcept
 			:resource_{other.resource()}
-		{
-		}
+		{}
 
 		memory_resource_ptr resource() const noexcept
 		{
 			return resource_;
 		}
+
 	private:
 		memory_resource_ptr resource_;
 	};
@@ -171,18 +163,16 @@ namespace Yupei
 		return !(a == b);
 	}
 
-
 	namespace Internal
 	{
-		constexpr inline memory_resource::size_type GetFinalSize(memory_resource::size_type bytes, memory_resource::size_type alignment = alignof(std::max_align_t))
+		constexpr inline memory_resource::size_type GetFinalSize(memory_resource::size_type bytes, memory_resource::size_type alignment = alignof(std::max_align_t)) noexcept
 		{
 			return (bytes + alignment - 1) & ~(alignment - 1);
 		}
 
-		inline std::size_t GetFinalOffset(const void* addr, std::size_t alignment)
+		inline std::size_t GetFinalOffset(const void* addr, std::size_t alignment) noexcept
 		{
 			const auto mask = alignment - 1;
-
 			return mask - ((static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(addr)) - 1) & mask);
 		}
 
@@ -194,20 +184,20 @@ namespace Yupei
 		public:
 			using size_type = std::size_t;
 
-			BufferManager(void* buffer, size_type bufferSize)
+			BufferManager(void* buffer, size_type bufferSize) noexcept
 				:buffer_{static_cast<ByteType*>(buffer)},
 				bufferSize_{bufferSize},
 				cursor_{}
 			{
 			}
 
-			BufferManager() noexcept
+			constexpr BufferManager() noexcept
 				:buffer_{}, bufferSize_{}, cursor_{}
 			{}
 
 			void* Allocate(size_type size, size_type alignment);
 
-			ByteType* ReplaceBuffer(void* newBuffer, size_type newBufferSize);
+			ByteType* ReplaceBuffer(void* newBuffer, size_type newBufferSize) noexcept;
 
 			void Release() noexcept
 			{
@@ -221,7 +211,7 @@ namespace Yupei
 				cursor_ = {};
 			}
 
-			void Deallocate(void* ptr)
+			void Deallocate(void* ptr) noexcept
 			{
 				//no-op
 			}
@@ -239,11 +229,9 @@ namespace Yupei
 			DISABLECOPY(BufferManager)
 
 		private:
-
 			ByteType* buffer_;
 			size_type bufferSize_;
 			size_type cursor_;
-
 		};
 
 		class SimplePoolManager
@@ -257,17 +245,19 @@ namespace Yupei
 				Block* nextBlock_;
 				size_type blockSize_;
 			};
-		public:
 
+		public:
 			SimplePoolManager() noexcept
-				:headBlock_{} {}
+				:headBlock_{} 
+            {}
 
 			SimplePoolManager(memory_resource_ptr upstream)
-				:headBlock_{}, upstream_{ upstream } {}
+				:headBlock_{}, upstream_{ upstream } 
+            {}
 
 			void* Allocate(size_type size, size_type alignment = alignof(std::max_align_t));
 
-			void Deallocate(void* ptr)
+			void Deallocate(void* ptr) noexcept
 			{
 				//no-op
 			}
@@ -277,14 +267,13 @@ namespace Yupei
 				return upstream_;
 			}
 
-			void Release();
+			void Release() noexcept;
 
 			~SimplePoolManager() = default;
 
 			DISABLECOPY(SimplePoolManager)
 
 		private:
-
 			Block* headBlock_;
 			memory_resource_ptr upstream_;
 		};
@@ -292,17 +281,13 @@ namespace Yupei
 
 	class monotonic_buffer_resource : public memory_resource
 	{
-
 	public:
-
 		using size_type = std::size_t;
 
 	private:
-
 		static constexpr size_type MaxBufferSize = 1024 * 1024; //1MB
 
 	public:
-
 		explicit monotonic_buffer_resource(memory_resource_ptr upstream)
 			:poolManager_{ upstream }
 		{
@@ -319,13 +304,11 @@ namespace Yupei
 			poolManager_{upstream}
 		{
 			auto nextSize = Internal::GetFinalSize(bufferSize) << 1;
-
 			if (nextSize > MaxBufferSize) nextSize = MaxBufferSize;
-
 			nextBufferSize_ = nextSize;
 		}
 
-		void release()
+		void release() noexcept
 		{
 			nextBufferSize_ = {};
 			bufferManager_.Release();
@@ -343,7 +326,7 @@ namespace Yupei
 
 		void* do_allocate(size_type bytes, size_type alignment) override;
 
-		void do_deallocate(void* , size_type , size_type ) override
+		void do_deallocate(void* , size_type , size_type) noexcept override
 		{
 			//no-op
 		}
@@ -361,16 +344,13 @@ namespace Yupei
 
 	namespace Internal
 	{
-
 		class Pool
 		{
 		public:
 			using size_type = std::size_t;
 
 			const size_type blockSize_;
-
 			const size_type realBlockSize_;
-
 			const size_type maxBlocks_;
 
 			size_type currentChunkSize_;
@@ -381,7 +361,6 @@ namespace Yupei
 			};
 
 			SimplePoolManager poolManager_;
-
 			Link* freeList_ = {};
 
 		private:
@@ -398,7 +377,7 @@ namespace Yupei
 			ByteType* chunkEnd_ = {};
 
 		public:
-			Pool(memory_resource_ptr upstream,size_type blockSize, size_type maxBlocks)
+			Pool(memory_resource_ptr upstream, size_type blockSize, size_type maxBlocks)
 				:blockSize_{blockSize},
 				realBlockSize_{GetFinalSize(blockSize)},
 				maxBlocks_{maxBlocks == 0 ? maxBlocksCount : maxBlocks},
@@ -408,15 +387,15 @@ namespace Yupei
 			}
 
 			Pool(size_type blockSize, size_type maxBlocks)
-				:Pool({},blockSize,maxBlocks)
+                :Pool{{},blockSize,maxBlocks}
 			{
 			}
 
 			void* Allocate(size_type bytes,size_type alignment = alignof(std::max_align_t));
 
-			void Deallocate(void* address);
+			void Deallocate(void* address) noexcept;
 
-			void Release();
+			void Release() noexcept;
 
 			DISABLECOPY(Pool)
 
@@ -440,10 +419,12 @@ namespace Yupei
 		unsynchronized_pool_resource(const pool_options& opts, memory_resource_ptr upstream);
 
 		unsynchronized_pool_resource()
-			:unsynchronized_pool_resource(pool_options(), {}) {}
+            :unsynchronized_pool_resource{pool_options(), {}}
+        {}
 
 		unsynchronized_pool_resource(const pool_options& opts)
-			:unsynchronized_pool_resource(opts, {}) {}
+            :unsynchronized_pool_resource{opts, {}} 
+        {}
 
 		~unsynchronized_pool_resource()
 		{
@@ -452,7 +433,7 @@ namespace Yupei
 
 		DISABLECOPY(unsynchronized_pool_resource)
 
-		void release()
+		void release() noexcept
 		{
 			for (size_type i{};i < poolsCount_;++i)
 				pools_[i].Release();
@@ -471,18 +452,14 @@ namespace Yupei
 	protected:
 		void* do_allocate(size_type bytes, size_type alignment) override;
 
-		void do_deallocate(void* p, size_type bytes, size_type alignment) override;
+		void do_deallocate(void* p, size_type bytes, size_type alignment) noexcept override;
 
 		bool do_is_equal(const memory_resource& other) const noexcept override;
 
 	private:
-
 		Internal::Pool* pools_;
-
 		size_type poolsCount_;
-
 		size_type maxBlockSize_;
-
 		Internal::SimplePoolManager poolManager_;
 
 		size_type FindPool(size_type bytes) const noexcept
@@ -503,7 +480,7 @@ inline void *operator new(std::size_t sz, Yupei::memory_resource_ptr mrp)
 	return mrp->allocate(sz);
 }
 
-inline void operator delete(void *p, std::size_t sz, Yupei::memory_resource_ptr mrp)
+inline void operator delete(void *p, std::size_t sz, Yupei::memory_resource_ptr mrp) noexcept
 {
 	mrp->deallocate(p, sz);
 }
