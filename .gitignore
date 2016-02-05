@@ -226,3 +226,4 @@ Test/MemoryResourceTest/err.txt
 Test/SmartPointersTest/err.txt
 *.db
 Report20151201-1955 (5).diagsession
+*.opendb
