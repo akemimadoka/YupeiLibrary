@@ -97,7 +97,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="memoryreasource\MemoryResource.cpp" />
+    <ClCompile Include="MemoryResource\MemoryResource.cpp" />
     <ClCompile Include="_HashTable.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -113,7 +113,7 @@
     <ClInclude Include="HelperMacros.h" />
     <ClInclude Include="Iterator.h" />
     <ClInclude Include="List.h" />
-    <ClInclude Include="memoryreasource\MemoryResource.h" />
+    <ClInclude Include="MemoryResource\MemoryResource.h" />
     <ClInclude Include="Mutex.h" />
     <ClInclude Include="Numeric.h" />
     <ClInclude Include="Owner.h" />

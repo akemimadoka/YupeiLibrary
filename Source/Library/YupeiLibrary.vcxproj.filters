@@ -18,7 +18,7 @@
     <ClCompile Include="_HashTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="memoryreasource\MemoryResource.cpp">
+    <ClCompile Include="MemoryResource\MemoryResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,9 +92,6 @@
     <ClInclude Include="clib\RawMemory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="memoryreasource\MemoryResource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="smartpointers\DefaultDelete.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -102,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="smartpointers\UniquePtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryResource\MemoryResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
