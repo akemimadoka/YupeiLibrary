@@ -1,6 +1,6 @@
-#include "MemoryResource.h"
-#include "..\ConstructDestruct.h"
-#include "..\Mutex.h"
+#include "MemoryResource.hpp"
+#include "..\ConstructDestruct.hpp"
+#include "..\Mutex.hpp"
 #include <new> //for ::operator new/delete
 #include <cstdint>
 

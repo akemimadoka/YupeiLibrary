@@ -15,93 +15,93 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="_HashTable.cpp">
+    <ClCompile Include="MemoryResource\MemoryResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryResource\MemoryResource.cpp">
+    <ClCompile Include="Containers\_HashTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Assert.h">
+    <ClInclude Include="Assert.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Auto.h">
+    <ClInclude Include="Auto.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Comparators.h">
+    <ClInclude Include="Comparators.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConstructDestruct.h">
+    <ClInclude Include="ConstructDestruct.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Extensions.h">
+    <ClInclude Include="Extensions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ForwardList.h">
+    <ClInclude Include="Functional.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functional.h">
+    <ClInclude Include="Hash.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Hash.h">
+    <ClInclude Include="HelperMacros.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HelperMacros.h">
+    <ClInclude Include="Iterator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Iterator.h">
+    <ClInclude Include="Mutex.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="List.h">
+    <ClInclude Include="Numeric.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Mutex.h">
+    <ClInclude Include="Owner.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Numeric.h">
+    <ClInclude Include="Pair.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Owner.h">
+    <ClInclude Include="StopWatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Pair.h">
+    <ClInclude Include="Tuple.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StopWatch.h">
+    <ClInclude Include="TypeTraits.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tuple.h">
+    <ClInclude Include="Utility.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TypeTraits.h">
+    <ClInclude Include="Variant.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utility.h">
+    <ClInclude Include="Containers\_HashTable.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Variant.h">
+    <ClInclude Include="Containers\ForwardList.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vector.h">
+    <ClInclude Include="Containers\List.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="_HashTable.h">
+    <ClInclude Include="Containers\Vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="clib\RawMemory.h">
+    <ClInclude Include="MemoryResource\MemoryResource.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="smartpointers\DefaultDelete.h">
+    <ClInclude Include="SmartPointers\DefaultDelete.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="smartpointers\SharedPtr.h">
+    <ClInclude Include="SmartPointers\SharedPtr.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="smartpointers\UniquePtr.h">
+    <ClInclude Include="SmartPointers\UniquePtr.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryResource\MemoryResource.h">
+    <ClInclude Include="CLib\RawMemory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

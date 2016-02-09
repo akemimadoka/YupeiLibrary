@@ -16,6 +16,7 @@ bld/
 [Bb]in/
 [Oo]bj/
 
+
 # Roslyn cache directories
 *.ide/
 
@@ -56,6 +57,9 @@ dlldata.c
 *.pidb
 *.svclog
 *.scc
+*.cmake
+*.bin
+
 
 # Chutzpah Test files
 _Chutzpah*
@@ -227,3 +231,6 @@ Test/SmartPointersTest/err.txt
 *.db
 Report20151201-1955 (5).diagsession
 *.opendb
+
+Source/Library/CMakeFiles/
+Source/Library/CMakeCache.txt

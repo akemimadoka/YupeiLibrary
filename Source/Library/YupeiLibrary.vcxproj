@@ -21,12 +21,13 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2A77A2F0-5B90-494F-B890-6CE55407B5AA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_clang_3_7</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -34,9 +35,9 @@
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_Clang_3_7</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -63,9 +64,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Lib\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Lib\$(Platform)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -96,38 +101,43 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Containers\_HashTable.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
-    <ClCompile Include="_HashTable.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Assert.h" />
-    <ClInclude Include="Auto.h" />
-    <ClInclude Include="clib\RawMemory.h" />
-    <ClInclude Include="Comparators.h" />
-    <ClInclude Include="ConstructDestruct.h" />
-    <ClInclude Include="Extensions.h" />
-    <ClInclude Include="ForwardList.h" />
-    <ClInclude Include="Functional.h" />
-    <ClInclude Include="Hash.h" />
-    <ClInclude Include="HelperMacros.h" />
-    <ClInclude Include="Iterator.h" />
-    <ClInclude Include="List.h" />
-    <ClInclude Include="MemoryResource\MemoryResource.h" />
-    <ClInclude Include="Mutex.h" />
-    <ClInclude Include="Numeric.h" />
-    <ClInclude Include="Owner.h" />
-    <ClInclude Include="Pair.h" />
-    <ClInclude Include="smartpointers\DefaultDelete.h" />
-    <ClInclude Include="smartpointers\SharedPtr.h" />
-    <ClInclude Include="smartpointers\UniquePtr.h" />
-    <ClInclude Include="StopWatch.h" />
-    <ClInclude Include="Tuple.h" />
-    <ClInclude Include="TypeTraits.h" />
-    <ClInclude Include="Utility.h" />
-    <ClInclude Include="Variant.h" />
-    <ClInclude Include="Vector.h" />
-    <ClInclude Include="_HashTable.h" />
+    <ClInclude Include="Assert.hpp" />
+    <ClInclude Include="Auto.hpp" />
+    <ClInclude Include="CLib\RawMemory.h" />
+    <ClInclude Include="Comparators.hpp" />
+    <ClInclude Include="ConstructDestruct.hpp" />
+    <ClInclude Include="Containers\ForwardList.hpp" />
+    <ClInclude Include="Containers\List.hpp" />
+    <ClInclude Include="Containers\Vector.hpp" />
+    <ClInclude Include="Containers\_HashTable.hpp" />
+    <ClInclude Include="Extensions.hpp" />
+    <ClInclude Include="Functional.hpp" />
+    <ClInclude Include="Hash.hpp" />
+    <ClInclude Include="HelperMacros.hpp" />
+    <ClInclude Include="Iterator.hpp" />
+    <ClInclude Include="MemoryResource\MemoryResource.hpp" />
+    <ClInclude Include="Mutex.hpp" />
+    <ClInclude Include="Numeric.hpp" />
+    <ClInclude Include="Owner.hpp" />
+    <ClInclude Include="Pair.hpp" />
+    <ClInclude Include="SmartPointers\DefaultDelete.hpp" />
+    <ClInclude Include="SmartPointers\SharedPtr.hpp" />
+    <ClInclude Include="SmartPointers\UniquePtr.hpp" />
+    <ClInclude Include="StopWatch.hpp" />
+    <ClInclude Include="Tuple.hpp" />
+    <ClInclude Include="TypeTraits.hpp" />
+    <ClInclude Include="Utility.hpp" />
+    <ClInclude Include="Variant.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
