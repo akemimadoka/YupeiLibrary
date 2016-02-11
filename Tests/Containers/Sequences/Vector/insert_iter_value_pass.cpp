@@ -1,7 +1,9 @@
-#include <Containers\Vector.hpp>
-#include <cassert>
-#include <crtdbg.h>
+#define _DEBUG 1
 
+#include <Containers\Vector.hpp>
+#include <Assert.hpp>
+#include <iostream>
+#include <crtdbg.h>
 
 int main() 
 {
@@ -45,5 +47,6 @@ int main()
         assert(v[j] == 1);
         for (++j; j < v.size(); ++j)
             assert(v[j] == 0);
+
     }
 }

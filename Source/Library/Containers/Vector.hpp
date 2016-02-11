@@ -1,10 +1,10 @@
 #pragma once
 
-#include "TypeTraits.hpp"
-#include "MemoryResource\MemoryResource.hpp"
-#include "HelperMacros.hpp"
-#include "CLib\RawMemory.h"
-#include "ConstructDestruct.hpp"
+#include "..\TypeTraits.hpp"
+#include "..\MemoryResource\MemoryResource.hpp"
+#include "..\HelperMacros.hpp"
+#include "..\CLib\RawMemory.h"
+#include "..\ConstructDestruct.hpp"
 #include <algorithm>
 #include <cassert>
 #include <stdexcept> //for std::out_of_range
@@ -172,10 +172,10 @@ namespace Yupei
                 return it.current_;
             }
 
-            const T* current_;
+            T* current_;
             const ContainerType* container_;
 
-            vector_const_iterator(const T* p, const ContainerType* container)
+            vector_const_iterator(T* p, const ContainerType* container)
                 :current_{p},
                 container_{container}
             {}
@@ -329,7 +329,6 @@ namespace Yupei
             Reserve(n);
             for (size_type i{}; i < n; ++i)
                 AddElementAtLast(v);
-            size_ = n;
         }
 
         explicit vector(memory_resource_ptr resource)
@@ -546,13 +545,13 @@ namespace Yupei
                 const auto dist = std::distance(first, last);
                 ReserveMore(dist);
                 std::for_each(first, last, [this](auto&& v) {
-                    allocator_.AddElementAtLast(std::forward<decltype(v)&&>(v));
+                    AddElementAtLast(std::forward<decltype(v)&&>(v));
                 });
             }
             else
             {
                 std::for_each(first, last, [this](auto&& v) {
-                    allocator_.push_back(std::forward<decltype(v) && >(v));
+                    push_back(std::forward<decltype(v) && >(v));
                 });
             }
         }
@@ -585,7 +584,7 @@ namespace Yupei
         {
             const auto newSize = size() + n;
             const auto insertionOffset = pos - cbegin();   
-            const auto insertionPoint = begin() + insertionOffset;
+            const auto insertionPoint = pos.current_;
             pointer des{};
             if (pos == cend())
             {
@@ -601,8 +600,8 @@ namespace Yupei
                 const auto elementsToAlloc = CalcNewSize(newSize);
                 const auto newStorage = allocator_.allocate(elementsToAlloc);                
                 des = NoOverlapMove(storage_, insertionOffset, newStorage);
-                des = Yupei::construct_n(des, n, std::forward<ParamsT>(params)...);
-                NoOverlapMove(insertionPoint, size() - insertionOffset, des);
+                const auto cur = Yupei::construct_n(des, n, std::forward<ParamsT>(params)...);
+                NoOverlapMove(insertionPoint, size() - insertionOffset, cur);
                 allocator_.deallocate(storage_, capacity());
                 capacity_ = elementsToAlloc;
                 storage_ = newStorage;  
@@ -611,10 +610,11 @@ namespace Yupei
             else
             {
                 auto prevEnd = storage_ + size();
-                des = insertionPoint + n;
-                OverlappedMove(insertionPoint, n, des);
+                OverlappedMove(insertionPoint, n, insertionPoint + n);
                 for (size_type i{}; i < n; ++i)
-                    Yupei::construct(insertionPoint + i, std::forward<ParamsT>(params)...);                      
+                    Yupei::construct(insertionPoint + i, std::forward<ParamsT>(params)...);
+                des = insertionPoint;
+                size_ += n;
             }
             return MakeIterator(des);
         }
@@ -678,12 +678,12 @@ namespace Yupei
 
 		static pointer MoveImp(pointer src, size_type size, pointer des, std::false_type, std::true_type)
 		{
-			return static_cast<pointer>(memcpy(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type)));
+			return static_cast<pointer>(memcpy(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type))) + size;
 		}
 
         static pointer MoveImp(pointer src, size_type size, pointer des, std::true_type, std::true_type)
         {
-            return static_cast<pointer>(memmove(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type)));
+            return static_cast<pointer>(memmove(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type))) + size;
         }
 
         template<bool B>
@@ -739,7 +739,7 @@ namespace Yupei
             -> vector_iterator<T>&
         {
             current_ += n;
-            assert(*this > container_->end());
+            assert(*this <= container_->end());
             return *this;
         }
 
@@ -748,7 +748,7 @@ namespace Yupei
             -> vector_iterator<T>&
         {
             current_ -= n;
-            assert(*this < container_->begin());
+            assert(*this >= container_->begin());
             return *this;
         }
 
@@ -757,7 +757,7 @@ namespace Yupei
             -> vector_const_iterator<T>&
         {
             current_ += n;
-            assert(*this > container_->end());
+            assert(*this <= container_->end());
             return *this;
         }
 
@@ -766,7 +766,7 @@ namespace Yupei
             -> vector_const_iterator<T>&
         {
             current_ -= n;
-            assert(*this < container_->begin());
+            assert(*this >= container_->begin());
             return *this;
         }
     }
