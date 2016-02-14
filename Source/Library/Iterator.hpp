@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TypeTraits.h"
+#include "TypeTraits.hpp"
 #include <iterator>
 #include <cstddef> //for std::ptrdiff_t
 
@@ -33,14 +33,17 @@ namespace Yupei
             using type = std::remove_reference_t<decltype(*std::declval<IteratorT>())>;
         };
 
+        template<typename T, typename = void>
+        struct IteratorCategoryImp {};
+
         template<typename T>
-        struct IteratorCategoryImp
+        struct IteratorCategoryImp<T, void_t<typename T::iterator_category>>
         {
             using type = typename T::iterator_category;
         };
 
         template<typename T>
-        struct IteratorCategoryImp<T*>
+        struct IteratorCategoryImp<T*, void>
             : std::enable_if<std::is_object<T>::value, std::random_access_iterator_tag> {};
 
         template<typename T>
@@ -75,7 +78,17 @@ namespace Yupei
     template<typename T>
     using pointer_t = deteced_or_t<value_type_t<T>*, Internal::PointerOp, T>;
 
+    template<typename IteratorT, typename = void>
+    struct is_iterator : std::false_type {};
+
     template<typename IteratorT>
-    struct is_input_iterator : bool_constant<std::is_base_of<std::input_iterator_tag, iterator_category_t<IteratorT>>> {};
+    struct is_iterator<IteratorT, 
+        void_t<iterator_category_t<IteratorT>>> : std::true_type {};
+
+    template<typename IteratorT, bool B = is_iterator<IteratorT>::value>
+    struct is_input_iterator : std::false_type {};
+
+    template<typename IteratorT>
+    struct is_input_iterator<IteratorT, true> : bool_constant<std::is_base_of<std::input_iterator_tag, iterator_category_t<IteratorT>>::value> {};
 }
 

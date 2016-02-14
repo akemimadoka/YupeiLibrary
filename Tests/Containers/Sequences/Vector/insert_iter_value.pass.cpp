@@ -49,4 +49,5 @@ int main()
             assert(v[j] == 0);
 
     }
+    assert(_CrtDumpMemoryLeaks() == 0);
 }

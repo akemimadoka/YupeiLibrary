@@ -1,37 +1,43 @@
-#pragma once
+﻿#pragma once
 
-#include "SmartPointers\unique_ptr.h"
-#include "MemoryReasource\memory_resource.h"
-#include "HelperMacros.h"
-#include "MemoryInternal.h"
-#include "iterator.h"
-#include "utility.h"
+#include "..\SmartPointers\UniquePtr.hpp"
+#include "..\MemoryResource\MemoryResource.hpp"
+#include "..\HelperMacros.hpp"
+#include "..\ConstructDestruct.hpp"
+#include "..\Iterator.hpp"
+#include "..\Utility.hpp"
+#include "..\Assert.hpp"
+#include <algorithm>
+#include <initializer_list>
 
 namespace Yupei
 {
+    template<typename>
+    class list;
+
 	namespace Internal
 	{
 		template<typename T>
-		struct list_node;
+		struct ListNode;
 
 		template<typename T>
-		struct list_node_base;
+		struct ListNodeBase;
 
 		template<typename T>
 		struct NodeTraits
 		{			
-			using NodeBaseType = list_node_base<T>;
-			using NodeType = list_node<T>;
+			using NodeBaseType = ListNodeBase<T>;
+			using NodeType = ListNode<T>;
 			using LinkPointer = NodeBaseType*;
 			using NodePointer = NodeType*;
 
-			static auto AsNode(list_node_base<T>* p) noexcept
+			static auto AsNode(ListNodeBase<T>* p) noexcept
 				-> NodePointer
 			{
-				return reinterpret_cast<list_node<T>*>(p);
+				return reinterpret_cast<ListNode<T>*>(p);
 			}
 
-			static auto AsNode(list_node<T>* p) noexcept
+			static auto AsNode(ListNode<T>* p) noexcept
 				-> NodePointer
 			{
 				return p;
@@ -39,7 +45,7 @@ namespace Yupei
 		};
 
 		template<typename T>
-		struct list_node_base
+		struct ListNodeBase
 		{
 		private:						
 			using LinkPointer = typename NodeTraits<T>::LinkPointer;
@@ -70,14 +76,14 @@ namespace Yupei
 				return NodeTraits<T>::AsNode(this);
 			}
 
-			list_node_base() noexcept
+			ListNodeBase() noexcept
 				:prev_{ self() },
 				next_{ self() }
 			{}
 		};
 
 		template<typename T>
-		struct list_node : public list_node_base<T>
+		struct ListNode : public ListNodeBase<T>
 		{
 		private:
 			using NodePointer = typename NodeTraits<T>::NodePointer;
@@ -91,181 +97,209 @@ namespace Yupei
 			}
 		};
 
+        template<typename T>
+        class ListIterator
+        {
+            using NodePointer = typename Internal::NodeTraits<T>::NodePointer;               
+            using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
+            
+
+            LinkPointer cur_;
+
+            template<typename>
+            friend class Yupei::list;
+
+            template<typename>
+            friend class ListConstIterator;
+
+            explicit ListIterator(LinkPointer p) noexcept
+                :cur_{p}
+            {}
+
+        public:
+            using value_type = T;
+            using reference = value_type&;
+            using pointer = value_type*;
+            using difference_type = std::ptrdiff_t;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            constexpr ListIterator() noexcept
+                : cur_{}
+            {}
+
+            reference operator*() const noexcept
+            {
+                return NodeTraits<T>::AsNode(cur_)->item_;
+            }
+
+            pointer operator->() const noexcept
+            {
+                return std::addressof(Internal::NodeTraits<T>::AsNode(cur_)->item_);
+            }
+
+            ListIterator& operator++() noexcept
+            {
+                cur_ = cur_->next_;
+                return *this;
+            }
+
+            ListIterator operator++(int) noexcept
+            {
+                auto tmp = *this;
+                ++*this;
+                return tmp;
+            }
+
+            ListIterator& operator--() noexcept
+            {
+                cur_ = cur_->prev_;
+                return *this;
+            }
+
+            ListIterator operator--(int) noexcept
+            {
+                auto tmp = *this;
+                --*this;
+                return tmp;
+            }
+
+            bool operator==(const ListIterator& rhs) const noexcept
+            {
+                return cur_ == rhs.cur_;
+            }
+
+            bool operator!=(const ListIterator& rhs) const noexcept
+            {
+                return cur_ != rhs.cur_;
+            }
+        };
+
+        template<typename T>
+        class ListConstIterator
+        {
+            using NodePointer = Internal::ListNode<T>*;       
+            using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;           
+            LinkPointer cur_;
+
+            template<typename>
+            friend class Yupei::list;
+
+            ListConstIterator(LinkPointer p) noexcept
+                :cur_{p}
+            {}
+
+        public:
+            using difference_type = std::ptrdiff_t;
+            using value_type = T;
+            using reference = const value_type&;
+            using pointer = const value_type*;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            constexpr ListConstIterator() noexcept
+                : cur_{}
+            {}
+
+            ListConstIterator(const ListIterator<T>& it) noexcept
+                : cur_{it.cur_}
+            {}
+
+            reference operator*() const noexcept
+            {
+                return NodeTraits<T>::AsNode(cur_)->item_;
+            }
+
+            pointer operator->() const noexcept
+            {
+                return std::addressof(NodeTraits<T>::AsNode(cur_)->item_);
+            }
+
+            ListConstIterator& operator++() noexcept
+            {
+                cur_ = cur_->next_;
+                return *this;
+            }
+
+            ListConstIterator operator++(int) noexcept
+            {
+                auto tmp = *this;
+                ++*this;
+                return tmp;
+            }
+
+            ListConstIterator& operator--() noexcept
+            {
+                cur_ = cur_->prev_;
+                return *this;
+            }
+
+            ListConstIterator operator--(int) noexcept
+            {
+                auto tmp = *this;
+                --*this;
+                return tmp;
+            }
+
+            bool operator==(const ListConstIterator& rhs) const noexcept
+            {
+                return cur_ == rhs.cur_;
+            }
+
+            bool operator!=(const ListConstIterator& rhs) const noexcept
+            {
+                return cur_ != rhs.cur_;
+            }
+        };
 	}
 	
+	
 	template<typename T>
-	class list_iterator : public iterator<bidirectional_iterator_tag,T>
+	class list
 	{
-		using NodePointer = typename Internal::NodeTraits<T>::NodePointer;
-		using BaseType = iterator<bidirectional_iterator_tag, T>;
-		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
-
-		LinkPointer cur_;
-
-		template<typename U>
-		friend class list;
-
-		template<typename U>
-		friend class list_const_iterator;
-
-		explicit list_iterator(LinkPointer p) noexcept
-			:cur_{p}
-		{}
-
-	public:
-		constexpr list_iterator() noexcept
-			:cur_{}
-		{}
-
-		reference_t<BaseType> operator*() const noexcept
-		{ 
-			return Internal::NodeTraits<T>::AsNode(cur_)->item_; 
-		}
-
-		pointer_t<BaseType> operator->() const noexcept
-		{ 
-			return Yupei::addressof(Internal::NodeTraits<T>::AsNode(cur_)->item_); 
-		}
-
-		list_iterator& operator++() noexcept
-		{
-			cur_ = cur_->next_;
-			return *this;
-		}
-
-		list_iterator operator++(int) noexcept
-		{
-			auto tmp = *this;
-			++*this;
-			return tmp;
-		}
-
-		list_iterator& operator--() noexcept
-		{
-			cur_ = cur_->prev_;
-			return *this;
-		}
-
-		list_iterator operator--(int) noexcept
-		{
-			auto tmp = *this;
-			--*this;
-			return tmp;
-		}
-
-		bool operator==(const list_iterator& rhs) const noexcept
-		{
-			return cur_ == rhs.cur_;
-		}
-
-		bool operator!=(const list_iterator& rhs) const noexcept
-		{
-			return cur_ != rhs.cur_;
-		}
-	};
-
-	template<typename T>
-	class list_const_iterator : public iterator<bidirectional_iterator_tag, T, std::ptrdiff_t, const T*, const T&>
-	{
-		using NodePointer = Internal::list_node<T>*;
-		using BaseType = iterator<bidirectional_iterator_tag, T, std::ptrdiff_t, const T*, const T&>;
-		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
-		LinkPointer cur_;
-
-		template<typename T>
-		friend class list;
-
-		list_const_iterator(LinkPointer p) noexcept
-			:cur_{ p }
-		{}
-
-		constexpr list_const_iterator() noexcept
-			: cur_{}
-		{}
-
-		explicit list_const_iterator(list_iterator<T> it) noexcept
-			:cur_{it.cur_}
-		{}
-	public:
-		reference_t<BaseType> operator*() const noexcept
-		{ 
-			return Internal::NodeTraits<T>::AsNode(cur_)->item_; 
-		}
-
-		pointer_t<BaseType> operator->() const noexcept
-		{ 
-			return Yupei::addressof(Internal::NodeTraits<T>::AsNode(cur_)->item_);
-		}
-
-		list_const_iterator& operator++() noexcept
-		{
-			cur_ = cur_->next_;
-			return *this;
-		}
-
-		list_const_iterator operator++(int) noexcept
-		{
-			auto tmp = *this;
-			++*this;
-			return tmp;
-		}
-
-		list_const_iterator& operator--() noexcept
-		{
-			cur_ = cur_->prev_;
-			return *this;
-		}
-
-		list_const_iterator operator--(int) noexcept
-		{
-			auto tmp = *this;
-			--*this;
-			return tmp;
-		}
-
-		bool operator==(const list_const_iterator& rhs) const noexcept
-		{
-			return cur_ == rhs.cur_;
-		}
-
-		bool operator!=(const list_const_iterator& rhs) const noexcept
-		{
-			return cur_ != rhs.cur_;
-		}
-	};
-
-	template<typename T>
-	class list : private polymorphic_allocator<Internal::list_node<T>>
-	{
-
 	public:
 		CONTAINER_DEFINE(T)
-		using iterator = list_iterator<T>;
-		using const_iterator = list_const_iterator<T>;
-		using allocator_type = polymorphic_allocator<Internal::list_node<T>>;
+		using iterator = Internal::ListIterator<T>;
+		using const_iterator = Internal::ListConstIterator<T>;
+		using allocator_type = polymorphic_allocator<T>;
 
 	private:
-		using NodeType = typename Internal::NodeTraits<T>::NodeType;
-		using NodeBaseType = typename Internal::NodeTraits<T>::NodeBaseType;
-		using LinkPointer = typename Internal::NodeTraits<T>::LinkPointer;
+        using NodeTraits = Internal::NodeTraits<value_type>;
+		using NodeType = typename NodeTraits::NodeType;
+		using NodeBaseType = typename NodeTraits::NodeBaseType;
+		using LinkPointer = typename NodeTraits::LinkPointer;
 		using NodePointer = NodeType*;
 
 	public:
+        list() noexcept
+            :count_{}
+        {}
 
-		list() noexcept
-			:count_{}
-		{}
+        list(size_type count, const value_type& v, memory_resource_ptr pmr = {})
+            :allocator_{pmr}
+        {
+            for (size_type i{}; i < count; ++i)
+                push_back(v);
+        }
 
 		explicit list(memory_resource_ptr pmr)
 			:count{},
-			allocator_type{pmr}
+			allocator_{pmr}
 		{}
 
-		explicit list(size_type n)
+        explicit list(size_type n, memory_resource_ptr pmr = {})
+            :allocator_{pmr}
 		{
-			for (; n != 0 ; --n)
-				emplace_back();
+            for (size_type i{}; i < count; ++i)
+                emplace_back();
 		}
+
+        template<typename InputItT, std::enable_if_t<is_input_iterator<InputItT>{}, int> = 0>
+        list(InputItT first, InputItT last, memory_resource_ptr pmr = {})
+            :allocator_{pmr}
+        {
+            std::for_each(first, last, [&](const value_type_t<InputItT>& v) {
+                push_back(v);
+            });
+        }
 
 		list(const list& other)
 			:list()
@@ -283,7 +317,7 @@ namespace Yupei
 
 		list& operator=(list&& other) noexcept
 		{
-			list(Yupei::move(other)).swap(*this);
+			list(std::move(other)).swap(*this);
 			return *this;
 		}
 
@@ -298,37 +332,37 @@ namespace Yupei
 			clear();
 		}
 
-		//TODO: if(count == 0) throw xxx;
 		//CANNOT BE NOEXCEPT!
 		reference front()
 		{
-			if (count_ != 0)
-				return head_.next_->AsNode()->item_;
+			YPASSERT(!empty(), "Call front on an empty list!");
+			return head_.next_->AsNode()->item_;
 		}
 
 		const_reference front() const
 		{
-			if (count_ != 0)
-				return head_.next_->AsNode()->item_;
+			YPASSERT(!empty(), "Call front on an empty list!");
+			return head_.next_->AsNode()->item_;
 		}
 
 		reference back()
 		{
-			if (count_ != 0)
-				return head_.prev_->AsNode()->item_;
+			YPASSERT(!empty(), "Call back on an empty list!");
+			return head_.prev_->AsNode()->item_;
 		}
 
 		const_reference back() const
 		{
-			if (count_ != 0)
-				return head_.prev_->AsNode()->item_;
+			YPASSERT(!empty(), "Call back on an empty list!");
+			return head_.prev_->AsNode()->item_;
 		}
 
 		void swap(list& other) noexcept
 		{
-			Yupei::swap(head_.next_, other.head_.next_);
-			Yupei::swap(head_.prev_, other.head_.prev_);
-			Yupei::swap(count_, other.count_);
+            using std::swap;
+			swap(head_.next_, other.head_.next_);
+			swap(head_.prev_, other.head_.prev_);
+			swap(count_, other.count_);
 
 			if (empty())
 				head_.next_ = head_.prev_ = head_.self();
@@ -345,9 +379,9 @@ namespace Yupei
 		template<typename ...Args>
 		auto MakeNode(Args&&... args)
 		{
-			const auto deleteFn = [this](NodePointer p) {this->deallocate(p, 1);};
-			unique_ptr<NodeType, decltype(deleteFn)> holder{ this->allocate(1),deleteFn };			
-			Yupei::construct(Yupei::addressof(holder->item_), Yupei::forward<Args>(args)...);
+			const auto deleteFn = [this](NodePointer p) {allocator_.deallocate(p, 1);};
+			unique_ptr<NodeType, decltype(deleteFn)> holder{allocator_.allocate(1),deleteFn };
+			Yupei::construct(std::addressof(holder->item_), std::forward<Args>(args)...);
 			return holder;
 		}
 
@@ -359,7 +393,7 @@ namespace Yupei
 
 		void push_back(value_type&& v)
 		{
-			insert(cend(), Yupei::move(v));
+			insert(cend(), std::move(v));
 		}
 
 		void push_front(const value_type& v)
@@ -369,32 +403,35 @@ namespace Yupei
 
 		void push_front(value_type&& v)
 		{
-			insert(cbegin(), Yupei::move(v));
+			insert(cbegin(), std::move(v));
 		}
 
-		template<typename... Args>
-		void emplace_back(Args&&... args)
-		{
-			auto node = MakeNode(Yupei::forward<Args>(args)...);
-			InsertInterval(head_.prev_, node.get(), node.get());
-			node.release();
-			++count_;
-		}
+        template<typename... Args>
+        void emplace_front(Args&&... args)
+        {
+            Insert(cbegin(), std::forward<Args>(args)...);
+        }
 
-		void pop_back()
+        template<typename... Args>
+        void emplace_back(Args&&... args)
+        {
+            Insert(cend(), std::forward<Args>(args)...);
+        }
+
+		void pop_back() noexcept
 		{
 			if (count_ != 0)
 			{
-				DeallocateNode(head_.prev_);
+				DeallocateNode(NodeTraits::AsNode(head_.prev_));
 				--count_;
 			}
 		}
 
-		void pop_front()
+		void pop_front() noexcept
 		{
 			if (count_ != 0)
 			{
-				DeallocateNode(head_.next_);
+                DeallocateNode(NodeTraits::AsNode(head_.next_));
 				--count_;
 			}
 		}
@@ -406,7 +443,7 @@ namespace Yupei
 
 		iterator insert(const_iterator position, value_type&& v)
 		{
-			return Insert(position, Yupei::move(v));
+			return Insert(position, std::move(v));
 		}
 
 		template<typename InputItT>
@@ -421,15 +458,26 @@ namespace Yupei
 			return it;
 		}
 
+        iterator insert(const_iterator pos, std::initializer_list<T> ilist)
+        {
+            return insert(pos, ilist.begin(), ilist.end());
+        }
+
 		iterator erase(const_iterator position)
 		{
 			auto cur = position.cur_;
 			UnlinkNode(cur,cur);
 			auto ret = cur->next_;
-			DeallocateNode(cur);
+			DeallocateNode(NodeTraits::AsNode(cur));
 			--count_;
 			return iterator{ ret };
 		}
+
+        template<typename... Args>
+        iterator emplace(const_iterator pos, Args&&... args)
+        {
+            return Insert(pos, std::forward<Args>(args)...);
+        }
 
 		iterator erase(const_iterator position, const_iterator last)
 		{
@@ -528,7 +576,7 @@ namespace Yupei
 		{
 			auto firstNode = first.cur_->AsNode();
 			auto lastNode = last.cur_->AsNode();
-			auto n = Yupei::distance(first, last);
+			auto n = std::distance(first, last);
 			auto prev = lastNode->prev_->AsNode();
 			other.UnlinkNode(firstNode, prev);
 			auto pos = position.cur_->AsNode();
@@ -544,10 +592,10 @@ namespace Yupei
 			while (cur != head)
 			{
 				auto next = cur->next_;
-				Yupei::swap(cur->next_, cur->prev_);
+				std::swap(cur->next_, cur->prev_);
 				cur = next;
 			}
-			Yupei::swap(head_.prev_, head_.next_);
+			std::swap(head_.prev_, head_.next_);
 		}
 
 		template<typename CompareT>
@@ -614,20 +662,21 @@ namespace Yupei
 		}
 
 	private:
-		Internal::list_node_base<T> head_;
+		Internal::ListNodeBase<T> head_;
 		size_type count_;
+        polymorphic_allocator<Internal::ListNode<T>> allocator_;
 
 		void DeallocateNode(NodePointer node)
 		{
-			Yupei::destroy(Yupei::addressof(node->item_));
-			this->deallocate(node, 1);
+			Yupei::destroy(std::addressof(node->item_));
+			allocator_.deallocate(node, 1);
 		}
 
 		//insert before pos
 		template<typename ...Args>
 		iterator Insert(const_iterator position, Args&&... args)
 		{
-			auto node = MakeNode(Yupei::forward<Args>(args)...);
+			auto node = MakeNode(std::forward<Args>(args)...);
 			auto cur = position.cur_;
 			auto prev = cur->prev_;
 			node->next_ = cur;
@@ -655,5 +704,64 @@ namespace Yupei
 			last->next_->prev_ = prev;
 		}		
 	};
+
+    template<typename T>
+    decltype(auto) begin(const list<T>& l) noexcept
+    {
+        return l.begin();
+    }
+
+    template<typename T>
+    decltype(auto) begin(list<T>& l) noexcept
+    {
+        return l.begin();
+    }
+
+    template<typename T>
+    decltype(auto) end(const list<T>& l) noexcept
+    {
+        return l.end();
+    }
+
+    template<typename T>
+    decltype(auto) end(list<T>& l) noexcept
+    {
+        return l.end();
+    }
+
+    template<typename T>
+    decltype(auto) cbegin(const list<T>& l) noexcept
+    {
+        return begin(l);
+    }
+
+    template<typename T>
+    decltype(auto) cend(const list<T>& l) noexcept
+    {
+        return end(l);
+    }
+
+    template<typename T>
+    auto size(const list<T>& l) noexcept -> typename list<T>::size_type
+    {
+        return l.size();
+    }
+
+    template<typename T>
+    bool operator == (const list<T>& lhs, const list<T>& rhs)
+    {
+        if (size(lhs) != size(rhs)) return false;
+        auto lStart = begin(lhs);
+        auto rStart = end(rhs);
+        while (lStart != lhs.end())
+            if (*lStart++ != *rStart++) return false;
+        return true;
+    }
+
+    template<typename T>
+    bool operator != (const list<T>& lhs, const list<T>& rhs)
+    {
+        return !(lhs == rhs);
+    }
 }
 
