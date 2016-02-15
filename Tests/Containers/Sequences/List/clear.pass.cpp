@@ -14,13 +14,12 @@
 #include <Containers/List.hpp>
 #include <cassert>
 
-
 int main()
 {
     {
         int a[] = {1, 2, 3};
         Yupei::list<int> c(a, a + 3);
-        c.clear();
+        c.clear();      
         assert(c.empty());
     }
     assert(_CrtDumpMemoryLeaks() == 0);

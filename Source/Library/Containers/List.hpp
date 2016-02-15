@@ -274,7 +274,7 @@ namespace Yupei
         {}
 
         list(size_type count, const value_type& v, memory_resource_ptr pmr = {})
-            :allocator_{pmr}
+            :allocator_{pmr},count_{}
         {
             for (size_type i{}; i < count; ++i)
                 push_back(v);
@@ -286,7 +286,7 @@ namespace Yupei
 		{}
 
         explicit list(size_type n, memory_resource_ptr pmr = {})
-            :allocator_{pmr}
+            :allocator_{pmr}, count_{}
 		{
             for (size_type i{}; i < count; ++i)
                 emplace_back();
@@ -294,7 +294,7 @@ namespace Yupei
 
         template<typename InputItT, std::enable_if_t<is_input_iterator<InputItT>{}, int> = 0>
         list(InputItT first, InputItT last, memory_resource_ptr pmr = {})
-            :allocator_{pmr}
+            :allocator_{pmr}, count_{}
         {
             std::for_each(first, last, [&](const value_type_t<InputItT>& v) {
                 push_back(v);
@@ -302,7 +302,7 @@ namespace Yupei
         }
 
 		list(const list& other)
-			:list()
+			:list{other.allocator_.resource()}
 		{
 			insert(cend(), other.begin(), other.end());
 		}
@@ -422,7 +422,9 @@ namespace Yupei
 		{
 			if (count_ != 0)
 			{
-				DeallocateNode(NodeTraits::AsNode(head_.prev_));
+                const auto n = head_.prev_;
+                UnlinkNode(n, n);
+				DeallocateNode(NodeTraits::AsNode(n));
 				--count_;
 			}
 		}
@@ -431,7 +433,9 @@ namespace Yupei
 		{
 			if (count_ != 0)
 			{
-                DeallocateNode(NodeTraits::AsNode(head_.next_));
+                const auto n = head_.next_;
+                UnlinkNode(n, n);
+                DeallocateNode(NodeTraits::AsNode(n));
 				--count_;
 			}
 		}
@@ -449,12 +453,11 @@ namespace Yupei
 		template<typename InputItT>
 		iterator insert(const_iterator position, InputItT first, InputItT last)
 		{
-			if (first == last) return iterator{ position.cur_ };
-			auto firstNode = MakeNode(*first).release()->AsNode();
-			InsertInterval(position.cur_, firstNode, firstNode);
-			auto it = iterator{ firstNode };
-			for (;first != last;++first)
-				insert(position, *first);
+			if (first == last) return iterator{ position.cur_ };			
+            auto it = insert(position, *first);			         
+            std::for_each(++first, last, [&](const value_type_t<InputItT>& v) {
+                insert(position, v);
+            });
 			return it;
 		}
 
@@ -466,7 +469,7 @@ namespace Yupei
 		iterator erase(const_iterator position)
 		{
 			auto cur = position.cur_;
-			UnlinkNode(cur,cur);
+			UnlinkNode(cur, cur);
 			auto ret = cur->next_;
 			DeallocateNode(NodeTraits::AsNode(cur));
 			--count_;
@@ -676,15 +679,16 @@ namespace Yupei
 		template<typename ...Args>
 		iterator Insert(const_iterator position, Args&&... args)
 		{
-			auto node = MakeNode(std::forward<Args>(args)...);
+			auto holder = MakeNode(std::forward<Args>(args)...);
+            auto node = holder.release();
 			auto cur = position.cur_;
 			auto prev = cur->prev_;
 			node->next_ = cur;
-			cur->prev_ = node.get();
-			prev->next_ = node.get();
+			cur->prev_ = node;
+			prev->next_ = node;
 			node->prev_ = prev;
 			++count_;
-			return iterator{ node.release() };
+			return iterator{node};
 		}
 
 		//[first,last]
@@ -751,11 +755,7 @@ namespace Yupei
     bool operator == (const list<T>& lhs, const list<T>& rhs)
     {
         if (size(lhs) != size(rhs)) return false;
-        auto lStart = begin(lhs);
-        auto rStart = end(rhs);
-        while (lStart != lhs.end())
-            if (*lStart++ != *rStart++) return false;
-        return true;
+        return std::mismatch(begin(lhs), end(lhs), begin(rhs), end(rhs)) == std::make_pair(end(lhs), end(rhs));
     }
 
     template<typename T>

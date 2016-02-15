@@ -32,3 +32,7 @@ for dirName, subdirList, fileList in os.walk('.'):
                 print(os.sep.join([dirName, fname]) + " compiled & linked failed!\n")
             print(fname)
 
+for t in binaries:
+    subprocess.call(t)
+
+
