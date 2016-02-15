@@ -332,7 +332,6 @@ namespace Yupei
             clear();
         }
 
-        //CANNOT BE NOEXCEPT!
         reference front()
         {
             YPASSERT(!empty(), "Call front on an empty list!");

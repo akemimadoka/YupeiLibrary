@@ -4,7 +4,6 @@
 
 namespace Yupei
 {
-
 #ifdef __cpp_lib_void_t 
     using std::void_t;
 #else
@@ -23,7 +22,7 @@ namespace Yupei
 
     template<std::size_t N>
     using size_constant = std::integral_constant<std::size_t, N>;
-   
+
     template<typename Type, typename... Args>
     struct is_one_of;
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "SmartPointers\unique_ptr.h"
-#include "MemoryReasource\memory_resource.h"
-#include "HelperMacros.h"
-#include "MemoryInternal.h"
-#include "TypeTraits.h"
-#include "utility.h"
+#include "..\SmartPointers\UniquePtr.hpp"
+#include "..\MemoryResource\MemoryResource.hpp"
+#include "..\HelperMacros.hpp"
+#include "..\ConstructDestruct.hpp"
+#include "..\TypeTraits.hpp"
+#include "..\Utility.hpp"
 #include <initializer_list>
 
 namespace Yupei

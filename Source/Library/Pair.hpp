@@ -43,7 +43,7 @@ namespace Yupei
             std::is_copy_constructible<first_type>::value &&
             std::is_copy_constructible<second_type>::value &&
             !(std::is_convertible<const first_type&, first_type>::value &&
-            std::is_convertible<const second_type&, second_type>::value), bool> = false>
+                std::is_convertible<const second_type&, second_type>::value), bool> = false>
         explicit constexpr pair(const T1& x, const T2& y)
             :first(x), second(y)
         {
@@ -55,7 +55,7 @@ namespace Yupei
             std::is_convertible<U&&, first_type>::value &&
             std::is_convertible<V&&, second_type>::value, bool> = true>
         constexpr pair(U&& x, V&& y)
-            noexcept(std::is_nothrow_constructible<first_type, U&&>::value && 
+            noexcept(std::is_nothrow_constructible<first_type, U&&>::value &&
                 std::is_nothrow_constructible<second_type, V&&>::value)
             :first(std::forward<U>(x)),
             second(std::forward<V>(y))
@@ -127,17 +127,17 @@ namespace Yupei
         template <typename... Args1, typename... Args2>
         pair(piecewise_construct_t, tuple<Args1...> val1, tuple<Args2...> val2);
 
-        pair& operator =(const pair& p) 
+        pair& operator =(const pair& p)
             noexcept(std::is_nothrow_copy_assignable<first_type>::value &&
-            std::is_nothrow_copy_assignable<second_type>::value)
+                std::is_nothrow_copy_assignable<second_type>::value)
         {
             first = p.first;
             second = p.second;
         }
 
-        pair& operator= (pair&& p) 
+        pair& operator= (pair&& p)
             noexcept(std::is_nothrow_move_assignable<first_type>::value &&
-            std::is_nothrow_move_assignable<second_type>::value)
+                std::is_nothrow_move_assignable<second_type>::value)
         {
             first = std::move(p.first);
             second = std::move(p.second);
@@ -233,7 +233,7 @@ namespace Yupei
     template<typename T1, typename T2>
     constexpr auto make_pair(T1&& x, T2&& y)
     {
-        return pair<Internal::TupleRetType<T1>, Internal::TupleRetType<T2>>(std::forward<T1>(x),std::forward<T2>(y));
+        return pair<Internal::TupleRetType<T1>, Internal::TupleRetType<T2>>(std::forward<T1>(x), std::forward<T2>(y));
     }
 
     template<typename Type>
