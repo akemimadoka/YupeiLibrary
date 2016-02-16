@@ -6,7 +6,9 @@
 #include "..\ConstructDestruct.hpp"
 #include "..\TypeTraits.hpp"
 #include "..\Utility.hpp"
+#include "..\Iterator.hpp"
 #include <initializer_list>
+#include <algorithm>
 
 namespace Yupei
 {
@@ -86,7 +88,7 @@ namespace Yupei
         class ForwardListIterator
         {
         public:
-            using iterator_category = forward_iterator_tag;
+            using iterator_category = std::forward_iterator_tag;
             using value_type = T;
             using reference = value_type&;
             using pointer = value_type*;
@@ -135,7 +137,7 @@ namespace Yupei
 
             pointer operator ->() const noexcept
             {
-                return Yupei::addressof(AsNode()->Value_);
+                return std::addressof(AsNode()->Value_);
             }
 
             MyType& operator ++() noexcept
@@ -172,7 +174,7 @@ namespace Yupei
         class ForwardListConstIterator
         {
         public:
-            using iterator_category = forward_iterator_tag;
+            using iterator_category = std::forward_iterator_tag;
             using value_type = T;
             using reference = const value_type&;
             using pointer = const value_type*;
@@ -227,7 +229,7 @@ namespace Yupei
 
             pointer operator ->() const noexcept
             {
-                return Yupei::addressof(AsNode()->Value_);
+                return std::addressof(AsNode()->Value_);
             }
 
             MyType& operator ++() noexcept
@@ -272,7 +274,7 @@ namespace Yupei
         {
             const auto deleteFn = [this](NodePointer p) {allocator_.deallocate(p, 1);};
             unique_ptr<Node, decltype(deleteFn)> holder{allocator_.allocate(1), deleteFn};            
-            Yupei::construct(Yupei::addressof(holder->Value_), Yupei::forward<ParamsT>(params)...);
+            Yupei::construct(std::addressof(holder->Value_), std::forward<ParamsT>(params)...);
             return holder;
         }
 
@@ -290,10 +292,28 @@ namespace Yupei
 
         forward_list() = default;
 
-        forward_list(std::initializer_list<value_type> l)
+        explicit forward_list(memory_resource_ptr pmr)
+            :allocator_{pmr}
+        {}
+
+        forward_list(size_type count, const value_type& value, memory_resource_ptr pmr = {})
+            :forward_list{pmr}
         {
-            insert_after(cbefore_begin(), l.begin(), l.end());
+            auto start = before_begin();
+            for (size_type i{}; i < count; ++i)
+                start = insert_after(start, value);
         }
+
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
+        forward_list(InputItT first, InputItT last, memory_resource_ptr pmr = {})
+            :forward_list{pmr}
+        {
+            insert_after(cbefore_begin(), first, last);
+        }
+
+        forward_list(std::initializer_list<value_type> l, memory_resource_ptr pmr = {})
+            :forward_list{l.begin(), l.end(), pmr}
+        {}
 
         forward_list(const forward_list& other)
         {
@@ -314,7 +334,7 @@ namespace Yupei
 
         forward_list& operator =(forward_list&& other) noexcept
         {
-            forward_list(Yupei::move(other)).swap(*this);
+            forward_list(std::move(other)).swap(*this);
             return *this;
         }
 
@@ -328,17 +348,17 @@ namespace Yupei
             iterator tmp;
             for (auto cur = begin(); cur != end(); cur = tmp)
             {
-                tmp = Yupei::next(cur);
+                tmp = std::next(cur);
                 DeallocateNode(cur.AsNode());
             }
             beginNode_.Next_ = {};
         }
 
-        template<typename InputItT, typename = enable_if_t<is_input_iterator<InputItT>{}>>
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{}>>
         void assign(InputItT first, InputItT last)
         {
             auto before = before_begin();
-            auto cur = Yupei::next(before);
+            auto cur = std::next(before);
             auto e = end();
             for (; cur != e && first != last;++before, (void)++first)
                 *cur = *first;
@@ -351,7 +371,7 @@ namespace Yupei
         void assgin(size_type n, const value_type& v)
         {
             auto before = before_begin();
-            auto cur = Yupei::next(before);
+            auto cur = std::next(before);
             auto e = end();
             for (; cur != e && n != 0;++before, --n)
                 *cur = v;
@@ -373,12 +393,12 @@ namespace Yupei
 
         iterator before_begin() noexcept
         {
-            return iterator{Yupei::addressof(beginNode_)};
+            return iterator{std::addressof(beginNode_)};
         }
 
         const_iterator before_begin() const noexcept
         {
-            return const_iterator{Yupei::addressof(beginNode_)};
+            return const_iterator{std::addressof(beginNode_)};
         }
 
         const_iterator cbefore_begin() const noexcept
@@ -416,14 +436,40 @@ namespace Yupei
             return beginNode_.Next_ == nullptr;
         }
 
+        reference front()
+        {
+            return *begin();
+        }
+
+        const_reference front() const
+        {
+            return *cbegin();
+        }
+
         iterator insert_after(const_iterator pos, const value_type& value)
         {
             return InsertAfter(pos, 1, value);
         }
 
+        template<typename... Args>
+        void emplace_front(Args&&... args)
+        {
+            InsertAfter(cbefore_begin(), 1, std::forward<Args>(args)...);
+        }
+
+        void push_front(const value_type& value)
+        {
+            InsertAfter(cbefore_begin(), 1, value);
+        }
+
+        void push_front(value_type&& value)
+        {
+            InsertAfter(cbefore_begin(), 1, std::move(value));
+        }
+
         iterator insert_after(const_iterator pos, value_type&& value)
         {
-            return InsertAfter(pos, 1, Yupei::move(value));
+            return InsertAfter(pos, 1, std::move(value));
         }
 
         iterator insert_after(const_iterator pos, size_type count, const value_type& value)
@@ -431,13 +477,18 @@ namespace Yupei
             return InsertAfter(pos, count, value);
         }
 
-        template<typename InputItT, typename = enable_if_t<is_input_iterator<InputItT>{}>>
+        iterator insert_after(const_iterator pos, std::initializer_list<T> ilist)
+        {
+            return insert_after(pos, ilist.begin(), ilist.end());
+        }
+
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{} >>
         iterator insert_after(const_iterator pos, InputItT first, InputItT last)
         {
             auto cur = pos.AsNode();
             NodePointer node = cur;
             const auto insertLast = cur->Next_;
-            for (;first != last;++first, cur = node)
+            for (; first != last; ++first, cur = node)
             {
                 node = MakeNode(*first).release();
                 cur->Next_ = node;
@@ -446,20 +497,30 @@ namespace Yupei
             return iterator{node};
         }
 
+        void resize(size_type count)
+        {
+            Resize(count);
+        }
+
+        void resize(size_type count, const value_type& value)
+        {
+            Resize(count, value);
+        }      
+        
         template<typename... ParamsT>
         iterator emplace_after(const_iterator pos, ParamsT&&... params)
         {
-            return InsertAfter(pos, 1, Yupei::forward<ParamsT>(params)...);
+            return InsertAfter(pos, 1, std::forward<ParamsT>(params)...);
         }
 
         iterator erase_after(const_iterator pos)
         {
             const auto cur = pos.AsBegin();
             const auto toErase = cur->Next_;
-            const auto last = toErase->Next_
+            const auto last = toErase->Next_;
             cur->Next_ = last;
             DeallocateNode(toErase);
-            return {last};
+            return iterator{last};
         }
 
         iterator erase_after(const_iterator first, const_iterator last)
@@ -470,10 +531,10 @@ namespace Yupei
             for (auto cur = eraseStart->Next_; cur != eraseLast; cur = node)
             {
                 node = cur->Next_;
-                DeallocateNode(toErase);
+                DeallocateNode(cur);
             }
             eraseStart->Next_ = eraseLast;
-            return last;
+            return iterator{last.ptr_};
         }
 
         void pop_front()
@@ -532,11 +593,11 @@ namespace Yupei
             const_iterator realItem2; 
             for (;realItem1 != cend() && realItem2 != cend();)
             {               
-                realItem1 = Yupei::next(cur1);
-                realItem2 = Yupei::next(cur2);
+                realItem1 = std::next(cur1);
+                realItem2 = std::next(cur2);
                 if (comp(*realItem2, *realItem1))
                 {    
-                    auto tmp = Yupei::next(cur2);
+                    auto tmp = std::next(cur2);
                     splice_after(cur1, other, cur2);                   
                     cur2 = tmp;
                 }
@@ -570,7 +631,7 @@ namespace Yupei
 
         void swap(forward_list& other) noexcept
         {
-            Yupei::swap(beginNode_, other.beginNode_);
+            std::swap(beginNode_, other.beginNode_);
         }
 
     private:
@@ -580,16 +641,77 @@ namespace Yupei
         template<typename... ParamsT>
         iterator InsertAfter(const_iterator pos, size_type count, ParamsT&&... params)
         {
-            auto node = pos.AsNode();
-            for (size_type i{};i < count;++i)
+            auto cur = pos.AsNode();
+            const auto insertionLast = cur->Next_;
+            for (size_type i{}; i < count; ++i)
             {
-                node = MakeNode(Yupei::forward<ParamsT>(params)...).release();
-                const auto curPos = pos.AsBegin();
-                node->Next_ = curPos->Next_;
-                curPos->Next_ = node;
+                auto node = MakeNode(std::forward<ParamsT>(params)...).release();               
+                cur->Next_ = node;
+                cur = node;
             }
-            return {node};
+            return iterator{cur};
+        }
+
+        template<typename... Args>
+        void Resize(size_type count, Args&&... args)
+        {
+            auto prev = cbefore_begin();
+            auto cur = cbegin();
+            size_type now{};
+            for (; now != count && cur != cend(); prev = cur, ++cur, ++now)
+                ;
+            if (cur == cend())
+                InsertAfter(prev, count - now, std::forward<Args>(args)...);
+            else if (now == count)
+                erase_after(prev, cend());
         }
     };
 
+    template<typename T>
+    decltype(auto) begin(forward_list<T>& l) noexcept
+    {
+        return l.begin();
+    }
+
+    template<typename T>
+    decltype(auto) begin(const forward_list<T>& l) noexcept
+    {
+        return l.begin();
+    }
+
+    template<typename T>
+    decltype(auto) end(forward_list<T>& l) noexcept
+    {
+        return l.end();
+    }
+
+    template<typename T>
+    decltype(auto) begin(const forward_list<T>& l) noexcept
+    {
+        return l.end();
+    }
+
+    template<typename T>
+    decltype(auto) cbegin(const forward_list<T>& l) noexcept
+    {
+        return begin(l);
+    }
+
+    template<typename T>
+    decltype(auto) cend(const forward_list<T>& l) noexcept
+    {
+        return end(l);
+    }
+
+    template<typename T>
+    bool operator == (const forward_list<T>& lhs, const forward_list<T>& rhs)
+    {
+        return std::mismatch(begin(lhs), end(lhs), begin(rhs), end(rhs)) == std::make_pair(end(lhs), end(rhs));
+    }
+
+    template<typename T>
+    bool operator != (const forward_list<T>& lhs, const forward_list<T>& rhs)
+    {
+        return !(lhs == rhs);
+    }
 }

@@ -12,7 +12,7 @@ platformToOptions = {"Win32" : "m32","x64" : "m64" }
 staticLibDir = libraryDir + '\\Lib\\' + platform
 compileOptions = '-c -O0 -D "_DEBUG" -D "_DLL" -D "_MT" -frtti -g2 -gdwarf-2 ' \
                  '-fexceptions -fno-ms-compatibility -Xclang --dependent-lib=msvcrtd ' \
-                 '-std=c++1z -'+ platformToOptions[platform]  + ' -I ' + libraryDir
+                 '-std=c++1z -'+ platformToOptions[platform]  + ' -I ' + libraryDir + ' -I ' + '.\\Support'
 binaries = []
 
 for dirName, subdirList, fileList in os.walk('.'):
