@@ -54,7 +54,7 @@ namespace Yupei
             : resource_{get_default_resource()}
         {}
 
-        memory_resource_ptr(std::nullptr_t) noexcept
+        explicit memory_resource_ptr(std::nullptr_t) noexcept
             : resource_{get_default_resource()}
         {}
 
@@ -120,14 +120,14 @@ namespace Yupei
 
         polymorphic_allocator() noexcept = default;
 
-        polymorphic_allocator(memory_resource_ptr r)
+        explicit polymorphic_allocator(memory_resource_ptr r)
             :resource_{r}
         {
         }
 
         DEFAULTCOPY(polymorphic_allocator)
 
-            value_type* allocate(size_type n)
+        value_type* allocate(size_type n)
         {
             return static_cast<value_type*>(resource_->allocate(n * sizeof(value_type), alignof(value_type)));
         }

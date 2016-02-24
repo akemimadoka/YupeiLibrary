@@ -336,6 +336,19 @@ namespace Yupei
             :allocator_{resource}, storage_{}, size_{}, capacity_{}
         {}
 
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{}>>
+        vector(InputItT first, InputItT last, memory_resource_ptr pmr = {})
+            :vector{pmr}
+        {           
+            std::for_each(first, last, [&](const value_type_t<InputItT>& v) {
+                push_back(v);
+            });
+        }
+
+        vector(std::initializer_list<value_type> il)
+            :vector{il.begin(), il.end()}
+        {}
+
         vector(const vector& other)
         {
             append(other.begin(), other.end());

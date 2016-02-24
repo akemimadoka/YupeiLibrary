@@ -14,6 +14,9 @@ namespace Yupei
     template<typename ContainerT>
     using const_iterator_t = typename ContainerT::const_iterator;
 
+    template<typename ContainerT>
+    using size_type_t = typename ContainerT::size_type;
+
     //iterators
 
     namespace Internal
@@ -90,5 +93,38 @@ namespace Yupei
 
     template<typename IteratorT>
     struct is_input_iterator<IteratorT, true> : bool_constant<std::is_base_of<std::input_iterator_tag, iterator_category_t<IteratorT>>::value> {};
+
+    //http://120.52.72.41/www.open-std.org/c3pr90ntcsf0/jtc1/sc22/wg21/docs/papers/2014/n4183.pdf
+
+    template<typename T>     
+    constexpr T* do_pointer_from(T* p) noexcept { return p; } 
+
+    template<typename ContiguousIterator>     
+    constexpr auto pointer_from(ContiguousIterator i) noexcept(noexcept(do_pointer_from(i))) 
+        -> decltype(do_pointer_from(i))  // necessary for SFINAE     
+    { 
+        return do_pointer_from(i); 
+    } 
+
+    template<typename IteratorT, typename = void>
+    struct is_contiguous_iterator : std::false_type {};
+
+    template<typename IteratorT>
+    struct is_contiguous_iterator<IteratorT, void_t<Yupei::pointer_from(std::declval<IteratorT&>())>> : std::true_type {};
+
+    //BLOCKED
+//#define OP(ClassName, OpName, ...) std::declval<ClassName>().OpName(__VA_ARGS__)
+//
+//    namespace Internal
+//    {
+//        template<typename Iterator, typename = void>
+//        struct CouldUseFacade : std::false_type {};
+//
+//        template<typename Iterator>
+//        struct CouldUseFacade<Iterator, void_t<
+//            decltype(OP(Iterator, dereference)),
+//            decltype(OP(Iterator, equal, std::declval<Iterator>())),
+//            decltype(std::declval<Iterator>().)
+//    }
 }
 

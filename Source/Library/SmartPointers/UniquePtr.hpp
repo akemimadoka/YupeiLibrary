@@ -112,7 +112,9 @@ namespace Yupei
 
         void reset(pointer ptr = {}) noexcept
         {
+            auto old = get();
             Yupei::get<0>(data_) = ptr;
+            if(old != nullptr) get_deleter()(old);
         }
 
         void swap(unique_ptr& other) noexcept
@@ -242,7 +244,9 @@ namespace Yupei
         template<typename U, typename = std::enable_if_t<CouldBeConstructed<U>>>
         void reset(U p) noexcept
         {
-            Yupei::get<0>(data_) = p;
+            auto old = get();
+            Yupei::get<0>(data_) = ptr;
+            if (old != nullptr) get_deleter()(old);
         }
 
         pointer release() noexcept
@@ -308,7 +312,7 @@ namespace Yupei
     template<class T1, class D1, class T2, class D2>
     inline bool operator <(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y) noexcept
     {
-        return less<common_type_t<typename unique_ptr<T1, D1>::pointer, typename unique_ptr<T2, D2>::pointer>>()(x, y);
+        return less<std::common_type_t<typename unique_ptr<T1, D1>::pointer, typename unique_ptr<T2, D2>::pointer>>()(x, y);
     }
 
     template<class T1, class D1, class T2, class D2>

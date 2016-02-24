@@ -686,7 +686,7 @@ namespace Yupei
     }
 
     template<typename T>
-    decltype(auto) begin(const forward_list<T>& l) noexcept
+    decltype(auto) end(const forward_list<T>& l) noexcept
     {
         return l.end();
     }

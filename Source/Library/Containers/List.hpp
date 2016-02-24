@@ -281,14 +281,14 @@ namespace Yupei
         }
 
         explicit list(memory_resource_ptr pmr)
-            :count{},
+            :count_{},
             allocator_{pmr}
         {}
 
         explicit list(size_type n, memory_resource_ptr pmr = {})
             :allocator_{pmr}, count_{}
         {
-            for (size_type i{}; i < count; ++i)
+            for (size_type i{}; i < n; ++i)
                 emplace_back();
         }
 
@@ -300,6 +300,10 @@ namespace Yupei
                 push_back(v);
             });
         }
+
+        list(std::initializer_list<value_type> il)
+            :list{il.begin(), il.end()}
+        {}
 
         list(const list& other)
             :list{other.allocator_.resource()}
