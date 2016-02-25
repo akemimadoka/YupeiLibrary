@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "..\Hash\Hash.hpp"
 #include "..\Comparators.hpp"
@@ -298,6 +298,59 @@ namespace Yupei
             Initialize(bucketCount);
         }
 
+        dictionary(const dictionary& other)
+            :key_equal{other.key_eq()},
+            hasher{other.hash_function()}
+        {
+            Initialize(other.bucketCount_);
+            for (const auto& v : other)
+                insert(v);
+        }
+
+        dictionary(dictionary&& other) noexcept
+            :key_equal{other.key_eq()},
+            hasher{other.hash_function()},
+            freeList_{other.freeList_},
+            freeCount_{other.freeCount_},
+            count_{other.count_},
+            bucketCount_{other.bucketCount_},
+            entries_{std::move(other.entries_)},
+            buckets_{std::move(other.buckets_)}
+        {
+            other.freeList_ = kNothing;
+            other.freeCount_ = {};
+            other.count_ = {};
+            other.bucketCount_ = {};
+        }
+
+        dictionary& operator=(const dictionary& other)
+        {
+            dictionary(other).swap(*this);
+            return *this;
+        }
+
+        dictionary& operator=(dictionary&& other) noexcept
+        {
+            dictionary(std::move(other)).swap(*this);
+            return *this;
+        }
+
+        ~dictionary()
+        {
+            clear();
+        }
+
+        void swap(dictionary& other) noexcept
+        {
+            using std::swap;
+            swap(freeList_, other.freeList_);
+            swap(freeCount_, other.freeCount_);
+            swap(count_, other.count_);
+            swap(bucketCount_, other.bucketCount_);
+            swap(entries_, other.entries_);
+            swap(buckets_, other.buckets_);
+        }
+
         allocator_type get_allocator() const noexcept
         {
             return static_cast<allocator_type>(*this);
@@ -448,9 +501,28 @@ namespace Yupei
             return false;
         }
 
-        size_type count(const key_type& key) const
+        mapped_type& at(const key_type& key)
         {
+            const auto i = FindEntry(key);
+            if (i == kNothing) throw std::out_of_range("Key doesn't exist!");
+            return entries_[i].KeyValue_.second;
+        }
 
+        const mapped_type& at(const key_type& key) const
+        {
+            const auto i = FindEntry(key);
+            if (i == kNothing) throw std::out_of_range("Key doesn't exist!");
+            return entries_[i].KeyValue_.second;
+        }
+
+        mapped_type& operator[](const key_type& key)
+        {
+            return try_emplace(key).first->second;
+        }
+
+        mapped_type& operator[](key_type&& key)
+        {
+            return try_emplace(std::move(key)).first->second;
         }
 
         pair<iterator, bool> insert(const value_type& value)
@@ -485,6 +557,18 @@ namespace Yupei
         pair<iterator, bool> try_emplace(key_type&& k, Args&&... args)
         {
             return Insert(true, std::move(k), std::forward<Args>(args)...);
+        }
+
+        void clear() noexcept
+        {
+            const auto entries = entries_.get();
+            std::for_each(entries, entries + count_, [](Entry& entry) {
+                destroy(std::addressof(entry.KeyValue_));
+                entry.HashCode_ = kNothing;
+            });
+            count_ = {};
+            freeList_ = kNothing;
+            freeCount_ = {};
         }
 
     private:
@@ -537,7 +621,7 @@ namespace Yupei
      
         size_type freeList_;
         size_type freeCount_ = {};
-        //���ˮλ�ߡ�
+        //最高水位线。
         size_type count_ = {};
         size_type bucketCount_ = {};
         polymorphic_allocator<Entry> allocator_;
@@ -627,13 +711,8 @@ namespace Yupei
             const auto ne = newEntries.get();
             const auto oldEntries = entries_.get();
             std::fill(nb, nb + newSize, kNothing);
-
-            std::copy_if(std::make_move_iterator(oldEntries), 
-                std::make_move_iterator(oldEntries + bucketCount_), ne, [](const Entry& entry){
-                    return entry.HashCode_ != kNothing;
-                });
-
-            for_each_dual(oldEntries, oldEntries + bucketCount_, ne, ne + bucketCount_,
+            
+            for_each_dual(oldEntries, oldEntries + count_, ne, ne + count_,
                 [](Entry& entry1, Entry& entry2) 
                 {
                     if (entry1.HashCode_ != kNothing)
@@ -642,7 +721,7 @@ namespace Yupei
                     destroy(std::addressof(entry1));
                 });
 
-            for_each_i(ne, ne + bucketCount_, [this](size_type i, Entry& entry) {
+            for_each_i(ne, ne + count_, [this](size_type i, Entry& entry) {
                 const auto hashCode = entry.HashCode_;
                 if (hashCode != kNothing)
                 {
@@ -658,11 +737,15 @@ namespace Yupei
             bucketsCount_ = newSize;
         }
 
-       /* size_type FindEntry(const key_type& key)
+        size_type FindEntry(const key_type& key)
         {
             const auto hashCode = hash_function()(key);
-            const auto targetBucket 
-        }*/
+            const auto targetBucket = ConstrainHash(hashCode);
+            for (auto i = buckets_[targetBucket]; i != kNothing; i = entries_[i].NextEntryIndex_)
+                if (entries_[i].HashCode_ == hashCode && entries[i].KeyValue_.first == key)
+                    return i;
+            return kNothing;
+        }
     };
 
     namespace Internal

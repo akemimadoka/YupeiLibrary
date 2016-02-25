@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Fnv32.hpp"
 
 namespace Yupei

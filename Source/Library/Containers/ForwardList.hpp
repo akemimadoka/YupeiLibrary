@@ -525,15 +525,18 @@ namespace Yupei
 
         iterator erase_after(const_iterator first, const_iterator last)
         {
-            const auto eraseStart = first.AsBegin();
-            const auto eraseLast = last.AsNode();
-            NodePointer node;
-            for (auto cur = eraseStart->Next_; cur != eraseLast; cur = node)
+            if (first != last)
             {
-                node = cur->Next_;
-                DeallocateNode(cur);
-            }
-            eraseStart->Next_ = eraseLast;
+                const auto eraseStart = first.AsBegin();
+                const auto eraseLast = last.AsNode();
+                NodePointer node;
+                for (auto cur = eraseStart->Next_; cur != eraseLast; cur = node)
+                {
+                    node = cur->Next_;
+                    DeallocateNode(cur);
+                }
+                eraseStart->Next_ = eraseLast;
+            }           
             return iterator{last.ptr_};
         }
 
@@ -591,7 +594,7 @@ namespace Yupei
             auto cur2 = other.cbefore_begin();
             const_iterator realItem1; 
             const_iterator realItem2; 
-            for (;realItem1 != cend() && realItem2 != cend();)
+            for (; realItem1 != cend() && realItem2 != cend();)
             {               
                 realItem1 = std::next(cur1);
                 realItem2 = std::next(cur2);
@@ -649,6 +652,7 @@ namespace Yupei
                 cur->Next_ = node;
                 cur = node;
             }
+            cur->Next_ = insertionLast;
             return iterator{cur};
         }
 

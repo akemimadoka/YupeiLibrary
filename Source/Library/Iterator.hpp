@@ -110,7 +110,7 @@ namespace Yupei
     struct is_contiguous_iterator : std::false_type {};
 
     template<typename IteratorT>
-    struct is_contiguous_iterator<IteratorT, void_t<Yupei::pointer_from(std::declval<IteratorT&>())>> : std::true_type {};
+    struct is_contiguous_iterator<IteratorT, void_t<decltype(Yupei::pointer_from(std::declval<IteratorT&>()))>> : std::true_type {};
 
     //BLOCKED
 //#define OP(ClassName, OpName, ...) std::declval<ClassName>().OpName(__VA_ARGS__)

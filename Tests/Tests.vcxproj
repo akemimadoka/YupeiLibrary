@@ -19,23 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2A77A2F0-5B90-494F-B890-6CE55407B5AA}</ProjectGuid>
+    <ProjectGuid>{CB13BF68-DD83-4D8B-BB2A-5BF9D9DA00B2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140_clang_3_7</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140_Clang_3_7</PlatformToolset>
   </PropertyGroup>
@@ -64,35 +64,38 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)Lib\$(Platform)\</OutDir>
+    <IncludePath>$(ProjectDir)Support;$(SolutionDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)Lib\$(Platform)\</OutDir>
+    <IncludePath>$(ProjectDir)Support;$(SolutionDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
@@ -103,54 +106,23 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Hash\Crc32.cpp" />
-    <ClCompile Include="Hash\Fnv32.cpp" />
-    <ClCompile Include="Hash\Fnv64.cpp" />
-    <ClCompile Include="Hash\Hash.cpp" />
-    <ClCompile Include="Hash\HashHelpers.cpp" />
-    <ClCompile Include="MemoryResource\MemoryResource.cpp" />
-    <ClCompile Include="OS\Windows\Console.cpp" />
-    <ClCompile Include="UnitTest.cpp" />
+    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp" />
+    <ClCompile Include="Containers\Sequences\List\ListAllTest.cpp" />
+    <ClCompile Include="Containers\Sequences\Vector\VectorAllTest.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Algorithm\ForEach.hpp" />
-    <ClInclude Include="Assert.hpp" />
-    <ClInclude Include="Auto.hpp" />
-    <ClInclude Include="CLib\RawMemory.h" />
-    <ClInclude Include="Comparators.hpp" />
-    <ClInclude Include="ConstructDestruct.hpp" />
-    <ClInclude Include="Containers\Array.hpp" />
-    <ClInclude Include="Containers\Dictionary.hpp" />
-    <ClInclude Include="Containers\ForwardList.hpp" />
-    <ClInclude Include="Containers\List.hpp" />
-    <ClInclude Include="Containers\Vector.hpp" />
-    <ClInclude Include="Containers\_HashTable.hpp" />
-    <ClInclude Include="Extensions.hpp" />
-    <ClInclude Include="Functional.hpp" />
-    <ClInclude Include="Hash\Crc32.hpp" />
-    <ClInclude Include="Hash\Fnv32.hpp" />
-    <ClInclude Include="Hash\Fnv64.hpp" />
-    <ClInclude Include="Hash\Hash.hpp" />
-    <ClInclude Include="Hash\HashHelpers.hpp" />
-    <ClInclude Include="HelperMacros.hpp" />
-    <ClInclude Include="Invoke.hpp" />
-    <ClInclude Include="Iterator.hpp" />
-    <ClInclude Include="MemoryResource\MemoryResource.hpp" />
-    <ClInclude Include="Mutex.hpp" />
-    <ClInclude Include="Numeric.hpp" />
-    <ClInclude Include="OS\Windows\Console.hpp" />
-    <ClInclude Include="Owner.hpp" />
-    <ClInclude Include="Pair.hpp" />
-    <ClInclude Include="Ranges\Range.hpp" />
-    <ClInclude Include="SmartPointers\DefaultDelete.hpp" />
-    <ClInclude Include="SmartPointers\SharedPtr.hpp" />
-    <ClInclude Include="SmartPointers\UniquePtr.hpp" />
-    <ClInclude Include="StopWatch.hpp" />
-    <ClInclude Include="Tuple.hpp" />
-    <ClInclude Include="TypeTraits.hpp" />
-    <ClInclude Include="UnitTest.hpp" />
-    <ClInclude Include="Utility.hpp" />
-    <ClInclude Include="Variant.hpp" />
+    <ClInclude Include="containers\Copyable.h" />
+    <ClInclude Include="containers\Emplaceable.h" />
+    <ClInclude Include="containers\NotConstructible.h" />
+    <ClInclude Include="support\DefaultOnly.h" />
+    <ClInclude Include="support\MoveOnly.h" />
+    <ClInclude Include="utilities\variant\shapes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Source\Library\YupeiLibrary.vcxproj">
+      <Project>{2a77a2f0-5b90-494f-b890-6ce55407b5aa}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

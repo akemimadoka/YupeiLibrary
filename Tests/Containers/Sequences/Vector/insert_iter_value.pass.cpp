@@ -1,4 +1,3 @@
-#define _DEBUG 1
 
 #include <Containers\Vector.hpp>
 #include <Assert.hpp>

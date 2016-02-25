@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Extensions.hpp"
 
 template <class Lambda> 
 class AtScopeExit
@@ -15,8 +16,7 @@ public:
 		m_lambda(); 
 	}
 };
-#define TOKEN_PASTEx(x, y) x ## y
-#define TOKEN_PASTE(x, y) TOKEN_PASTEx(x, y)
+
 
 #define Auto_INTERNAL1(lname, aname, ...) \
 auto lname = [&]() { __VA_ARGS__; }; \

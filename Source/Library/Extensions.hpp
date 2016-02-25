@@ -16,6 +16,12 @@
 	TYPE(TYPE&&) noexcept = default;\
 	TYPE& operator=(TYPE&&) noexcept = default;
 
+#define TOKEN_PASTEx(x, y) x ## y
+#define TOKEN_PASTE(x, y) TOKEN_PASTEx(x, y)
+
+#define STRx(s) #s
+#define STR(s) STRx(s)
+
 namespace Yupei
 {
     using byte = unsigned char;

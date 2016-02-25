@@ -72,19 +72,19 @@ namespace Yupei
         return Internal::HashCombineRangeImp(std::move(code), first, last, Internal::CouldBeHashedAsBytes<InputIterator>{});
     }
 
-    template<typename HashCode, typename T, typename = std::enable_if_t<is_integral<T>::value || is_enum<T>::value>>
+    template<typename HashCode, typename T, std::enable_if_t<std::is_integral<T>::value || std::is_enum<T>::value, int> = 0>
     inline auto hash_value(HashCode code, T value) -> hash_code
     {
         return Internal::HashBytes(std::move(code), value);
     }
 
-    template<typename HashCode, typename T, typename = std::enable_if_t<is_floating_point<T>::value>>
+    template<typename HashCode, typename T, std::enable_if_t<std::is_floating_point<T>::value, int> = 0>
     inline auto hash_value(HashCode code, T value) -> hash_code
     {       
         return Internal::HashBytes(std::move(code), value == 0.0 ? 0.0 : value);
     }
 
-    template<typename HashCode, typename T, typename = std::enable_if_t<is_pointer<T>::value>>
+    template<typename HashCode, typename T, std::enable_if_t<std::is_pointer<T>::value, int> = 0>
     inline auto hash_value(HashCode code, T value) -> hash_code
     {
         return Internal::HashBytes(std::move(code), value);

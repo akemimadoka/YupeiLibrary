@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include "fnv64.hpp"
+﻿#include "fnv64.hpp"
 
 namespace Yupei
 {

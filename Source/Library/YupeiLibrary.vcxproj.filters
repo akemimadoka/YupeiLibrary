@@ -18,9 +18,6 @@
     <ClCompile Include="MemoryResource\MemoryResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\_HashTable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Hash\Hash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,6 +31,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Hash\HashHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\Console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,6 +147,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Containers\Dictionary.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitTest.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OS\Windows\Console.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
