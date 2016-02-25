@@ -109,6 +109,7 @@
     <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp" />
     <ClCompile Include="Containers\Sequences\List\ListAllTest.cpp" />
     <ClCompile Include="Containers\Sequences\Vector\VectorAllTest.cpp" />
+    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>

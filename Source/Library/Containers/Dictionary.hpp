@@ -256,7 +256,7 @@ namespace Yupei
         };
     }
 
-    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    template<typename KeyT, typename ValueT, typename HashFun = hash<>, typename KeyEqualT = equal_to<KeyT>>
     class dictionary : KeyEqualT, HashFun
     {
     public:
@@ -296,6 +296,19 @@ namespace Yupei
             allocator_{pmr}
         {
             Initialize(bucketCount);
+        }
+
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
+        dictionary(InputItT first, InputItT last, size_type bucket = {}, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
+            :hasher{hash},
+            key_equal{keyEqual},
+            allocator_{pmr}
+        {
+            if (std::is_base_of<std::random_access_iterator_tag, iterator_category_t<InputItT>>::value)
+                Initialize(static_cast<size_type>(last - first));
+            std::for_each(first, last, [this](const value_type& v) {
+                try_emplace(v.first, v.second);
+            });
         }
 
         dictionary(const dictionary& other)
@@ -596,7 +609,7 @@ namespace Yupei
 
             void operator()(size_type* p) const noexcept
             {
-                dict.GetSizeTypeAllocator().deallocate(p);
+                dict_.GetSizeTypeAllocator().deallocate(p);
             }
 
         private:
@@ -612,7 +625,7 @@ namespace Yupei
 
             void operator()(Entry* p) const noexcept
             {
-                dict.allocator_.deallocate(p);
+                dict_.allocator_.deallocate(p);
             }
 
         private:
@@ -629,7 +642,7 @@ namespace Yupei
         const BucketDeleter bucketDeleter_ {*this};
         using EntryPtr = unique_ptr<Entry[], EntryDeleter>;
         using BucketPtr = unique_ptr<size_type[], BucketDeleter>;
-        EntryPtr entries_ {nullptr, entryDeleter_};
+        EntryPtr entries_ {nullptr, EntryDeleter{*this}};
         BucketPtr buckets_ {nullptr, bucketDeleter_};
         
         void Initialize(size_type capacity)
@@ -645,7 +658,7 @@ namespace Yupei
                 entry.HashCode_ = kNothing;
             });
 
-            freeList = kNothing;
+            freeList_ = kNothing;
             bucketCount_ = newSize;
         }
 
@@ -721,7 +734,7 @@ namespace Yupei
                     destroy(std::addressof(entry1));
                 });
 
-            for_each_i(ne, ne + count_, [this](size_type i, Entry& entry) {
+            for_each_i(ne, ne + count_, [&](size_type i, Entry& entry) {
                 const auto hashCode = entry.HashCode_;
                 if (hashCode != kNothing)
                 {
@@ -734,7 +747,7 @@ namespace Yupei
             buckets_ = std::move(newBuckets);
             entries_ = std::move(newEntries);
 
-            bucketsCount_ = newSize;
+            bucketCount_ = newSize;
         }
 
         size_type FindEntry(const key_type& key)

@@ -169,7 +169,7 @@ namespace Yupei
         }
 
         template<typename U, typename E,
-            typename = std::enable_if_t < std::is_convertible<std::remove_pointer_t<U>(*)[], element_type(*)[]>{} &&
+            typename = std::enable_if_t<std::is_convertible<std::remove_pointer_t<U>(*)[], element_type(*)[]>{} &&
             std::is_constructible<deleter_type, E>{} >>
         unique_ptr(unique_ptr<U, E>&& other) noexcept
             :data_{std::move(other.data_)}
@@ -245,7 +245,7 @@ namespace Yupei
         void reset(U p) noexcept
         {
             auto old = get();
-            Yupei::get<0>(data_) = ptr;
+            Yupei::get<0>(data_) = p;
             if (old != nullptr) get_deleter()(old);
         }
 
