@@ -1,4 +1,4 @@
-#include "HashHelpers.hpp"
+ï»¿#include "HashHelpers.hpp"
 #include <cmath>
 #include <algorithm>
 #include <climits>
@@ -8,9 +8,11 @@ namespace Yupei
 {
     namespace Internal
     {
+        constexpr std::uint32_t HashHelpers::primes[80];
+
         bool HashHelpers::IsPrime(std::size_t candidate) noexcept
         {
-            if ((candidate & 1u) != 0) //ÆæÊý
+            if ((candidate & 1u) != 0) //å¥‡æ•°
             {
                 const auto limit = std::sqrt(candidate);
                 for (std::size_t divisor = 3; divisor <= limit; divisor += 2)

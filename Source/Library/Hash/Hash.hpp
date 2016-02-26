@@ -10,7 +10,9 @@
 
 namespace Yupei
 {   
-    using hash_code = std::conditional_t<sizeof(std::uintptr_t) == 32, fnv32, fnv64>;
+    using hash_code = std::conditional_t<sizeof(std::uintptr_t) == 4, fnv32, fnv64>;
+
+    extern hash_code hash_combine_range(hash_code h, const unsigned char* hashStart, const unsigned char* hashEnd) noexcept;
        
     template<typename T, typename Enable = void>
     struct is_uniquely_represented : std::false_type {};
@@ -113,7 +115,7 @@ namespace Yupei
     {
         template<typename T>
         std::size_t operator()(const T& value) const
-        {
+        {           
             HashCode hashCode;
             return hash_value(std::move(hashCode), value).finalize();
         }

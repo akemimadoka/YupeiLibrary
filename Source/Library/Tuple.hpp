@@ -584,7 +584,7 @@ namespace Yupei
 	template<std::size_t I, typename... Args>
 	constexpr tuple_element_t<I, tuple<Args...> >&& get(tuple<Args...>&& t) noexcept
 	{
-		return static_cast<Internal::TupleLeaf<I, tuple_element_t<I, tuple<Args...>>>&&>(t.base_).get();
+		return std::move(static_cast<Internal::TupleLeaf<I, tuple_element_t<I, tuple<Args...>>>&>(t.base_).get());
 	}
 
 	template<typename... Args>
@@ -667,13 +667,13 @@ namespace Yupei
 	template<typename T1,typename T2>
 	template<typename TupleType1, typename TupleType2, std::size_t... Indexes1, std::size_t... Indexes2>
 	inline pair<T1, T2>::pair(TupleType1 t1, TupleType2 t2, std::index_sequence<Indexes1...>, std::index_sequence<Indexes2...>)
-		:first(get<Indexes1>(t1)...), second(get<Indexes2>(t2)...)
+		:first(get<Indexes1>(std::move(t1))...), second(get<Indexes2>(std::move(t2))...)
 	{}
 
 	template<typename T1, typename T2>
 	template<typename... Args1, typename... Args2> 
     inline pair<T1, T2>::pair(piecewise_construct_t, tuple<Args1...> val1, tuple<Args2...> val2)
-        :pair(val1, val2, std::make_index_sequence<sizeof...(Args1)>{}, std::make_index_sequence<sizeof...(Args2)>{})
+        :pair(std::move(val1), std::move(val2), std::make_index_sequence<sizeof...(Args1)>{}, std::make_index_sequence<sizeof...(Args2)>{})
 	{}
 }
 

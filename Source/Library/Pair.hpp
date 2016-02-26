@@ -141,6 +141,7 @@ namespace Yupei
         {
             first = std::move(p.first);
             second = std::move(p.second);
+            return *this;
         }
 
         template<typename U, typename V>

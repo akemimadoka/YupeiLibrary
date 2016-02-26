@@ -55,6 +55,7 @@ namespace Yupei
 
             value_type& operator*() noexcept
             {
+                YPASSERT(index_ != size_t(-1), "Deref a null iterator!");
                 return dict_->entries_[index_].KeyValue_;
             }
 
@@ -276,14 +277,31 @@ namespace Yupei
         template<typename>
         friend class Internal::DictionaryIterator;
 
-        static constexpr size_type kNothing = static_cast<size_type>(-1);
+        template<typename>
+        friend class Internal::DictionaryConstIterator;
 
+        template<typename>
+        friend class Internal::DictionaryLocalIterator;
+
+        template<typename>
+        friend class Internal::DictionaryConstLocalIterator;
+
+        static constexpr size_type kNothing = static_cast<size_type>(-1);
+        using SizeAllocator = polymorphic_allocator<size_type>;
+       
         struct Entry
         {
             size_type HashCode_ = kNothing;
             size_type NextEntryIndex_;
             value_type KeyValue_;
         };
+        using EntryAllocator = polymorphic_allocator<Entry>;
+        using EntryPtrTuple = tuple<Entry*>;
+
+#ifdef _DEBUG
+        Entry* dEntries;
+#endif // _DEBUG
+
 
     public:
         dictionary()
@@ -504,7 +522,7 @@ namespace Yupei
 
                         entry.HashCode_ = kNothing;
                         entry.NextEntryIndex_ = freeList_;
-                        freeList_ = index;
+                        freeList_ = i;
                         ++freeCount_;
                         destroy(std::addressof(entry.KeyValue_));
                         return true;
@@ -516,14 +534,24 @@ namespace Yupei
 
         mapped_type& at(const key_type& key)
         {
-            const auto i = FindEntry(key);
+            const auto i = FindEntryByKey(key);
             if (i == kNothing) throw std::out_of_range("Key doesn't exist!");
             return entries_[i].KeyValue_.second;
         }
 
+        iterator find(const key_type& key)
+        {
+            return {this, FindEntryByKey(key)};
+        }
+
+        const_iterator find(const key_type& key) const
+        {
+            return {this, FindEntryByKey(key)};
+        }
+
         const mapped_type& at(const key_type& key) const
         {
-            const auto i = FindEntry(key);
+            const auto i = FindEntryByKey(key);
             if (i == kNothing) throw std::out_of_range("Key doesn't exist!");
             return entries_[i].KeyValue_.second;
         }
@@ -542,7 +570,7 @@ namespace Yupei
         {
             return Insert(true, value.first, value.second);
         }
-
+     
         pair<iterator, bool> insert(value_type&& value)
         {
             return Insert(true, std::move(value.first), std::move(value.second));
@@ -603,33 +631,33 @@ namespace Yupei
         class BucketDeleter
         {
         public:
-            BucketDeleter(const dictionary& dict) noexcept
-                :dict_{dict}
+            BucketDeleter(const allocator_type& alloc) noexcept
+                :allocator_{alloc}
             {}
 
-            void operator()(size_type* p) const noexcept
+            void operator()(size_type* p) noexcept
             {
-                dict_.GetSizeTypeAllocator().deallocate(p);
+                allocator_.deallocate(p, 1);
             }
 
         private:
-            const dictionary& dict_;
+            SizeAllocator allocator_;
         };
 
         class EntryDeleter
         {
         public:
-            EntryDeleter(const dictionary& dict) noexcept
-                : dict_{dict}
+            EntryDeleter(const allocator_type& alloc) noexcept
+                : allocator_{alloc}
             {}
 
-            void operator()(Entry* p) const noexcept
+            void operator()(Entry* p) noexcept
             {
-                dict_.allocator_.deallocate(p);
+                allocator_.deallocate(p, 1);
             }
 
         private:
-            const dictionary& dict_;
+            EntryAllocator allocator_;
         };
      
         size_type freeList_;
@@ -638,13 +666,14 @@ namespace Yupei
         size_type count_ = {};
         size_type bucketCount_ = {};
         polymorphic_allocator<Entry> allocator_;
-        const EntryDeleter entryDeleter_ {*this};
-        const BucketDeleter bucketDeleter_ {*this};
+        const EntryDeleter entryDeleter_ {allocator_};
+        const BucketDeleter bucketDeleter_ {allocator_};
         using EntryPtr = unique_ptr<Entry[], EntryDeleter>;
         using BucketPtr = unique_ptr<size_type[], BucketDeleter>;
-        EntryPtr entries_ {nullptr, EntryDeleter{*this}};
+        EntryPtr entries_ {nullptr, entryDeleter_};
         BucketPtr buckets_ {nullptr, bucketDeleter_};
         
+
         void Initialize(size_type capacity)
         {
             const auto newSize = Internal::HashHelpers::GetPrime(capacity);
@@ -660,6 +689,9 @@ namespace Yupei
 
             freeList_ = kNothing;
             bucketCount_ = newSize;
+#ifdef _DEBUG
+            dEntries = entries_.get();
+#endif // _DEBUG
         }
 
         size_type ConstrainHash(size_type original) const noexcept
@@ -672,18 +704,34 @@ namespace Yupei
         {          
             if (!buckets_) Initialize({});
             auto hashCode = hash_function()(key);
-            auto targetBucket = ContrainHash(hashCode);
-            for (auto i = buckets_[targetBucket]; i >= 0; i = entries_[i].NextEntryIndex_)
-            {
-                const auto& curEntry = entries_[i];
-                if (curEntry.HashCode_ == hashCode && key_eq()(curEntry.KeyValue_.first))
+            auto targetBucket = ConstrainHash(hashCode);
+            for (auto i = buckets_[targetBucket]; i != kNothing; i = entries_[i].NextEntryIndex_)
+                if (entries_[i].HashCode_ == hashCode && key_eq()(entries_[i].KeyValue_.first, key))
                 {
                     if (!addOnly)
-                        curEntry.KeyValue_.second = mapped_type(std::forward<Args>(args)...);
-                    return {};
-                }                 
-            }
-            
+                        Yupei::construct(std::addressof(entries_[i].KeyValue_.second), std::forward<Args>(args)...);
+                    return {{this, i}, {}};
+                }
+                                         
+            const auto index = GetAvaliableEntry(hashCode, targetBucket);
+            ConstructEntry(entries_[index], piecewise_construct, Yupei::forward_as_tuple(std::forward<K>(key)),
+                Yupei::forward_as_tuple(std::forward<Args>(args)...));
+            auto& entry = entries_[index];
+            entry.NextEntryIndex_ = buckets_[targetBucket];
+            entry.HashCode_ = hashCode;
+            buckets_[targetBucket] = index;
+            return {{this, index}, true};
+        }
+
+        template<typename... Args>
+        void ConstructEntry(Entry& entry, Args&&... args)
+        {
+            YPASSERT(entry.HashCode_ == -1, "Construct on existing value.");
+            Yupei::construct(std::addressof(entry.KeyValue_), std::forward<Args>(args)...);
+        }
+
+        size_type GetAvaliableEntry(size_type hashCode, size_type& targetBucket) noexcept
+        {
             size_type index;
             if (freeCount_ > 0)
             {
@@ -701,25 +749,14 @@ namespace Yupei
                 index = count_;
                 ++count_;
             }
-
-            ConstructEntry(entries_[index], piecewise_construct, Yupei::forward_as_tuple(std::forward<K>(key)),
-                Yupei::forward_as_tuple(std::forward<Args>(args)...));
-            entries_[index].NextEntryIndex_ = buckets_[targetBucket];
-            buckets_[targetBucket] = index;
-        }
-
-        template<typename... Args>
-        void ConstructEntry(Entry& entry, Args&&... args)
-        {
-            YPASSERT(entry.HashCode_ == -1, "Construct on existing value.");
-            Yupei::construct(std::addressof(entry.KeyValue_), std::forward<Args>(args)...);
+            return index;
         }
 
         void Resize()
         {
             const auto newSize = Internal::HashHelpers::ExpandPrime(bucketCount_);
             BucketPtr newBuckets {GetSizeTypeAllocator().allocate(newSize), bucketDeleter_};
-            EntryPtr newEntries {allocator_.allocate(newSize)};
+            EntryPtr newEntries {allocator_.allocate(newSize), entryDeleter_};
             const auto nb = newBuckets.get();
             const auto ne = newEntries.get();
             const auto oldEntries = entries_.get();
@@ -734,6 +771,7 @@ namespace Yupei
                     destroy(std::addressof(entry1));
                 });
 
+            bucketCount_ = newSize;
             for_each_i(ne, ne + count_, [&](size_type i, Entry& entry) {
                 const auto hashCode = entry.HashCode_;
                 if (hashCode != kNothing)
@@ -746,16 +784,18 @@ namespace Yupei
 
             buckets_ = std::move(newBuckets);
             entries_ = std::move(newEntries);
-
-            bucketCount_ = newSize;
+            
+#ifdef _DEBUG
+            dEntries = entries_.get();
+#endif // _DEBUG
         }
 
-        size_type FindEntry(const key_type& key)
+        size_type FindEntryByKey(const key_type& key) const
         {
             const auto hashCode = hash_function()(key);
             const auto targetBucket = ConstrainHash(hashCode);
             for (auto i = buckets_[targetBucket]; i != kNothing; i = entries_[i].NextEntryIndex_)
-                if (entries_[i].HashCode_ == hashCode && entries[i].KeyValue_.first == key)
+                if (entries_[i].HashCode_ == hashCode && key_eq()(entries_[i].KeyValue_.first, key))
                     return i;
             return kNothing;
         }

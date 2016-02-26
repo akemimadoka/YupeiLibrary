@@ -114,7 +114,6 @@ namespace Yupei
     class polymorphic_allocator
     {
     public:
-
         using value_type = T;
         using size_type = std::size_t;
 
@@ -125,7 +124,15 @@ namespace Yupei
         {
         }
 
-        DEFAULTCOPY(polymorphic_allocator)
+        polymorphic_allocator(const polymorphic_allocator& other) noexcept
+            :resource_{other.resource_}
+        {}
+
+        polymorphic_allocator& operator=(const polymorphic_allocator& other) noexcept
+        {
+            resource_.reset(other.resource());
+            return *this;
+        }
 
         value_type* allocate(size_type n)
         {

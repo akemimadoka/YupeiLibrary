@@ -147,7 +147,7 @@ namespace Yupei
         {}
 
         template<typename U>
-        static constexpr bool CouldBeConstructed = std::is_same<U, pointer>{} ||
+        static constexpr bool CouldBeConstructed = is_one_of<U, pointer, std::nullptr_t>::value ||
             (std::is_pointer<U>{} && std::is_convertible<std::remove_pointer_t<U>(*)[], element_type(*)[]>{});
 
         template<typename U,
