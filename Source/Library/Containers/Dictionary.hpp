@@ -610,6 +610,7 @@ namespace Yupei
             count_ = {};
             freeList_ = kNothing;
             freeCount_ = {};
+            bucketCount_ = {};
         }
 
     private:
