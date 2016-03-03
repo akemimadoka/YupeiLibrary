@@ -25,6 +25,8 @@ namespace Yupei
 
         std::size_t HashHelpers::GetPrime(std::size_t min) noexcept
         {
+            //TODO: need fix!!
+            //if(min > static_cast<std::size_t>(maxPrime)) xxxx
             const auto it = std::lower_bound(std::begin(primes), std::end(primes), min);
             if (it != std::end(primes)) return *it;
 

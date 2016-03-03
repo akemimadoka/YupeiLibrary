@@ -17,9 +17,9 @@ namespace Yupei
                 {
                     log_.push_back(std::string {e.what()} +" at line " + std::to_string(e.LineNumber_) + " in file " + std::string {e.FileName_});
                 }
-                catch (...)
+                catch (std::exception& e)
                 {
-
+                    log_.push_back({e.what()});
                 }
             }
             PrintInfo();

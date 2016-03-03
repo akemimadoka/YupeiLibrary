@@ -350,6 +350,7 @@ namespace Yupei
         {}
 
         vector(const vector& other)
+            :vector()
         {
             append(other.begin(), other.end());
         }
@@ -466,15 +467,21 @@ namespace Yupei
             return storage_[n];
         }
 
+        const_reference operator[](size_type n) const
+        {
+            YPASSERT(n >= size(), "Out of Range!");
+            return storage_[n];
+        }
+
         reference at(size_type pos)
         {
-            if (pos < size()) throw std::out_of_range("Out of range!");
+            if (pos >= size()) throw std::out_of_range("Out of range!");
             return storage_[pos];
         }
 
         const_reference at(size_type pos) const
         {
-            if (pos < size()) throw std::out_of_range("Out of range!");
+            if (pos >= size()) throw std::out_of_range("Out of range!");
             return storage_[pos];
         }
 
@@ -511,12 +518,6 @@ namespace Yupei
         size_type size() const noexcept
         {
             return size_;
-        }
-
-        const_reference operator[](size_type n) const
-        {
-            YPASSERT(n >= size(), "Out of Range!");
-            return storage_[n];
         }
 
         void push_back(const value_type& v)

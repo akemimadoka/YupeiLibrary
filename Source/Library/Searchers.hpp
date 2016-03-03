@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Hash\Hash.hpp"
 #include "Comparators.hpp"
@@ -29,7 +29,7 @@ namespace Yupei
         public:
             BMBadSkipTable(size_type n, value_type defaultValue, Hash hf, Pred pred) noexcept
             {
-                std::fill_n(table_, static_cast<std::ptrdiff_t>(n), defaultValue);
+                std::fill_n(table_, limits_max_v<UnsignedKey>, defaultValue);
             }
 
             void Insert(key_type k, value_type v) noexcept
@@ -103,28 +103,26 @@ namespace Yupei
         template<typename RandomIt2T>
         RandomIt2T operator()(RandomIt2T first, RandomIt2T last) const
         {
-            const auto dist = std::distance(first, last);
+            const auto dist = last - first;
             const auto patLen = patLen_;
             if (patLen == 0 || dist < patLen) return last;
             if (patLen_ == 1)
                 return first;//TODO: Naive way to search.
             else
             {
-                auto strCur = first + patLen;
+                auto strCur = patLen - 1;
                 const auto patStart = patStart_; 
-                while (strCur != last)
+                while (strCur != dist)
                 {
-                    auto patCur = patLast_;
-                    //Why not std::tie? I don't want to include <tuple>...
-                    const auto p = std::mismatch(std::make_reverse_iterator(patCur), std::make_reverse_iterator(patStart_),
-                        std::make_reverse_iterator(strCur), std::make_reverse_iterator(std::prev(strCur, patLen)), EqualFunc());
-                    patCur = p.first.base();
-                    strCur = p.second.base();
-                    if (patCur == patStart) break;
-                    const auto cur = patCur - patStart;
-                    strCur += std::max(badTable_[cur], goodTable_[cur]);
-                }
-                return strCur;
+                    auto patCur = patLen - 1;
+                    while (patCur >= 0 && EqualFunc()(patStart[patCur], first[strCur]))
+                        --patCur, --strCur;
+                    if (patCur < 0) break;          
+                    const auto bad = badTable_[first[strCur]] - (patLen - 1 - patCur);
+                    const auto good = goodTable_[patCur];
+                    strCur += std::max(bad, good);
+                }                
+                return first + strCur + 1;
             }
         }
         
@@ -160,39 +158,39 @@ namespace Yupei
         void BuildGoodTable()
         {
             const auto suffixTable = BuildSuffix();
-            const auto patLen = patLen_;
-            //��֤������
+            const auto lastIndex = patLen_ - 1;                 
             DifferenceType cur{};
-            for (auto i = patLen - 1; i >= 0; --i)
+            for (auto i = lastIndex; i >= 0; --i)
             {
                 if (suffixTable[i] == i + 1)
-                    for (; cur < patLen - i - 1; ++cur)
-                        goodTable_[i] = i + 1;
+                    for (; cur < lastIndex - i; ++cur)  //保证不交叉
+                        if(goodTable_[cur] == patLen_)  //遇到前缀以非前缀为准，所以仅当该 cell 没有被更新时更新。
+                            goodTable_[cur] = lastIndex - i;
             }
-            for (auto i : xrange(goodTable_.size()))
-                goodTable_[patLen - suffixTable[i] - 1] = patLen - 1 - i;
+            for (auto i : xrange(goodTable_.size() - 1))
+                goodTable_[lastIndex - suffixTable[i]] = lastIndex - i + suffixTable[i];
         }
 
         vector<DifferenceType> BuildSuffix()
         {
-            const auto patLen = patLen_;
-            vector<DifferenceType> suffixTable(static_cast<std::size_t>(patLen));
-            suffixTable[patLen - 1] = patLen;
-            DifferenceType prev = patLen - 1;
-            auto last = prev;
-            for (auto i = patLen - 2; i >= 0; --i)
+            const auto lastIndex = patLen_ - 1;
+            vector<DifferenceType> suffixTable(static_cast<std::size_t>(patLen_));
+            suffixTable[lastIndex] = patLen_;
+            auto prev = lastIndex;
+            DifferenceType last;
+            for (auto i = lastIndex - 1; i >= 0; --i)
             {
-                const auto& c = suffixTable[i + patLen - 1 - last];
-                if (prev < last && c < i - prev)
+                const auto& c = suffixTable[i + lastIndex - last];
+                if (i > prev && c < i - prev)
                     suffixTable[i] = c;
                 else
                 {
-                    prev = last = i;
-                    const auto p = std::mismatch(std::make_reverse_iterator(patStart_ + i),
-                        std::make_reverse_iterator(patStart_), 
-                        std::make_reverse_iterator(patLast_), 
-                        std::make_reverse_iterator(patLast_ - i), EqualFunc());
-                    suffixTable[i] = (patStart_ + i - p.first.base()) + i;
+                    if (i < prev)
+                        prev = i;
+                    last = i;
+                    while (prev >= 0 && EqualFunc()(patStart_[prev], patStart_[prev + lastIndex - last]))
+                        --prev;
+                    suffixTable[i] = last - prev;
                 }
             }
             return suffixTable;
