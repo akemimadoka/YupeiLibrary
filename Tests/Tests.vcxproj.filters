@@ -30,6 +30,9 @@
     <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Algorithms\SearchersAllTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h">

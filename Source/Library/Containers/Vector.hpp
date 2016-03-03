@@ -6,8 +6,8 @@
 #include "..\CLib\RawMemory.h"
 #include "..\ConstructDestruct.hpp"
 #include "..\Iterator.hpp"
+#include "..\Assert.hpp"
 #include <algorithm>
-#include <cassert>
 #include <stdexcept> //for std::out_of_range
 
 namespace Yupei
@@ -462,6 +462,7 @@ namespace Yupei
 
         reference operator[](size_type n) noexcept
         {
+            YPASSERT(n >= size(), "Out of Range!");
             return storage_[n];
         }
 
@@ -514,6 +515,7 @@ namespace Yupei
 
         const_reference operator[](size_type n) const
         {
+            YPASSERT(n >= size(), "Out of Range!");
             return storage_[n];
         }
 
@@ -539,6 +541,11 @@ namespace Yupei
         size_type capacity() const noexcept
         {
             return capacity_;
+        }
+
+        void reserve(size_type cap)
+        {
+            Reserve(cap);
         }
 
         iterator insert(const_iterator pos, const value_type& value)

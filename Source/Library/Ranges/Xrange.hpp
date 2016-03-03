@@ -53,22 +53,17 @@ namespace Yupei
                 return tmp;
             }
 
-            reference operator*() const noexcept
+            value_type operator*() const noexcept
             {
                 return cur_;
             }
 
-            pointer operator->() noexcept
-            {
-                return std::addressof(cur_);
-            }
-
-            bool operator==(const RangeIterator& rhs) const noexcept(noexcept(std::declval<T>() == std::declval<T>()))
+            bool operator==(const RangeIterator& rhs) const noexcept
             {
                 return cur_ == rhs.cur_;
             }
 
-            bool operator!=(const RangeIterator& rhs) const noexcept(noexcept(std::declval<T>() == std::declval<T>()))
+            bool operator!=(const RangeIterator& rhs) const noexcept
             {
                 return !(*this == rhs);
             }
@@ -82,8 +77,6 @@ namespace Yupei
         template<typename T>
         class Range
         {
-            static_assert(std::is_move_constructible<T>::value, "Not nothrow constructible.");
-
         public:
             using value_type = T;
             using size_type = std::size_t;
@@ -135,14 +128,14 @@ namespace Yupei
     }
 
     template<typename T>
-    Internal::Range<T> range(T from, T to) noexcept
+    Internal::Range<T> xrange(T from, T to) noexcept
     {
         return {std::move(from), std::move(to)};
     }
 
     template<typename T>
-    Internal::Range<T> range(T to) noexcept
+    Internal::Range<T> xrange(T to) noexcept
     {
-        return range<T>({}, std::move(to));
+        return {{}, std::move(to)};
     }
 }

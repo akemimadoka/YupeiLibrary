@@ -119,9 +119,6 @@
     <ClInclude Include="CLib\RawMemory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Ranges\Range.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Containers\Array.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -153,6 +150,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OS\Windows\Console.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="String.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StringView.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Searchers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Limits.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ranges\Xrange.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
