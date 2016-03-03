@@ -33,6 +33,9 @@
     <ClCompile Include="Algorithms\SearchersAllTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MinMaxAllTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h">

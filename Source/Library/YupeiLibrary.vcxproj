@@ -137,6 +137,7 @@
     <ClInclude Include="Iterator.hpp" />
     <ClInclude Include="Limits.hpp" />
     <ClInclude Include="MemoryResource\MemoryResource.hpp" />
+    <ClInclude Include="MinMax.hpp" />
     <ClInclude Include="Mutex.hpp" />
     <ClInclude Include="Numeric.hpp" />
     <ClInclude Include="OS\Windows\Console.hpp" />

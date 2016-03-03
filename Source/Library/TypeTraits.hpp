@@ -72,13 +72,11 @@ namespace Yupei
     template<typename Expected, template<typename...>class Op, typename... Args>
     using is_deteced_exact = std::is_same<detected_t<Op, Args...>, Expected>;
 
-#if __cpp_variable_templates
     template<template<typename...>class Op, typename... Args>
     constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 
     template<typename Expected, template<typename...>class Op, typename... Args>
     constexpr bool is_deteced_exact_v = is_deteced_exact<Expected, Op, Args...>::value;
-#endif
 
     template<bool...B>
     struct static_and;
@@ -88,4 +86,10 @@ namespace Yupei
 
     template<>
     struct static_and<> : std::true_type {};
+
+    template<typename... B>
+    struct conjunction : static_and<B::value...> {};
+
+    template<typename... B>
+    constexpr bool conjunction_v = conjunction<B...>::value;
 }

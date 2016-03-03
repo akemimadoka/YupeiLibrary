@@ -167,5 +167,8 @@
     <ClInclude Include="Ranges\Xrange.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MinMax.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

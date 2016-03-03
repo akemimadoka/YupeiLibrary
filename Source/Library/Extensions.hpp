@@ -22,6 +22,8 @@
 #define STRx(s) #s
 #define STR(s) STRx(s)
 
+#define exforward(x) std::forward<decltype((x))>((x))
+
 namespace Yupei
 {
     using byte = unsigned char;
