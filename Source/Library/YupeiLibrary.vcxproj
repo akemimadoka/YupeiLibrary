@@ -110,6 +110,7 @@
     <ClCompile Include="Hash\HashHelpers.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
     <ClCompile Include="OS\Windows\Console.cpp" />
+    <ClCompile Include="OS\Windows\Win32Wrappers.cpp" />
     <ClCompile Include="UnitTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +128,7 @@
     <ClInclude Include="Containers\_HashTable.hpp" />
     <ClInclude Include="Extensions.hpp" />
     <ClInclude Include="Functional.hpp" />
+    <ClInclude Include="HandleWrapper.hpp" />
     <ClInclude Include="Hash\Crc32.hpp" />
     <ClInclude Include="Hash\Fnv32.hpp" />
     <ClInclude Include="Hash\Fnv64.hpp" />
@@ -141,6 +143,9 @@
     <ClInclude Include="Mutex.hpp" />
     <ClInclude Include="Numeric.hpp" />
     <ClInclude Include="OS\Windows\Console.hpp" />
+    <ClInclude Include="OS\Windows\HandleWrappers.hpp" />
+    <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />
+    <ClInclude Include="OS\Windows\WinDef.hpp" />
     <ClInclude Include="Owner.hpp" />
     <ClInclude Include="Pair.hpp" />
     <ClInclude Include="Ranges\Xrange.hpp" />

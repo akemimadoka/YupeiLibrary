@@ -154,6 +154,11 @@ namespace Yupei
             return resource_;
         }
 
+        size_type max_size() const noexcept
+        {
+            return size_type(-1) / sizeof(value_type);
+        }
+
     private:
         memory_resource_ptr resource_;
     };

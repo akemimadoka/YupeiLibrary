@@ -137,7 +137,7 @@ namespace Yupei
         constexpr basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
         {
             if (pos > size()) throw std::out_of_range("pos > size()!");
-            return {data_ + pos, min(n, size_ - pos};
+            return {data_ + pos, min(n, size_ - pos)};
         }
 
         constexpr int compare(basic_string_view str) const noexcept
@@ -219,4 +219,40 @@ namespace Yupei
             return 0;
         }
     };
+
+    template<typename CharT>
+    decltype(auto) begin(basic_string_view<CharT>& view) noexcept
+    {
+        return view.begin();
+    }
+
+    template<typename CharT>
+    decltype(auto) begin(const basic_string_view<CharT>& view) noexcept
+    {
+        return view.begin();
+    }
+
+    template<typename CharT>
+    decltype(auto) cbegin(const basic_string_view<CharT>& view) noexcept
+    {
+        return begin(view);
+    }
+
+    template<typename CharT>
+    decltype(auto) end(basic_string_view<CharT>& view) noexcept
+    {
+        return view.end();
+    }
+
+    template<typename CharT>
+    decltype(auto) end(const basic_string_view<CharT>& view) noexcept
+    {
+        return view.end();
+    }
+
+    template<typename CharT>
+    decltype(auto) cend(const basic_string_view<CharT>& view) noexcept
+    {
+        return end(view);
+    }
 }

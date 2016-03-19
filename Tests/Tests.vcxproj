@@ -116,6 +116,7 @@
     <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MinMaxAllTests.cpp" />
+    <ClCompile Include="StringAllTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h" />
