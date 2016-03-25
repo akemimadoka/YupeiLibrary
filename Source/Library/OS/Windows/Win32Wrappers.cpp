@@ -7,5 +7,4 @@ namespace Yupei
     {
         return ::CloseHandle(handle);
     }
-
 }

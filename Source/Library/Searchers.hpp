@@ -6,11 +6,55 @@
 #include "Containers\Dictionary.hpp"
 #include "Containers\Vector.hpp"
 #include "Ranges\Xrange.hpp"
+#include "Pair.hpp"
+#include <cassert>
 #include <iterator>
 #include <algorithm>
 
 namespace Yupei
 {
+    //http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0253r0.pdf
+
+    template<typename ForwardIt1T, typename Pred = equal_to<>>
+    class default_searcher : Pred
+    {
+    public:
+        default_searcher(ForwardIt1T patFirst, ForwardIt1T patLast, Pred pred = {}) noexcept
+            :patFirst_{patFirst}, patLast_{patLast}, Pred{pred}
+        {}
+
+        template<typename ForwardIt2T>
+        pair<ForwardIt2T, ForwardIt2T> 
+            operator()(ForwardIt2T first, ForwardIt2T last) const
+        {
+            if (first == last) return {first, last};
+            const auto firstChar = *patFirst_;
+            const auto patNext = std::next(patFirst_);
+            const auto patLast = patLast_;
+            for (;;)
+            {
+                first = std::find(first, last, firstChar, GetPred());
+                if (first == last) return {first, last};
+                else
+                {
+                    const auto searchStart = std::next(first);
+                    const auto misMatch = std::mismatch(patNext, patLast, searchStart, last, GetPred());
+                    if (misMatch.first == patLast)
+                        return {first, misMatch.second};
+                }
+            }
+        }
+
+    private:
+        ForwardIt1T patFirst_, patLast_;
+
+        const Pred& GetPred() const noexcept
+        {
+            return static_cast<const Pred&>(*this);
+        }
+    };
+
+
     //https://github.com/mclow/search-library/blob/master/searching.hpp
     namespace Internal
     {      
@@ -62,12 +106,13 @@ namespace Yupei
                 :table_(n, hf, pred), defaultValue_{std::move(defaultValue)}
             {}
 
+            //未使用的变量 res，等 [[maybe_unused]]。
             void Insert(const key_type& k, const value_type& v)
             {
 #ifdef _DEBUG
                 const auto res = 
 #endif
-                    table_.insert(k, v);
+                    table_.insert({k, v});
                 YPASSERT(res.second == true, "Insert failed!");
             }
 
@@ -101,18 +146,27 @@ namespace Yupei
         }
 
         template<typename RandomIt2T>
-        RandomIt2T operator()(RandomIt2T first, RandomIt2T last) const
+        pair<RandomIt2T, RandomIt2T> operator()(RandomIt2T first, RandomIt2T last) const
         {
+            assert(first <= last);
             const auto dist = last - first;
             const auto patLen = patLen_;
-            if (patLen == 0 || dist < patLen) return last;
+            if (patLen == 0 || dist < patLen) return {last, last};
             if (patLen_ == 1)
-                return first;//TODO: Naive way to search.
+            {
+                const auto charToFind = *patStart_;
+                const auto it = std::find_if(first, last, [&](const auto c) noexcept
+                {
+                    return EqualFunc()(c, charToFind);
+                });
+                if (it == last) return {last, last};
+                return {it, it + 1};
+            }
             else
             {
                 auto strCur = patLen - 1;
                 const auto patStart = patStart_; 
-                while (strCur != dist)
+                while (strCur < dist)
                 {
                     auto patCur = patLen - 1;
                     while (patCur >= 0 && EqualFunc()(patStart[patCur], first[strCur]))
@@ -121,8 +175,10 @@ namespace Yupei
                     const auto bad = badTable_[first[strCur]] - (patLen - 1 - patCur);
                     const auto good = goodTable_[patCur];
                     strCur += std::max(bad, good);
-                }                
-                return first + strCur + 1;
+                }                                
+                if (strCur >= dist) return {last, last};
+                const auto target = first + strCur + 1;
+                return {target, target + patLen};
             }
         }
         

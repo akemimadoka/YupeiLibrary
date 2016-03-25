@@ -2,6 +2,7 @@
 
 #include <climits>
 #include <cfloat>
+#include <type_traits>
 
 namespace Yupei
 {
@@ -35,8 +36,8 @@ namespace Yupei
     DEFINE_LIMITS(long double, LDBL_MAX, LDBL_MIN)
 
     template<typename T>
-    constexpr T limits_max_v = limit<T>::max_value;
+    constexpr auto limits_max_v = limit<std::decay_t<T>>::max_value;
 
     template<typename T>
-    constexpr T limits_min_v = limit<T>::min_value;
+    constexpr auto limits_min_v = limit<std::decay_t<T>>::min_value;
 }

@@ -3,6 +3,7 @@
 #include "Assert.hpp"
 #include "MinMax.hpp"
 #include "Searchers.hpp"
+#include "CharTraitsHelpers.hpp"
 #include <cstddef>
 #include <cstring>
 #include <algorithm>
@@ -12,35 +13,64 @@
 namespace Yupei
 {
     enum class string_type
-    {
-        narrow,
-        wide,
+    {        
         utf8,
-        utf32,
-        ansi
+        utf16,
+        utf32,  
+        wide
     };
 
-    template<typename CharT>
+    namespace Internal
+    {
+        template<string_type StringT>
+        struct CharTTraits;
+
+        template<>
+        struct CharTTraits<string_type::wide>
+        {
+            using Type = wchar_t;
+        };
+
+        template<>
+        struct CharTTraits<string_type::utf8>
+        {
+            using Type = char;
+        };
+
+        template<>
+        struct CharTTraits<string_type::utf16>
+        {
+            using Type = char16_t;
+        };
+
+        template<>
+        struct CharTTraits<string_type::utf32>
+        {
+            using Type = char32_t;
+        };
+    }
+
+    template<string_type StringT>
     class basic_string_view
     {
     public:
-        using value_type = CharT;
+        using value_type = typename Internal::CharTTraits<StringT>::Type;
         using size_type = std::size_t;
         using pointer = value_type*;
         using const_pointer = const value_type*;
-        using reference = CharT&;
-        using const_reference = const CharT&;
+        using reference = value_type&;
+        using const_reference = const value_type&;
         using iterator = const_pointer;
         using const_iterator = iterator;
 
         static constexpr size_type npos = static_cast<size_type>(-1);
 
-        constexpr basic_string_view(const CharT* str, size_type len) noexcept
+        constexpr basic_string_view(const_pointer str, size_type len) noexcept
             :data_{str}, size_{len}
         {}
 
-        constexpr basic_string_view(const CharT* str) noexcept
-            :basic_string_view{str, std::strlen(str)}
+        basic_string_view(const_pointer str) noexcept
+            :basic_string_view{str, Internal::StrLen(str)}
         {}
 
         constexpr basic_string_view() noexcept
@@ -119,7 +149,7 @@ namespace Yupei
             size_ -= n;
         }
 
-        size_type copy(CharT* s, size_type n, size_type pos = {}) const
+        size_type copy(pointer s, size_type n, size_type pos = {}) const
         {
             const auto sizeToCopy = min(size() - pos, n);
             (void)std::copy_n(data(), static_cast<std::ptrdiff_t>(sizeToCopy), s);
@@ -166,17 +196,17 @@ namespace Yupei
             return static_cast<size_type>(it - begin());
         }
 
-        size_type find(const CharT* s, size_type pos) const
+        size_type find(const_pointer s, size_type pos) const
         {
             return find(basic_string_view(s), pos);
         }
 
-        size_type find(const CharT* s, size_type pos, size_type n) const
+        size_type find(const_pointer s, size_type pos, size_type n) const
         {
             return find(basic_string_view(s, n), pos);
         }
 
-        size_type find(CharT c, size_type pos) const noexcept
+        size_type find(value_type c, size_type pos) const noexcept
         {
             const auto searchStart = begin() + pos;
             const auto it = std::find(searchStart, end(), c);
@@ -196,12 +226,12 @@ namespace Yupei
             }
         }
 
-        constexpr size_type find_first_of(const CharT* s, size_type pos) const noexcept
+        constexpr size_type find_first_of(const_pointer s, size_type pos) const noexcept
         {
             return find_first_of(basic_string_view(s), pos);
         }
 
-        constexpr size_type find_first_of(const CharT* s, size_type pos, size_type n) const noexcept
+        constexpr size_type find_first_of(const_pointer s, size_type pos, size_type n) const noexcept
         {
             return find_first_of(basic_string_view(s, n), pos);
         }
@@ -220,39 +250,60 @@ namespace Yupei
         }
     };
 
-    template<typename CharT>
-    decltype(auto) begin(basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) begin(basic_string_view<StringT>& view) noexcept
     {
         return view.begin();
     }
 
-    template<typename CharT>
-    decltype(auto) begin(const basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) begin(const basic_string_view<StringT>& view) noexcept
     {
         return view.begin();
     }
 
-    template<typename CharT>
-    decltype(auto) cbegin(const basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) cbegin(const basic_string_view<StringT>& view) noexcept
     {
         return begin(view);
     }
 
-    template<typename CharT>
-    decltype(auto) end(basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) end(basic_string_view<StringT>& view) noexcept
     {
         return view.end();
     }
 
-    template<typename CharT>
-    decltype(auto) end(const basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) end(const basic_string_view<StringT>& view) noexcept
     {
         return view.end();
     }
 
-    template<typename CharT>
-    decltype(auto) cend(const basic_string_view<CharT>& view) noexcept
+    template<string_type StringT>
+    decltype(auto) cend(const basic_string_view<StringT>& view) noexcept
     {
         return end(view);
     }
+
+    template<string_type StringT>
+    decltype(auto) size(const basic_string_view<StringT>& view) noexcept
+    {
+        return view.size();
+    }
+
+    /*basic_string_view<string_type::utf8> operator"" _sv(const char* str) noexcept
+    {
+        return {str, std::strlen(str)};
+    }
+
+    basic_string_view<string_type::wide> operator"" _sv(const wchar_t* str) noexcept
+    {
+        return {str, std::wcslen(str)};
+    }
+
+    basic_string_view<string_type::utf16> operator"" _sv(const wchar_t* str) noexcept
+    {
+        return {str, std::wcslen(str)};
+    }*/
 }

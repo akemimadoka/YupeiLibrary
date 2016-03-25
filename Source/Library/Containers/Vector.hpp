@@ -333,7 +333,7 @@ namespace Yupei
         }
 
         explicit vector(memory_resource_ptr resource)
-            :allocator_{resource}, storage_{}, size_{}, capacity_{}
+            :storage_{}, size_{}, capacity_{}, allocator_{resource}
         {}
 
         template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{}>>
@@ -603,7 +603,7 @@ namespace Yupei
         {
             const auto newSize = size() + n;
             const auto insertionOffset = pos - cbegin();
-            const auto insertionPoint = pos.current_;
+            const auto insertionPoint = begin() + insertionOffset;
             pointer des{};
             if (pos == cend())
             {
@@ -619,7 +619,7 @@ namespace Yupei
                 const auto newStorage = allocator_.allocate(elementsToAlloc);
                 des = NoOverlapMove(storage_, insertionOffset, newStorage);
                 const auto cur = Yupei::construct_n(des, n, std::forward<ParamsT>(params)...);
-                NoOverlapMove(insertionPoint, size() - insertionOffset, cur);
+                NoOverlapMove(Unwrap(insertionPoint), size() - insertionOffset, cur);            
                 allocator_.deallocate(storage_, capacity());
                 capacity_ = elementsToAlloc;
                 storage_ = newStorage;
@@ -628,10 +628,10 @@ namespace Yupei
             else
             {
                 auto prevEnd = storage_ + size();
-                OverlappedMove(insertionPoint, n, insertionPoint + n);
+                OverlappedMove(Unwrap(insertionPoint), n, Unwrap(insertionPoint + n));
                 for (size_type i{}; i < n; ++i)
-                    Yupei::construct(insertionPoint + i, std::forward<ParamsT>(params)...);
-                des = insertionPoint;
+                    Yupei::construct(Unwrap(insertionPoint + i), std::forward<ParamsT>(params)...);
+                des = Unwrap(insertionPoint);
                 size_ += n;
             }
             return MakeIterator(des);
@@ -731,48 +731,34 @@ namespace Yupei
             return Move(src, size, des, std::true_type{});
         }
 
+#ifdef _DEBUG
+        static pointer Unwrap(iterator it) noexcept
+        {
+            return it.current_;
+        }
+
+        static const_pointer Unwrap(const_iterator it) noexcept
+        {
+            return it.current_;
+        }       
+#endif // _DEBUG
+
+        static pointer Unwrap(pointer p) noexcept
+        {
+            return p;
+        }
+
+        static const_pointer Unwrap(const_pointer p) noexcept
+        {
+            return p;
+        }
+
         pointer storage_;
         size_type size_;
         size_type capacity_;
         polymorphic_allocator<ElementT> allocator_;
     };
-
-    template<typename ElementT>
-    inline decltype(auto) begin(const vector<ElementT>& v) noexcept
-    {
-        return v.begin();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) end(const vector<ElementT>& v) noexcept
-    {
-        return v.end();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) begin(vector<ElementT>& v) noexcept
-    {
-        return v.begin();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) end(vector<ElementT>& v) noexcept
-    {
-        return v.end();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) cbegin(const vector<ElementT>& v) noexcept
-    {
-        return begin(v);
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) cend(const vector<ElementT>& v) noexcept
-    {
-        return end(v);
-    }
-
+   
     namespace Internal
     {
         template<typename T>
@@ -811,4 +797,41 @@ namespace Yupei
             return *this;
         }
     }
+
+    template<typename ElementT>
+    inline decltype(auto) begin(const vector<ElementT>& v) noexcept
+    {
+        return v.begin();
+    }
+
+    template<typename ElementT>
+    inline decltype(auto) end(const vector<ElementT>& v) noexcept
+    {
+        return v.end();
+    }
+
+    template<typename ElementT>
+    inline decltype(auto) begin(vector<ElementT>& v) noexcept
+    {
+        return v.begin();
+    }
+
+    template<typename ElementT>
+    inline decltype(auto) end(vector<ElementT>& v) noexcept
+    {
+        return v.end();
+    }
+
+    template<typename ElementT>
+    inline decltype(auto) cbegin(const vector<ElementT>& v) noexcept
+    {
+        return begin(v);
+    }
+
+    template<typename ElementT>
+    inline decltype(auto) cend(const vector<ElementT>& v) noexcept
+    {
+        return end(v);
+    }
+
 }

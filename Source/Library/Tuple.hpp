@@ -333,19 +333,19 @@ namespace Yupei
 	}
 
     template<typename T>
-    class tuple_size;
+    struct tuple_size;
 
     template<typename... Args>
-    class tuple_size<tuple<Args...>> : public size_constant<sizeof...(Args)> {};
+    struct tuple_size<tuple<Args...>> : size_constant<sizeof...(Args)> {};
 
     template< typename T>
-    class tuple_size<const T> : public size_constant<tuple_size<T>::value> {};
+    struct tuple_size<const T> : size_constant<tuple_size<T>::value> {};
 
     template< typename T >
-    class tuple_size<volatile T> : public size_constant<tuple_size<T>::value> {};
+    struct tuple_size<volatile T> : size_constant<tuple_size<T>::value> {};
 
     template< typename T >
-    class tuple_size<const volatile T> : public size_constant<tuple_size<T>::value> {};
+    struct tuple_size<const volatile T> : size_constant<tuple_size<T>::value> {};
 
 	template<typename... Args>
 	class tuple

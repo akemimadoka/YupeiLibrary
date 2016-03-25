@@ -86,7 +86,7 @@ namespace Yupei
             template<typename, typename, typename, typename>
             friend class Yupei::dictionary;
 
-            DictionaryConstIterator(DictionaryT* dict, size_type_t<DictionaryT> index) noexcept
+            DictionaryConstIterator(const DictionaryT* dict, size_type_t<DictionaryT> index) noexcept
                 :dict_{dict}, index_{index}
             {}
           
@@ -114,12 +114,12 @@ namespace Yupei
                 return tmp;
             }
 
-            reference operator*() noexcept
+            reference operator*() const noexcept
             {
                 return dict_->entries_[index_].KeyValue_;
             }
 
-            pointer operator->() noexcept
+            pointer operator->() const noexcept
             {
                 return std::addressof(this->operator*());
             }
@@ -136,7 +136,7 @@ namespace Yupei
             }
 
         private:
-            DictionaryT* dict_;
+            const DictionaryT* dict_;
             size_type_t<DictionaryT> index_;
         };
 
@@ -309,8 +309,8 @@ namespace Yupei
         {}
 
         explicit dictionary(size_type bucketCount, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
-            :hasher{hash},
-            key_equal{keyEqual},
+            :key_equal {keyEqual}, 
+            hasher{hash},            
             allocator_{pmr}
         {
             Initialize(bucketCount);
@@ -318,9 +318,9 @@ namespace Yupei
 
         template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
         dictionary(InputItT first, InputItT last, size_type bucket = {}, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
-            :hasher{hash},
-            key_equal{keyEqual},
-            allocator_{pmr}
+            :key_equal {keyEqual},
+            hasher {hash},
+            allocator_ {pmr}
         {
             if (std::is_base_of<std::random_access_iterator_tag, iterator_category_t<InputItT>>::value)
                 Initialize(static_cast<size_type>(last - first));
@@ -500,7 +500,7 @@ namespace Yupei
             freeList_ = index;
             ++freeCount_;
             destroy(std::addressof(entry.KeyValue_));
-            return {ret.dict_, ret.index_};
+            return {this, ret.index_};
         }
 
         bool erase(const key_type& key)
@@ -847,6 +847,48 @@ namespace Yupei
             index_ = dict_->entries_[index_].NextEntryIndex_;
             return *this;
         }
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) begin(dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return dict.begin();
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) begin(const dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return dict.begin();
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) cbegin(const dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return cbegin(dict);
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) end(dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return dict.end();
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) end(const dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return dict.end();
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) cend(const dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return cend(dict);
+    }
+
+    template<typename KeyT, typename ValueT, typename HashFun, typename KeyEqualT>
+    decltype(auto) size(const dictionary<KeyT, ValueT, HashFun, KeyEqualT>& dict) noexcept
+    {
+        return dict.size();
     }
 
 }

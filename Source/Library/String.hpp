@@ -4,22 +4,29 @@
 #include "MemoryResource\MemoryResource.hpp"
 #include "Ranges\Xrange.hpp"
 #include "Limits.hpp"
+#include "Containers\Vector.hpp"
+#include "Searchers.hpp"
 #include <algorithm>
 #include <utility>
 
 namespace Yupei
 {
-    template<typename CharT>
+    template<string_type StringT>
     class basic_string
     {
     public:
-        using view_type = basic_string_view<CharT>;
-        CONTAINER_DEFINE(CharT)
+        using view_type = basic_string_view<StringT>;
+        using value_type = typename view_type::value_type;
+        using size_type = std::size_t;
+        using pointer = value_type*;
+        using const_pointer = const value_type*;
+        using reference = value_type&;
+        using const_reference = const value_type&;
         using iterator = pointer;
-        using const_iterator = const value_type*;
+        using const_iterator = const_pointer;
 
         basic_string(memory_resource_ptr pmr = {}) noexcept
-            :allocator_{pmr}
+            :allocator_ {pmr}
         {
             SetSmallSize(0);
         }
@@ -74,7 +81,7 @@ namespace Yupei
         {
             std::swap(storage_, other.storage_);
         }
-        
+
         size_type size() const noexcept
         {
             return GetSize();
@@ -83,9 +90,9 @@ namespace Yupei
         view_type to_string_view() const noexcept
         {
             if (IsBig())
-                return {GetBigPtr(), GetBigSize()};
+                return {storage_.big_.ptr_, GetBigSize()};
             else
-                return {GetSmallPtr(), GetSmallSize()};
+                return {storage_.small_.data_, GetSmallSize()};
         }
 
         size_type capacity() const noexcept
@@ -135,12 +142,12 @@ namespace Yupei
                 const auto str = storage_.small_.data_;
                 const_cast<reference>(str[storage_.small_.size_]) = {};
                 return str;
-            }            
+            }
         }
 
         pointer c_str() && noexcept = delete;
         const_pointer c_str() const && noexcept = delete;
-        
+
         reference operator[](size_type n) noexcept
         {
             return GetBegin()[n];
@@ -211,9 +218,9 @@ namespace Yupei
 
         void pop_back(size_type n = 1) noexcept
         {
-            IncrementSize(limits_max_v<size_type> + n - 1);
+            IncrementSize(limits_max_v<size_type> +n - 1);
         }
-        
+
         void append(value_type c)
         {
             push_back(c);
@@ -221,7 +228,7 @@ namespace Yupei
 
         void append(const_pointer str)
         {
-            append(view_type{str});
+            append(view_type {str});
         }
 
         void append(const_pointer str, size_type startIndex, size_type charCount)
@@ -229,6 +236,7 @@ namespace Yupei
             append(view_type {str + startIndex, charCount});
         }
 
+        //这里会警告有未使用的变量 i，等 [[maybe_unused]]。
         void append(value_type value, size_type repeatCount)
         {
             const auto prevSize = size();
@@ -244,7 +252,7 @@ namespace Yupei
             using Yupei::cend;
             const auto prevSize = size();
             const auto viewSize = view.size();
-            const auto newSpace = ReserveMore(viewSize);           
+            const auto newSpace = ReserveMore(viewSize);
             std::copy(cbegin(view), cend(view), newSpace);
             SetSize(prevSize + viewSize);
         }
@@ -264,12 +272,14 @@ namespace Yupei
             append(value.to_string_view().substr(startIndex, count));
         }
 
-        void insert(size_type index, const view_type& value, size_type count)
+        //将 count 个 value 插入到 index 之前。
+        void insert(size_type index, const view_type& value, size_type count = 1)
         {
             using Yupei::cbegin;
             using Yupei::cend;
             if (count == 0) return;
-            const auto charsToInsert = value.size();
+            const auto prevSize = size();
+            const auto charsToInsert = value.size() * count;
             auto insertPlace = MakeRoom(charsToInsert, index, index);
             for (;;)
             {
@@ -278,6 +288,7 @@ namespace Yupei
                 if (count == 0)
                     break;
             }
+            SetSize(prevSize + charsToInsert);
         }
 
         void insert(size_type index, const_pointer value, size_type startIndex, size_type charCount)
@@ -299,7 +310,82 @@ namespace Yupei
 
         void replace(const view_type& oldString, const view_type& newString)
         {
-            //TODO.
+            using Yupei::cbegin;
+            using Yupei::cend;
+            using Yupei::begin;
+            using Yupei::end;
+            vector<iterator> replacements;
+            //TODO: 小字符串应该使用 default searcher。
+            const auto searcher = make_boyer_moore_searcher(begin(oldString), end(oldString));
+            pair<iterator, iterator> result;            
+            const auto strBegin = begin(*this);
+            const auto strEnd = end(*this);
+            auto searchBegin = strBegin;
+            for (;;)
+            {
+                result = searcher(searchBegin, strEnd);
+                if (result.first != strEnd)
+                    replacements.push_back(result.first);
+                else break;
+                searchBegin = result.second;
+            }
+            if (!replacements.empty())
+            {
+                const auto oldSize = oldString.size();
+                const auto newSize = newString.size();
+                const auto prevEntireStringSize = size();
+
+                //TODO: sizeToEnsure 的溢出问题。
+                auto sizeToEnsure = prevEntireStringSize;
+                if (oldSize > newSize)
+                    sizeToEnsure -= (oldSize - newSize) * replacements.size();
+                else
+                    sizeToEnsure += (newSize - oldSize) * replacements.size();
+
+                //脏。                
+                auto oldStorage = strBegin;
+                size_type curReplace = {};
+                const auto wasBig = IsBig();
+                if ((!wasBig && sizeToEnsure < SmallMaxLength - 1) 
+                    || sizeToEnsure < capacity() //注意这里，必须严格小于 capacity，因为要保留空字符的位置。
+                    )
+                {
+                    //从 elementsToAllocate 这个位置开始向后移。
+                    size_type cur = replacements.size() - 1;
+                    auto curProgress = strBegin + sizeToEnsure;
+                    auto oldEnd = strEnd;
+                    for (; cur != size_type(-1); --cur)
+                    {
+                        auto replacement = replacements[cur];
+                        const auto moveStart = replacement + oldSize;
+                        curProgress = std::move_backward(moveStart, oldEnd, curProgress);
+                        curProgress = std::copy_backward(cbegin(newString), cend(newString), curProgress);
+                        oldEnd = replacement;
+                    }
+                    SetSize(sizeToEnsure);
+                }
+                else
+                {
+                    const auto elementsToAllocate = ((sizeToEnsure + 1 + 0x0Fu) & size_type(-0x10));
+                    if (elementsToAllocate < sizeToEnsure) throw std::bad_array_new_length();
+
+                    const auto newStorage = allocator_.allocate(elementsToAllocate);
+                    auto curProgress = newStorage;
+                    for (; curReplace != replacements.size();)
+                    {
+                        const auto oldEnd = replacements[curReplace];
+                        curProgress = std::copy(oldStorage, oldEnd, curProgress);
+                        curProgress = std::copy(cbegin(newString), cend(newString), curProgress);
+                        oldStorage = oldEnd + oldString.size();
+                        ++curReplace;
+                    }
+                    std::copy(oldStorage, strEnd, curProgress);
+                    SetBigCapacity(elementsToAllocate);
+                    if (wasBig) allocator_.deallocate(storage_.big_.ptr_, GetBigSize());
+                    storage_.big_.ptr_ = newStorage;
+                    storage_.big_.size_ = sizeToEnsure;
+                }                                                                   
+            }
         }
 
         void replace(value_type oldChar, value_type newChar) noexcept
@@ -309,7 +395,7 @@ namespace Yupei
                     c = newChar;
         }
 
-    private:        
+    private:
         struct Big
         {
             size_type capacity_;
@@ -317,14 +403,14 @@ namespace Yupei
             pointer ptr_;
         };
 
-        static constexpr size_type SmallMaxLength = max(2, sizeof(Big) / sizeof(CharT));
-        using UnsignedCharT = std::make_unsigned_t<CharT>;
+        static constexpr size_type SmallMaxLength = max(2, sizeof(Big) / sizeof(value_type));
+        using UnsignedCharT = std::make_unsigned_t<value_type>;
 
         //padding?
         struct Small
         {
             UnsignedCharT size_;
-            CharT data_[SmallMaxLength - 1];            
+            value_type data_[SmallMaxLength - 1];
         };
 
         union Storage
@@ -332,7 +418,7 @@ namespace Yupei
             Big big_;
             Small small_;
         }storage_;
-        
+
         polymorphic_allocator<value_type> allocator_;
 
         static constexpr size_type BigMask = 1;
@@ -340,17 +426,24 @@ namespace Yupei
 
         pointer ReserveMore(size_type delta)
         {
-            const auto curSize = size();           
+            const auto curSize = size();
             const auto sizeToEnsure = curSize + delta;
             if (sizeToEnsure < curSize) throw std::bad_array_new_length();
             return MakeRoom(delta, curSize, curSize);
+        }
+
+        void Reserve(size_type newCap)
+        {
+            const auto oldCap = capacity();
+            if (newCap <= oldCap) return;
+            (void)ReserveMore(newCap - oldCap);
         }
 
         //例如 Insert、Replace 这些函数都会有类似的要求：
         //先预留好空间。拷贝前半部分，这时在新区域加入或替换，再拷贝后半部分。
         //这个函数的作用：在 copyEndIndex1 与 copyStartIndex2 之间留出 count 的空隙。
         pointer MakeRoom(size_type count, size_type copyEndIndex1, size_type copyStartIndex2)
-        {       
+        {
             assert(copyEndIndex1 <= copyStartIndex2);
             const auto str = GetBegin();
             const auto strEnd = GetEnd();
@@ -364,14 +457,14 @@ namespace Yupei
             const auto curCap = capacity();
             if (elementsRequired <= curCap)
             {
-                std::move_backward(copyLastStart, strEnd, copyPrevEnd + count);
+                std::move_backward(copyLastStart, strEnd, strEnd + count);
                 return str + copyEndIndex1;
             }
 
-            const auto elementsToAllocate = ((elementsRequired + 0x0Fu) & size_type(-0x10));           
+            const auto elementsToAllocate = ((elementsRequired + 1 + 0x0Fu) & size_type(-0x10));
             if (elementsToAllocate < elementsRequired || elementsToAllocate >= max_size()) throw std::bad_array_new_length();
 
-            const auto newStorage = allocator_.allocate(elementsToAllocate);   
+            const auto newStorage = allocator_.allocate(elementsToAllocate);
             if (copyPrevEnd == strEnd && copyLastStart == strEnd)
                 std::copy(str, strEnd, newStorage);//在末尾留 count，直接全部拷贝过去。
             else
@@ -392,16 +485,16 @@ namespace Yupei
             if (IsBig())
             {
                 const auto prevSize = GetBigSize();
-                GetBigPtr()[prevSize] = c;
+                storage_.big_.ptr_[prevSize] = c;
                 SetBigSize(prevSize + 1);
             }
             else
             {
                 const auto prevSize = GetSmallSize();
-                GetSmallPtr()[prevSize] = c;
+                storage_.small_.data_[prevSize] = c;
                 SetSmallSize(prevSize + 1);
-            }            
-        }      
+            }
+        }
 
         bool IsBig() const noexcept
         {
@@ -435,10 +528,10 @@ namespace Yupei
 
         void SetSmallSize(size_type s) noexcept
         {
-            assert(s < SmallMaxLength);          
+            assert(s < SmallMaxLength);
             storage_.small_.size_ = (s << 1);
         }
-       
+
         size_type GetBigSize() const noexcept
         {
             assert(IsBig());
@@ -453,7 +546,7 @@ namespace Yupei
 
         //Capacity 只能是偶数，正是我们期望的。
         void SetBigCapacity(size_type s) noexcept
-        {           
+        {
             storage_.big_.capacity_ = s | BigMask;
         }
 
@@ -489,14 +582,64 @@ namespace Yupei
         const_pointer GetEnd() const noexcept
         {
             if (IsBig()) return storage_.big_.ptr_ + GetBigSize();
-            else return storage_.small_.ptr_ + GetSmallSize();
+            else return storage_.small_.data_ + GetSmallSize();
         }
 
         size_type GetCapacity() const noexcept
         {
-            return (IsBig() ? storage_.big_.capacity_ : SmallMaxLength) - 1;
+            return (IsBig() ? GetBigCapacity() : SmallMaxLength - 1);
         }
     };
 
-    using utf8_string = basic_string<char>;
+    template<string_type StringT>
+    decltype(auto) begin(basic_string<StringT>& str) noexcept
+    {
+        return str.begin();
+    }
+
+    template<string_type StringT>
+    decltype(auto) begin(const basic_string<StringT>& str) noexcept
+    {
+        return str.begin();
+    }
+
+    template<string_type StringT>
+    decltype(auto) cbegin(const basic_string<StringT>& str) noexcept
+    {
+        return begin(str);
+    }
+
+    template<string_type StringT>
+    decltype(auto) end(basic_string<StringT>& str) noexcept
+    {
+        return str.end();
+    }
+
+    template<string_type StringT>
+    decltype(auto) end(const basic_string<StringT>& str) noexcept
+    {
+        return str.end();
+    }
+
+    template<string_type StringT>
+    decltype(auto) cend(const basic_string<StringT>& str) noexcept
+    {
+        return end(str);
+    }
+
+    template<string_type StringT>
+    decltype(auto) size(const basic_string<StringT>& str) noexcept
+    {
+        return str.size();
+    }
+
+    extern template class basic_string<string_type::wide>;
+    extern template class basic_string<string_type::utf8>;
+    extern template class basic_string<string_type::utf16>;
+    extern template class basic_string<string_type::utf32>;
+
+    using wide_string = basic_string<string_type::wide>;
+    using utf8_string = basic_string<string_type::utf8>;
+    using utf16_string = basic_string<string_type::utf16>;
+    using utf32_string = basic_string<string_type::utf32>;
 }

@@ -8,10 +8,10 @@ TEST_CASE(BMSearcher)
     std::string pat = "GCAGAGAG";
     std::string str = "GCATCGCAGAGAGTATACAGTACG";
     auto i = make_boyer_moore_searcher(begin(pat), end(pat))(begin(str), end(str));
-    TEST_ASSERT(i == begin(str) + 5);
+    TEST_ASSERT(i.first == begin(str) + 5);
 
     pat = "AT_THAT";
     str = "WHICH_FINALLY_HALTS.__AT_THAT_POINT";
     i = make_boyer_moore_searcher(begin(pat), end(pat))(begin(str), end(str));
-    TEST_ASSERT(i == begin(str) + 22);
+    TEST_ASSERT(i.first == begin(str) + 22);
 }
