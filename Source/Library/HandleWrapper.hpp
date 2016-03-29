@@ -11,19 +11,19 @@ namespace Yupei
     public:
         using HandleType = typename Closer::HandleType;
 
-        static constexpr HandleType InvalidHandle = Closer::InvalidHandle;
+        const HandleType InvalidHandle = Closer::InvalidHandle;
 
-        constexpr HandleWrapper() noexcept
+        HandleWrapper() noexcept
             :handle_{InvalidHandle}
         {}
 
-        explicit constexpr HandleWrapper(HandleType handle) noexcept
+        explicit HandleWrapper(HandleType handle) noexcept
             :handle_{handle}
         {}
 
         DISABLECOPY(HandleWrapper)
 
-        constexpr HandleWrapper(HandleWrapper&& other) noexcept
+        HandleWrapper(HandleWrapper&& other) noexcept
             :handle_ {other.handle_}
         {
             other.handle_ = InvalidHandle;
