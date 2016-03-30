@@ -1,5 +1,9 @@
-#include <UnitTest.hpp>
+ï»¿#include <UnitTest.hpp>
 #include <String.hpp>
+#include <locale>
+#include <sstream>
+#include <string>
+#include <iostream>
 
 TEST_CASE(StringConstruct)
 {
@@ -61,7 +65,7 @@ TEST_CASE(StringAppendAndReplace)
         TEST_ASSERT(str[i + 1] == 'a');
     }
 
-    //Ç¿ÖÆÖØ·ÖÅä¡£
+    //å¼ºåˆ¶é‡åˆ†é…ã€‚
     str.replace({"ha"}, {"haha"});
 
     TEST_ASSERT(str.size() == 805);
@@ -75,7 +79,7 @@ TEST_CASE(SmallStringReplace)
 {
     using namespace Yupei;
 
-    //²âÊÔ¾ùÔÚĞ¡ÄÚ´æµÄÇé¿ö¡£
+    //æµ‹è¯•å‡åœ¨å°å†…å­˜çš„æƒ…å†µã€‚
     utf8_string str {"abcba"};
 
     str.replace("ab", "abc");
@@ -100,7 +104,7 @@ TEST_CASE(SmallStringReplaceToBig)
 {
     using namespace Yupei;
 
-    //²âÊÔÔÚĞ¡ÄÚ´æ£¬replace Íê±Ïºóµ½´óÄÚ´æµÄÇé¿ö¡£
+    //æµ‹è¯•åœ¨å°å†…å­˜ï¼Œreplace å®Œæ¯•ååˆ°å¤§å†…å­˜çš„æƒ…å†µã€‚
     utf8_string str {"abcba"};
 
     str.replace("ab", "abcdefghi");
@@ -141,6 +145,21 @@ TEST_CASE(StringSmallInsert)
         TEST_ASSERT(str[i] == static_cast<char>('a' + i));
 }
 
+TEST_CASE(StringPushBackTest)
+{
+	using namespace Yupei;
+	utf8_string str;
+	for (int i = 0;i < 1000;++i)
+	{
+		str.push_back('v');
+	}
+	TEST_ASSERT(str.size() == 1000);
+	for (int i = 0;i < 1000;++i)
+	{
+		TEST_ASSERT(str[i] == 'v');
+	}
+}
+
 TEST_CASE(StringBigInsert)
 {
     using namespace Yupei;
@@ -173,4 +192,29 @@ TEST_CASE(StringRemove)
 
     for (std::size_t i = 0; i < str.size(); ++i)
         TEST_ASSERT(str[i] == static_cast<char>('a' + i));
+}
+
+TEST_CASE(Utf32StringTest)
+{
+	using namespace Yupei;
+	const auto& u32Str = U"ä½ å¥½å•Šï¼Œå“ˆå“ˆå“ˆã€‚";	
+	const auto yStr = utf32_string { u32Str };
+	TEST_ASSERT(std::equal(std::begin(u32Str), std::end(u32Str) - 1, begin(yStr), end(yStr)));
+}
+
+
+TEST_CASE(Utf16DecoderTest)
+{
+	using namespace Yupei;
+	const utf16_string u16Str = u"ä½ å¥½å•Šï¼Œå“ˆå“ˆå“ˆã€‚";
+	for (auto c : u16Str)
+		std::cout << std::hex << static_cast<std::uint32_t>(c) << " ";
+	std::u32string u32Str = U"ä½ å¥½å•Šï¼Œå“ˆå“ˆå“ˆã€‚";
+	for (auto c : u32Str)
+		std::cout << std::hex << static_cast<std::uint32_t>(c) << " ";
+	const auto u32Str2 = to_utf32(u16Str.to_string_view());
+	/*
+	for (auto c : u32Str2)
+		std::cout << std::hex << static_cast<std::uint32_t>(c) << " ";*/
+	//TEST_ASSERT(std::equal(begin(u32Str), end(u32Str), begin(u32Str2), end(u32Str2)));
 }

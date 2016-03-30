@@ -8,6 +8,8 @@
 #include "Searchers.hpp"
 #include <algorithm>
 #include <utility>
+#include <cstdint>
+#include <iostream>
 
 namespace Yupei
 {
@@ -43,11 +45,16 @@ namespace Yupei
             append(view);
         }
 
+		basic_string(const_pointer value, memory_resource_ptr pmr = {})
+			:basic_string(value, 0, Internal::StrLen(value), pmr)
+		{}
+
         basic_string(const_pointer value, size_type startIndex, size_type count, memory_resource_ptr pmr = {})
             :basic_string(view_type {value + startIndex, count}, pmr)
         {}
 
         basic_string(const basic_string& other)
+			:basic_string()
         {
             append(other);
         }
@@ -59,6 +66,7 @@ namespace Yupei
         }
 
         basic_string(basic_string&& other) noexcept
+			:basic_string()
         {
             storage_ = other.storage_;
             other.SetSmallSize(0);
@@ -212,8 +220,9 @@ namespace Yupei
 
         void push_back(value_type c)
         {
-            ReserveMore(1);
-            UncheckedPush(c);
+			const auto prevSize = size();
+            *ReserveMore(1) = c;			
+			SetSize(prevSize + 1);
         }
 
         void pop_back(size_type n = 1) noexcept
@@ -395,6 +404,11 @@ namespace Yupei
                     c = newChar;
         }
 
+		void reserve(size_type newCap)
+		{
+			Reserve(newCap);
+		}
+
     private:
         struct Big
         {
@@ -428,15 +442,18 @@ namespace Yupei
         {
             const auto curSize = size();
             const auto sizeToEnsure = curSize + delta;
+			const auto curCap = capacity();
             if (sizeToEnsure < curSize) throw std::bad_array_new_length();
-            return MakeRoom(delta, curSize, curSize);
+			if (sizeToEnsure <= curCap) return GetEnd();
+            return MakeRoom(sizeToEnsure, curSize, curSize);
         }
 
         void Reserve(size_type newCap)
         {
-            const auto oldCap = capacity();
-            if (newCap <= oldCap) return;
-            (void)ReserveMore(newCap - oldCap);
+			const auto curCap = capacity();
+			const auto curSize = size();
+			if (newCap <= curCap) return;
+			(void)MakeRoom(newCap, curSize, curSize);
         }
 
         //例如 Insert、Replace 这些函数都会有类似的要求：
@@ -642,4 +659,305 @@ namespace Yupei
     using utf8_string = basic_string<string_type::utf8>;
     using utf16_string = basic_string<string_type::utf16>;
     using utf32_string = basic_string<string_type::utf32>;
+
+	template<typename IteratorT>
+	class string_reader
+	{
+	public:
+		string_reader(IteratorT start, IteratorT last) noexcept
+			: start_ { start }, last_ { last }
+		{}
+
+		explicit operator bool() const noexcept
+		{
+			return start_ != last_;
+		}
+
+		std::uint32_t operator()() noexcept
+		{
+			assert(start_ != last_);
+			const auto ret = *start_;
+			++start_;
+			return static_cast<std::uint32_t>(ret);
+		}
+
+	private:
+		IteratorT start_, last_;
+	};
+
+	template<typename StringT>
+	decltype(auto) make_reader(const StringT& str) noexcept
+	{
+		return string_reader<iterator_t<StringT>>{begin(str), end(str)};
+	}
+
+
+	template<typename ReaderT>
+	class utf8_decoder
+	{
+	public:
+		utf8_decoder(ReaderT reader) noexcept
+			:reader_{reader}
+		{}
+
+		explicit operator bool() const noexcept
+		{
+			return !!reader_;
+		}
+
+		std::uint32_t operator()()
+		{
+			//0 ~ 10000(16)：1
+			//10000(16) ~ 11000(24)：不合法。
+			//11000(24) ~ 11100(28)：2
+			//11100(28) ~ 11110(30)：3
+			//11110(30)：4
+			//11111(31)：不合法。
+			static constexpr std::uint8_t MaskTable[32] = {
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+			};
+			auto codePoint = reader_();
+			const auto byteCount = MaskTable[codePoint >> 3];
+			if (byteCount == 0)
+				throw std::invalid_argument { "invalid UTF-8 sequence!" };
+			else
+			{
+				static constexpr std::uint32_t NonleadingBytesMask = 0b10111111u;
+				const auto Unroll = [&]() 
+				{
+					const auto nextPoint = reader_();
+					if((nextPoint & NonleadingBytesMask) != nextPoint) throw std::invalid_argument { "invalid UTF-8 sequence!" };
+					codePoint <<= 6;
+					codePoint |= (nextPoint & 0x3Fu);
+				};
+				switch (byteCount)
+				{
+				case 1:
+					break;
+				case 2:
+					codePoint &= 0b00011111u;
+					Unroll();
+					break;
+				case 3:
+					codePoint &= 0b00001111u;
+					Unroll();
+					Unroll();
+					break;
+				case 4:
+					codePoint &= 0b00000111u;
+					Unroll();
+					Unroll();
+					Unroll();
+					break;
+				default:
+					break;
+				}
+				return codePoint;
+			}
+		}
+
+	private:
+		ReaderT reader_;
+	};
+
+	template<typename ReaderT>
+	utf8_decoder<ReaderT> make_utf8_decoder(ReaderT reader) noexcept
+	{
+		return { reader };
+	}
+
+	template<typename ReaderT>
+	class utf8_encoder
+	{
+	public:
+		utf8_encoder(ReaderT reader) noexcept
+			:reader_{reader}
+		{}
+
+		explicit operator bool() const noexcept
+		{
+			return !!reader_;
+		}
+
+		std::uint32_t operator()()
+		{
+			if (pendingBytes_ != 0)
+			{
+				const auto ret = pendingBytes_ & 0xFFu;
+				pendingBytes_ >>= 8;
+				return ret;
+			}
+
+			auto codePoint = reader_();
+			//UTF-8 的每个 code point 最多 21 位。
+			if (codePoint & 0x1FFFFFu != codePoint) throw std::invalid_argument { "invalid UTF-32 code point!" };
+			//从大到小测起。
+
+			const auto Unroll = [&]()
+			{
+				pendingBytes_ |= (codePoint & 0b111111u);
+				codePoint >>= 6;
+				pendingBytes_ <<= 8;
+			};
+
+			if ((codePoint >> 16) != 0)
+			{
+				//4 Bytes
+				//取前 3 位返回。
+				const auto ret = codePoint >> 18;
+				Unroll();
+				Unroll();
+				Unroll();
+				return ret;
+			}
+			else if ((codePoint >> 11) != 0)
+			{
+				//3 Bytes
+				//取前 4 位返回。
+				const auto ret = codePoint >> 12;
+				Unroll();
+				Unroll();
+				return ret;
+			}
+			else if ((codePoint >> 7) != 0)
+			{
+				//2 Bytes
+				//取前 5 位返回。
+				const auto ret = codePoint >> 6;
+				Unroll();
+				return ret;
+			}
+			else
+				return codePoint;
+		}
+
+	private:
+		ReaderT reader_;
+		std::uint32_t pendingBytes_ = {};
+	};
+
+	template<typename ReaderT>
+	utf8_encoder<ReaderT> make_utf8_encoder(ReaderT reader) noexcept
+	{
+		return { reader };
+	}
+
+	template<typename ReaderT>
+	class utf16_decoder
+	{
+	public:
+		utf16_decoder(ReaderT reader) noexcept
+			:reader_{reader}
+		{}
+
+		explicit operator bool() const noexcept
+		{
+			return !!reader_;
+		}
+
+		//https://tools.ietf.org/html/rfc2781 2.2，十分直白。
+		std::uint32_t operator()()
+		{
+			const auto w1 = reader_();
+			if (w1 < 0xD800)
+				return w1;
+			else
+				if (w1 > 0xDFFFu) return w1;
+				else
+					if (w1 <= 0xDBFFu)
+						if (reader_)
+						{
+							const auto w2 = reader_();
+							if (w2 >= 0xDC00u && w2 <= 0xDFFFu)
+								return (w1 << 10 | w2);
+							else goto NonTrailingError;
+						}
+						else goto NonTrailingError;
+					else
+						goto TrailingError;
+						
+		TrailingError:
+			throw std::invalid_argument { "invalid trailing surrogate!" };
+		NonTrailingError:
+			throw std::invalid_argument { "invalid Non-trailing surrogate!" };
+		}
+
+	private:
+		ReaderT reader_;
+	};
+
+	template<typename ReaderT>
+	utf16_decoder<ReaderT> make_utf16_decoder(ReaderT reader) noexcept
+	{
+		return { reader };
+	}
+
+	template<typename ReaderT>
+	class utf16_encoder
+	{
+	public:
+		utf16_encoder(ReaderT reader) noexcept
+			:reader_{reader}
+		{}
+
+		explicit operator bool() const noexcept
+		{
+			return !!reader_;
+		}
+
+		std::uint32_t operator()()
+		{
+			if (pendingBytes_)
+			{
+				const auto w2 = pendingBytes_ + 0xDC00u;
+				pendingBytes_ = {};
+				return w2;
+			}
+			auto codePoint = reader_();
+			if (codePoint > 0x10FFFFu)
+				throw std::invalid_argument { "invalid UTF-32 code point" };
+			else if (codePoint >= 0x10000u)
+			{
+				codePoint -= 0x10000u;
+				pendingBytes_ = codePoint & 0b1111111111u;
+				codePoint |= (codePoint & 0b11111111110000000000u) >> 10;
+				codePoint |= 0xD800u;				
+			}
+			return codePoint;
+		}
+
+	private:
+		ReaderT reader_;
+		std::uint32_t pendingBytes_ = {};
+	};
+
+	template<typename ReaderT>
+	utf16_encoder<ReaderT> make_utf16_encoder(ReaderT reader) noexcept
+	{
+		return { reader };
+	}
+
+	template<typename StringT, typename FilterT>
+	void convert(StringT& str, FilterT filter)
+	{
+		while (filter)
+		{
+			const auto v = static_cast<value_type_t<StringT>>(filter());
+			std::cout << v << " ";
+			str.push_back(v);
+		}			
+	}
+
+	utf8_string to_utf8(const wide_string::view_type& wide);
+	utf8_string to_utf8(const utf16_string::view_type& wide);
+	utf8_string to_utf8(const utf32_string::view_type& wide);
+
+	utf16_string to_utf16(const utf8_string::view_type& utf8);
+	utf16_string to_utf16(const utf32_string::view_type& utf8);
+
+	utf32_string to_utf32(const utf8_string::view_type& wide);
+	utf32_string to_utf32(const utf16_string::view_type& wide);
+	utf32_string to_utf32(const wide_string::view_type& wide);
+	
 }
