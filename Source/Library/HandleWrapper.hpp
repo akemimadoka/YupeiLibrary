@@ -50,6 +50,13 @@ namespace Yupei
             return handle_;
         }
 
+		HandleType Reset(HandleType other) noexcept
+		{
+			const auto tmp = handle_;
+			handle_ = other;
+			return tmp;
+		}
+
     private:
         HandleType handle_;
     };
