@@ -946,14 +946,14 @@ namespace Yupei
 	}
 
 	utf8_string to_utf8(const wide_string::view_type& wide);
-	utf8_string to_utf8(const utf16_string::view_type& wide);
-	utf8_string to_utf8(const utf32_string::view_type& wide);
+	utf8_string to_utf8(const utf16_string::view_type& utf16);
+	utf8_string to_utf8(const utf32_string::view_type& utf32);
 
 	utf16_string to_utf16(const utf8_string::view_type& utf8);
-	utf16_string to_utf16(const utf32_string::view_type& utf8);
+	utf16_string to_utf16(const utf32_string::view_type& utf32);
 
-	utf32_string to_utf32(const utf8_string::view_type& wide);
-	utf32_string to_utf32(const utf16_string::view_type& wide);
+	utf32_string to_utf32(const utf8_string::view_type& utf8);
+	utf32_string to_utf32(const utf16_string::view_type& utf16);
 	utf32_string to_utf32(const wide_string::view_type& wide);
 
 }
