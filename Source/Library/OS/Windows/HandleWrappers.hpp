@@ -17,6 +17,4 @@ namespace Yupei
     };
 
     using FileHandle = HandleWrapper<FileHandleCloser>;
-
-
 }

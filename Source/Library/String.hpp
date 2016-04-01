@@ -650,10 +650,10 @@ namespace Yupei
 		return str.size();
 	}
 
-	/*extern template class basic_string<string_type::wide>;
+	extern template class basic_string<string_type::wide>;
 	extern template class basic_string<string_type::utf8>;
 	extern template class basic_string<string_type::utf16>;
-	extern template class basic_string<string_type::utf32>;*/
+	extern template class basic_string<string_type::utf32>;
 
 	using wide_string = basic_string<string_type::wide>;
 	using utf8_string = basic_string<string_type::utf8>;
