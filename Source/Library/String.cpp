@@ -2,10 +2,10 @@
 
 namespace Yupei
 {
-    template class basic_string<string_type::wide>;
+    /*template class basic_string<string_type::wide>;
     template class basic_string<string_type::utf8>;
     template class basic_string<string_type::utf16>;
-    template class basic_string<string_type::utf32>;
+    template class basic_string<string_type::utf32>;*/
 
 	utf8_string to_utf8(const utf16_string::view_type & utf16)
 	{
