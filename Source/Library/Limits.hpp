@@ -35,9 +35,12 @@ namespace Yupei
     DEFINE_LIMITS(double, DBL_MAX, DBL_MIN)
     DEFINE_LIMITS(long double, LDBL_MAX, LDBL_MIN)
 
+	//MSVC bug here.
     template<typename T>
     constexpr auto limits_max_v = limit<std::decay_t<T>>::max_value;
 
     template<typename T>
     constexpr auto limits_min_v = limit<std::decay_t<T>>::min_value;
+
+#undef DEFINE_LIMITS
 }

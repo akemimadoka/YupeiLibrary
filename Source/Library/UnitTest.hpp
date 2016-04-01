@@ -13,18 +13,21 @@ namespace Yupei
     {
         class UnitTestException : public std::runtime_error
         {
+		private:
+			using LineType = decltype(__LINE__);
+
         public:
-            UnitTestException(const char* str, std::uint32_t lineNumber, const char* fileName)
+            UnitTestException(const char* str, LineType lineNumber, const char* fileName)
                 :runtime_error{str},
                 LineNumber_{lineNumber},
                 FileName_{fileName}
             {}
 
-            UnitTestException(const std::string& str, std::uint32_t lineNumber, const char* fileName)
+            UnitTestException(const std::string& str, LineType lineNumber, const char* fileName)
                 :UnitTestException{str.c_str(), lineNumber, fileName}
             {}
 
-            std::uint32_t LineNumber_;
+            LineType LineNumber_;
             const char* FileName_;
         };
 

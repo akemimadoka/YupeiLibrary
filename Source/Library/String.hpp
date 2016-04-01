@@ -416,7 +416,7 @@ namespace Yupei
 			pointer ptr_;
 		};
 
-		static constexpr size_type SmallMaxLength = max(2, sizeof(Big) / sizeof(value_type));
+		static constexpr size_type SmallMaxLength = std::max(std::size_t(2), sizeof(Big) / sizeof(value_type));
 		using UnsignedCharT = std::make_unsigned_t<value_type>;
 
 		//padding?

@@ -762,7 +762,7 @@ namespace Yupei
     namespace Internal
     {
         template<typename T>
-        auto vector_iterator<T>::operator += (vector_iterator<T>::difference_type n) noexcept
+        auto vector_iterator<T>::operator += (typename vector_iterator<T>::difference_type n) noexcept
             -> vector_iterator<T>&
         {
             current_ += n;
@@ -771,7 +771,7 @@ namespace Yupei
         }
 
         template<typename T>
-        auto vector_iterator<T>::operator -= (vector_iterator<T>::difference_type n) noexcept
+        auto vector_iterator<T>::operator -= (typename vector_iterator<T>::difference_type n) noexcept
             -> vector_iterator<T>&
         {
             current_ -= n;
@@ -780,7 +780,7 @@ namespace Yupei
         }
 
         template<typename T>
-        auto vector_const_iterator<T>::operator += (vector_const_iterator<T>::difference_type n) noexcept
+        auto vector_const_iterator<T>::operator += (typename vector_const_iterator<T>::difference_type n) noexcept
             -> vector_const_iterator<T>&
         {
             current_ += n;
@@ -789,7 +789,7 @@ namespace Yupei
         }
 
         template<typename T>
-        auto vector_const_iterator<T>::operator -= (vector_const_iterator<T>::difference_type n) noexcept
+        auto vector_const_iterator<T>::operator -= (typename vector_const_iterator<T>::difference_type n) noexcept
             -> vector_const_iterator<T>&
         {
             current_ -= n;

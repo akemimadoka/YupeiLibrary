@@ -380,7 +380,7 @@ namespace Yupei
 			std::enable_if_t<tuple_size >= 1 &&
             std::is_same<Dummy,void>::value
 			&& static_and<std::is_copy_constructible<Args>::value...>::value &&
-			static_and<std::is_convertible<const Args&,Args>::value...>::value,bool> = true>
+			static_and<std::is_convertible<const Args&, Args>::value...>::value, bool> = true>
 		constexpr tuple(const Args&... args) 
             noexcept(std::is_nothrow_constructible<BaseType, const Args&...>::value)
 			:base_(args...)
@@ -390,7 +390,7 @@ namespace Yupei
 			std::enable_if_t<tuple_size >= 1 &&
             std::is_same<Dummy, void>::value
 			&& static_and<std::is_copy_constructible<Args>::value...>::value &&
-			!static_and<std::is_convertible<const Args&, Args>::value...>::value,bool> = false>
+			!static_and<std::is_convertible<const Args&, Args>::value...>::value, bool> = false>
 		explicit constexpr tuple(const Args&... args)
 			noexcept(std::is_nothrow_constructible<BaseType, const Args&...>::value)
 			:base_(args...)
@@ -398,8 +398,8 @@ namespace Yupei
 
 		template<typename... UArgs,
 			std::enable_if_t<sizeof...(Args) >= 1 && sizeof...(UArgs) == tuple_size
-				&& static_and<std::is_constructible<Args,UArgs&&>::value...>::value
-					&& static_and<std::is_convertible<UArgs&&, Args>::value...>::value,bool> = false>
+				&& static_and<std::is_constructible<Args, UArgs&&>::value...>::value
+					&& static_and<std::is_convertible<UArgs&&, Args>::value...>::value, bool> = false>
 			constexpr tuple(UArgs&&... args)noexcept(
                 std::is_nothrow_constructible<BaseType, UArgs&&...>::value)
 			:base_(std::forward<UArgs>(args)...)
@@ -408,7 +408,7 @@ namespace Yupei
 		template<typename... UArgs,
 			std::enable_if_t<tuple_size >= 1 && sizeof...(UArgs) == tuple_size && 
 				static_and<std::is_constructible<Args, UArgs&&>::value...>::value &&
-					!static_and<std::is_convertible<UArgs&&, Args>::value...>::value,bool> = true>
+					!static_and<std::is_convertible<UArgs&&, Args>::value...>::value, bool> = true>
 		explicit constexpr tuple(UArgs&&... args)
 			noexcept(std::is_nothrow_constructible<BaseType,UArgs&&...>::value)
 			:base_(std::forward<UArgs>(args)...)
@@ -420,7 +420,7 @@ namespace Yupei
 		template<typename... UArgs,
 			std::enable_if_t<sizeof...(UArgs) == tuple_size &&
 				static_and<std::is_constructible<Args,const UArgs&>::value...>::value &&
-					static_and<std::is_convertible<const UArgs&,Args>::value...>::value,bool> = false>
+					static_and<std::is_convertible<const UArgs&, Args>::value...>::value, bool> = false>
 	    constexpr tuple(const tuple<UArgs...>& rhs)
 			noexcept(std::is_nothrow_constructible<BaseType,const tuple<UArgs...>&>::value)
 			:base_(rhs)
@@ -429,7 +429,7 @@ namespace Yupei
 		template<typename... UArgs,
 			std::enable_if_t<static_and<std::is_constructible<Args, const UArgs&>::value...>::value &&
 			sizeof...(UArgs) == tuple_size &&
-			!static_and<std::is_convertible<const UArgs&, Args>::value...>::value,bool> = true>
+			!static_and<std::is_convertible<const UArgs&, Args>::value...>::value, bool> = true>
 		explicit constexpr tuple(const tuple<UArgs...>& rhs)
 			noexcept(std::is_nothrow_constructible<BaseType, const tuple<UArgs...>&>::value)
 			:base_(rhs)

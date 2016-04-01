@@ -292,7 +292,7 @@ namespace Yupei
                 emplace_back();
         }
 
-        template<typename InputItT, std::enable_if_t<is_input_iterator<InputItT>{}, int> = 0>
+        template<typename InputItT, std::enable_if_t<is_input_iterator<InputItT>::value, int> = 0>
         list(InputItT first, InputItT last, memory_resource_ptr pmr = {})
             :allocator_{pmr}, count_{}
         {
