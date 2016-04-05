@@ -4,6 +4,7 @@
 #include "MinMax.hpp"
 #include "Searchers.hpp"
 #include "CharTraitsHelpers.hpp"
+#include "Config.hpp"
 #include <cstddef>
 #include <cstring>
 #include <algorithm>
@@ -65,7 +66,7 @@ namespace Yupei
 
         static constexpr size_type npos = static_cast<size_type>(-1);
 
-        constexpr basic_string_view(const_pointer str, size_type len) noexcept
+        CXX14_CONSTEXPR basic_string_view(const_pointer str, size_type len) noexcept
             :data_{str}, size_{len}
         {}
 
@@ -73,77 +74,77 @@ namespace Yupei
             :basic_string_view{str, Internal::StrLen(str)}
         {}
 
-        constexpr basic_string_view() noexcept
+        CXX14_CONSTEXPR basic_string_view() noexcept
             :basic_string_view{{}, {}}
         {}
 
-        constexpr basic_string_view(const basic_string_view&) noexcept = default;
-        constexpr basic_string_view& operator=(const basic_string_view&) noexcept = default;
+        CXX14_CONSTEXPR basic_string_view(const basic_string_view&) noexcept = default;
+        CXX14_CONSTEXPR basic_string_view& operator=(const basic_string_view&) noexcept = default;
 
-        constexpr const_iterator begin() const noexcept
+        CXX14_CONSTEXPR const_iterator begin() const noexcept
         {
             return data_;
         }
 
-        constexpr const_iterator end() const noexcept
+        CXX14_CONSTEXPR const_iterator end() const noexcept
         {
             return data_ + size_;
         }
 
-        constexpr const_iterator cbegin() const noexcept
+        CXX14_CONSTEXPR const_iterator cbegin() const noexcept
         {
             return begin();
         }
 
-        constexpr const_iterator cend() const noexcept
+        CXX14_CONSTEXPR const_iterator cend() const noexcept
         {
             return end();
         }
 
-        constexpr size_type size() const noexcept
+        CXX14_CONSTEXPR size_type size() const noexcept
         {
             return size_;
         }
 
-        constexpr bool empty() const noexcept
+        CXX14_CONSTEXPR bool empty() const noexcept
         {
             return size() == 0;
         }
 
-        constexpr explicit operator bool() const noexcept
+        CXX14_CONSTEXPR explicit operator bool() const noexcept
         {
             return size() != 0;
         }
 
-        constexpr const_reference operator[](size_type pos) const
+        CXX14_CONSTEXPR const_reference operator[](size_type pos) const
         {
             return data_[pos];
         }
 
-        constexpr const_reference at(size_type pos) const
+        CXX14_CONSTEXPR const_reference at(size_type pos) const
         {
             if (pos >= size()) throw std::out_of_range {"pos >= size()!"};
             return data_[pos];
         }
 
-        constexpr const_pointer data() const noexcept
+        CXX14_CONSTEXPR const_pointer data() const noexcept
         {
             return data_;
         }
 
-        constexpr void clear() noexcept
+        CXX14_CONSTEXPR void clear() noexcept
         {
             *this = basic_string_view {};
         }
 
-        constexpr void remove_prefix(size_type n)
+        CXX14_CONSTEXPR void remove_prefix(size_type n)
         {
             assert(n <= size());
             data_ += n;
             size_ -= n;
         }
 
-        constexpr void remove_suffix(size_type n)
+        CXX14_CONSTEXPR void remove_suffix(size_type n)
         {
             assert(n <= size());
             size_ -= n;
@@ -164,13 +165,13 @@ namespace Yupei
             swap(size_, s.size_);
         }
 
-        constexpr basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
+        CXX14_CONSTEXPR basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
         {
             if (pos > size()) throw std::out_of_range("pos > size()!");
             return {data_ + pos, min(n, size_ - pos)};
         }
 
-        constexpr int compare(basic_string_view str) const noexcept
+        CXX14_CONSTEXPR int compare(basic_string_view str) const noexcept
         {
             const auto c = InternalCompare(size(), str.size());
             if (c != 0)
@@ -214,7 +215,7 @@ namespace Yupei
             return static_cast<size_type>(it - begin() - pos);
         }
 
-        constexpr size_type find_first_of(const basic_string_view& v, size_type pos = {}) const noexcept
+        CXX14_CONSTEXPR size_type find_first_of(const basic_string_view& v, size_type pos = {}) const noexcept
         {
             size_type res {};
             for (const auto& c : *this)
@@ -226,12 +227,12 @@ namespace Yupei
             }
         }
 
-        constexpr size_type find_first_of(const_pointer s, size_type pos) const noexcept
+        CXX14_CONSTEXPR size_type find_first_of(const_pointer s, size_type pos) const noexcept
         {
             return find_first_of(basic_string_view(s), pos);
         }
 
-        constexpr size_type find_first_of(const_pointer s, size_type pos, size_type n) const noexcept
+        CXX14_CONSTEXPR size_type find_first_of(const_pointer s, size_type pos, size_type n) const noexcept
         {
             return find_first_of(basic_string_view(s, n), pos);
         }
@@ -241,7 +242,7 @@ namespace Yupei
         size_type size_;
 
         template<typename T, typename U>
-        constexpr int InternalCompare(T&& lhs, U&& rhs)
+        CXX14_CONSTEXPR int InternalCompare(T&& lhs, U&& rhs)
         {
             auto&& bigger = Yupei::max(exforward(lhs), exforward(rhs));
             if (exforward(bigger) == exforward(lhs)) return 1;

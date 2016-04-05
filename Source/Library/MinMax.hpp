@@ -3,6 +3,7 @@
 #include "TypeTraits.hpp"
 #include "Extensions.hpp"
 #include "Comparators.hpp"
+#include "Config.hpp"
 
 namespace Yupei
 {
@@ -23,7 +24,7 @@ namespace Yupei
     }
 
     template<typename T, typename... Args>
-    constexpr decltype(auto) min(T&& lhs, Args&&... args)
+    CXX14_CONSTEXPR decltype(auto) min(T&& lhs, Args&&... args)
     {
         auto&& prevMin = Yupei::min(exforward(args)...);
         return less<>{}(exforward(lhs), exforward(prevMin)) ? Internal::MinForward(exforward(lhs)) : Internal::MinForward(exforward(prevMin));
@@ -36,7 +37,7 @@ namespace Yupei
     }
 
     template<typename T, typename... Args>
-    constexpr decltype(auto) max(T&& lhs, Args&&... args)
+	CXX14_CONSTEXPR decltype(auto) max(T&& lhs, Args&&... args)
     {
         auto&& prevMax = Yupei::max(exforward(args)...);
         return greater<>{}(exforward(lhs), exforward(prevMax)) ? Internal::MinForward(exforward(lhs)) : Internal::MinForward(exforward(prevMax));

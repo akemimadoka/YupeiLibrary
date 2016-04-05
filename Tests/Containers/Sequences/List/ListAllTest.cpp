@@ -17,6 +17,9 @@
 #include <UnitTest.hpp>
 #include <Containers\List.hpp>
 
+//C4822	local class member function does not have a body
+#pragma warning(disable : 4822)
+
 TEST_CASE(ListClear)
 {
     {

@@ -9,6 +9,8 @@ namespace Yupei
     using NativeWindowHandle = void*;   
     static constexpr auto InvalidWindowHandleValue = static_cast<std::intptr_t>(-1);
 
+	using DWord = unsigned long;
+
 	inline NativeWindowHandle GetInvalidWindowHandle() noexcept
 	{
 		return reinterpret_cast<NativeWindowHandle>(InvalidWindowHandleValue);

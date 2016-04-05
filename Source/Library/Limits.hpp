@@ -35,12 +35,24 @@ namespace Yupei
     DEFINE_LIMITS(double, DBL_MAX, DBL_MIN)
     DEFINE_LIMITS(long double, LDBL_MAX, LDBL_MIN)
 
-	//MSVC bug here.
+	namespace Internal
+	{
+		template<typename T>
+		struct LimitWrapper
+		{
+			using ArithmeticType = std::decay_t<T>;
+			static_assert(std::is_arithmetic_v<ArithmeticType>, "T should be an arithmetic type");
+			static constexpr ArithmeticType max_value = limit<ArithmeticType>::max_value;
+			static constexpr ArithmeticType min_value = limit<ArithmeticType>::min_value;
+		};
+	}
+
+	//workaround for MSVC.
     template<typename T>
-    constexpr auto limits_max_v = limit<std::decay_t<T>>::max_value;
+	constexpr std::decay_t<T> limits_max_v = Internal::LimitWrapper<T>::max_value;
 
     template<typename T>
-    constexpr auto limits_min_v = limit<std::decay_t<T>>::min_value;
+    constexpr std::decay_t<T> limits_min_v = Internal::LimitWrapper<T>::min_value;
 
 #undef DEFINE_LIMITS
 }

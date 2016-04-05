@@ -546,7 +546,7 @@ namespace Yupei
 		void SetSmallSize(size_type s) noexcept
 		{
 			assert(s < SmallMaxLength);
-			storage_.small_.size_ = (s << 1);
+			storage_.small_.size_ = static_cast<UnsignedCharT>(s << 1);
 		}
 
 		size_type GetBigSize() const noexcept
@@ -955,5 +955,4 @@ namespace Yupei
 	utf32_string to_utf32(const utf8_string::view_type& utf8);
 	utf32_string to_utf32(const utf16_string::view_type& utf16);
 	utf32_string to_utf32(const wide_string::view_type& wide);
-
 }

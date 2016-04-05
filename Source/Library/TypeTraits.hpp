@@ -92,4 +92,20 @@ namespace Yupei
 
     template<typename... B>
     constexpr bool conjunction_v = conjunction<B...>::value;
+
+	template<typename... B>
+	struct disjunction;
+
+	template<typename B, typename... Args>
+	struct disjunction<B, Args...> : std::conditional_t<B::value, B, disjunction<Args...>> {};
+
+	template<typename B>
+	struct disjunction<B> : B {};
+
+	template<typename... B>
+	constexpr bool disjunction_v = conjunction<B...>::value;
+
+	template<typename B>
+	struct negation : bool_constant<!B::value> {};
+
 }

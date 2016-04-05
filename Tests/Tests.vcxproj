@@ -119,6 +119,8 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MinMaxAllTests.cpp" />
     <ClCompile Include="StringAllTest.cpp" />
+    <ClCompile Include="TupleAllTest.cpp" />
+    <ClCompile Include="TypeTraitsAllTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h" />
