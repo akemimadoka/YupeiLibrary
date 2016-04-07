@@ -115,6 +115,7 @@
     <ClCompile Include="Hash\HashHelpers.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
     <ClCompile Include="OS\Windows\Console.cpp" />
+    <ClCompile Include="OS\Windows\Win32Exception.cpp" />
     <ClCompile Include="OS\Windows\Win32Wrappers.cpp" />
     <ClCompile Include="String.cpp" />
     <ClCompile Include="UnitTest.cpp" />

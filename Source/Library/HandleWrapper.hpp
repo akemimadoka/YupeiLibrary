@@ -2,6 +2,7 @@
 
 #include "Extensions.hpp"
 #include <utility>
+#include <cassert>
 
 namespace Yupei
 {
@@ -49,6 +50,12 @@ namespace Yupei
         {
             return handle_;
         }
+
+		HandleType* AddressOf() noexcept
+		{
+			assert(handle_ == InvalidHandle);
+			return &handle_;
+		}
 
 		HandleType Reset(HandleType other) noexcept
 		{
