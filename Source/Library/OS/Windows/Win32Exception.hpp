@@ -14,5 +14,5 @@ namespace Yupei
 		{}
 	};
 
-#define THROW_WIN32_EXCEPTION [](){throw Win32Exception(Yupei::GetLastErrorWrapper());}()
+#define THROW_WIN32_EXCEPTION [](){throw Yupei::Win32Exception(Yupei::GetLastErrorWrapper());}()
 }

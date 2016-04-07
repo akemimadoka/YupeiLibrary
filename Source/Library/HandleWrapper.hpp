@@ -62,7 +62,7 @@ namespace Yupei
     };
 
     template<typename T>
-    void swap(HandleWrapper<T>& lhs, HandleWrapper<T>& rhs)
+    void swap(HandleWrapper<T>& lhs, HandleWrapper<T>& rhs) noexcept
     {
         lhs.swap(rhs);
     }
