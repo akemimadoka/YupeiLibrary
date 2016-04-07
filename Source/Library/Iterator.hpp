@@ -85,8 +85,7 @@ namespace Yupei
     struct is_iterator : std::false_type {};
 
     template<typename IteratorT>
-    struct is_iterator<IteratorT, 
-        void_t<iterator_category_t<IteratorT>>> : std::true_type {};
+    struct is_iterator<IteratorT, void_t<iterator_category_t<IteratorT>>> : std::true_type {};
 
     template<typename IteratorT, bool B = is_iterator<IteratorT>::value>
     struct is_input_iterator : std::false_type {};

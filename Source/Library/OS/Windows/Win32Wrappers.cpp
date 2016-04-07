@@ -7,4 +7,9 @@ namespace Yupei
     {
         return ::CloseHandle(handle);
     }
+
+	std::uint32_t GetLastErrorWrapper() noexcept
+	{
+		return static_cast<std::uint32_t>(GetLastError());
+	}
 }

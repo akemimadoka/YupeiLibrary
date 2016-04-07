@@ -31,7 +31,7 @@ namespace Yupei
         {}
 
         unique_ptr(unique_ptr&& other) noexcept
-            :data_{other.data_}
+            :data_{std::move(other.data_)}
         {
             other.release();
         }

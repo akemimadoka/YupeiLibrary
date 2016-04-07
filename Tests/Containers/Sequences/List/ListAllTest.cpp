@@ -12,7 +12,6 @@
 #include "..\..\NotConstructible.h"
 #include "..\..\Emplaceable.h"
 #include "..\..\Copyable.h"
-#include <DefaultOnly.h>
 #include <MoveOnly.h>
 #include <UnitTest.hpp>
 #include <Containers\List.hpp>

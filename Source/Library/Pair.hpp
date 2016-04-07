@@ -228,7 +228,6 @@ namespace Yupei
 
         template<typename T>
         using TupleRetType = typename TupleRetTypeImpl<std::decay_t<T>>::type;
-
     }
 
     template<typename T1, typename T2>
@@ -243,6 +242,24 @@ namespace Yupei
     template<std::size_t Id, typename Type>
     struct tuple_element;
 
+	template<std::size_t Index, typename TupleT>
+	struct tuple_element<Index, const TupleT>
+	{
+		using type = typename tuple_element<Index, TupleT>::type;
+	};
+
+	template<std::size_t Index, typename TupleT>
+	struct tuple_element<Index, volatile TupleT>
+	{
+		using type = typename tuple_element<Index, TupleT>::type;
+	};
+
+	template<std::size_t Index, typename TupleT>
+	struct tuple_element<Index, const volatile TupleT>
+	{
+		using type = typename tuple_element<Index, TupleT>::type;
+	};
+
     template<std::size_t Id, typename T>
     using tuple_element_t = typename tuple_element<Id, T>::type;
 
@@ -256,55 +273,75 @@ namespace Yupei
     };
 
     template <typename T1, typename T2>
-    struct tuple_element<1, pair<T1, T2> >
+    struct tuple_element<1, pair<T1, T2>>
     {
         using type = T2;
     };
 
     namespace Internal
     {
-        template<std::size_t I>
-        struct GetByIndexImpl;
+		template<typename T1, typename T2>
+		constexpr const tuple_element_t<0, pair<T1, T2>>&
+			GetImpl(const pair<T1, T2>& p, size_constant<0>) noexcept
+		{
+			return p.first;
+		}
 
-        template<>
-        struct GetByIndexImpl<0>
-        {
-            template<typename PairType>
-            static constexpr decltype(auto) GetValue(PairType&& p) noexcept
-            {
-                return (std::forward<PairType>(p).first);
-            }
-        };
-        template<>
-        struct GetByIndexImpl<1>
-        {
-            template<typename PairType>
-            static constexpr decltype(auto) GetValue(PairType&& p) noexcept
-            {
-                return (std::forward<PairType>(p).second);
-            }
-        };
+		template<typename T1, typename T2>
+		constexpr const tuple_element_t<1, pair<T1, T2>>&
+			GetImpl(const pair<T1, T2>& p, size_constant<1>) noexcept
+		{
+			return p.second;
+		}
+
+		template<typename T1, typename T2>
+		constexpr tuple_element_t<0, pair<T1, T2>>&
+			GetImpl(pair<T1, T2>& p, size_constant<0>) noexcept
+		{
+			return p.first;
+		}
+
+		template<typename T1, typename T2>
+		constexpr tuple_element_t<1, pair<T1, T2>>&
+			GetImpl(pair<T1, T2>& p, size_constant<1>) noexcept
+		{
+			return p.second;
+		}
+
+		template<typename T1, typename T2>
+		constexpr tuple_element_t<0, pair<T1, T2>>&&
+			GetImpl(pair<T1, T2>&& p, size_constant<0>) noexcept
+		{
+			return std::move(p.first);
+		}
+
+		template<typename T1, typename T2>
+		constexpr tuple_element_t<1, pair<T1, T2>>&&
+			GetImpl(pair<T1, T2>&& p, size_constant<1>) noexcept
+		{
+			return std::move(p.second);
+		}
     }
 
     template<size_t I, typename T1, typename T2>
     constexpr const tuple_element_t<I, pair<T1, T2>>&
         get(const pair<T1, T2>& p) noexcept
     {
-        return Internal::GetByIndexImpl<I>::GetValue(p);
+		return Internal::GetImpl(p, size_constant<I>{})
     }
 
     template<size_t I, typename T1, typename T2>
     constexpr tuple_element_t<I, pair<T1, T2>>&
         get(pair<T1, T2>& p) noexcept
     {
-        return Internal::GetByIndexImpl<I>::GetValue(p);
+		return Internal::GetImpl(p, size_constant<I>{})
     }
 
     template<size_t I, typename T1, typename T2>
     constexpr tuple_element_t<I, pair<T1, T2>>&&
         get(pair<T1, T2>&& p) noexcept
     {
-        return Internal::GetByIndexImpl<I>::GetValue(std::forward<pair<T1, T2>>(p));
+		return Internal::GetImpl(p, size_constant<I>{})
     }
 
     template <typename T, typename U>

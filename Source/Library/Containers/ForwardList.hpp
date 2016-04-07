@@ -482,7 +482,7 @@ namespace Yupei
             return insert_after(pos, ilist.begin(), ilist.end());
         }
 
-        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{} >>
+        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
         iterator insert_after(const_iterator pos, InputItT first, InputItT last)
         {
             auto cur = pos.AsNode();
