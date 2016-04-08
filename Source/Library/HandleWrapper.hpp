@@ -56,11 +56,11 @@ namespace Yupei
 			return &handle_;
 		}
 
-		HandleType Reset(HandleType other) noexcept
+		void Reset(HandleType other) noexcept
 		{
-			const auto tmp = handle_;
+			const auto old = Get();
 			handle_ = other;
-			return tmp;
+			if (old != InvalidHandle()) Closer()(old);
 		}
 
 		~HandleWrapper()
