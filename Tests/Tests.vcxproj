@@ -85,6 +85,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -118,6 +119,9 @@
     <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MinMaxAllTests.cpp" />
+    <ClCompile Include="OS\Windows\NativeHandlesAllTest.cpp" />
+    <ClCompile Include="OS\Windows\Win32ExceptionAllTest.cpp" />
+    <ClCompile Include="ScopeAllTest.cpp" />
     <ClCompile Include="StringAllTest.cpp" />
     <ClCompile Include="TupleAllTest.cpp" />
     <ClCompile Include="TypeTraitsAllTest.cpp" />

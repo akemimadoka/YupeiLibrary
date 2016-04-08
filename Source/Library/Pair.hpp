@@ -327,21 +327,21 @@ namespace Yupei
     constexpr const tuple_element_t<I, pair<T1, T2>>&
         get(const pair<T1, T2>& p) noexcept
     {
-		return Internal::GetImpl(p, size_constant<I>{})
+		return Internal::GetImpl(p, size_constant<I>{});
     }
 
     template<size_t I, typename T1, typename T2>
     constexpr tuple_element_t<I, pair<T1, T2>>&
         get(pair<T1, T2>& p) noexcept
     {
-		return Internal::GetImpl(p, size_constant<I>{})
+		return Internal::GetImpl(p, size_constant<I>{});
     }
 
     template<size_t I, typename T1, typename T2>
     constexpr tuple_element_t<I, pair<T1, T2>>&&
         get(pair<T1, T2>&& p) noexcept
     {
-		return Internal::GetImpl(p, size_constant<I>{})
+		return Internal::GetImpl(p, size_constant<I>{});
     }
 
     template <typename T, typename U>

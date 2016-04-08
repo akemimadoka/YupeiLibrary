@@ -12,10 +12,8 @@ namespace Yupei
     public:
         using HandleType = typename Closer::HandleType;
 
-        const HandleType InvalidHandle = Closer::InvalidHandle;
-
         HandleWrapper() noexcept
-            :handle_{InvalidHandle}
+            :handle_{InvalidHandle()}
         {}
 
         explicit HandleWrapper(HandleType handle) noexcept
@@ -27,23 +25,24 @@ namespace Yupei
         HandleWrapper(HandleWrapper&& other) noexcept
             :handle_ {other.handle_}
         {
-            other.handle_ = InvalidHandle;
+            other.handle_ = InvalidHandle();
         }
 
         HandleType& operator=(HandleWrapper&& other) noexcept
         {
-            HandleWrapper {std::move(i)}.swap(*this);
+            HandleWrapper {std::move(other)}.swap(*this);
             return *this;
         }
 
         void swap(HandleWrapper& other) noexcept
         {
-            std::swap(handle_, other.handle_);
+			using std::swap;
+            swap(handle_, other.handle_);
         }
 
-        explicit operator bool() const noexcept
+        constexpr explicit operator bool() const noexcept
         {
-            return handle_ != InvalidHandle;
+            return handle_ != InvalidHandle();
         }
 
         HandleType Get() const noexcept
@@ -53,7 +52,7 @@ namespace Yupei
 
 		HandleType* AddressOf() noexcept
 		{
-			assert(handle_ == InvalidHandle);
+			assert(handle_ == InvalidHandle());
 			return &handle_;
 		}
 
@@ -62,6 +61,16 @@ namespace Yupei
 			const auto tmp = handle_;
 			handle_ = other;
 			return tmp;
+		}
+
+		~HandleWrapper()
+		{
+			Closer()(handle_);
+		}
+
+		static constexpr HandleType InvalidHandle() noexcept
+		{
+			return Closer::InvalidHandle;
 		}
 
     private:

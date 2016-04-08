@@ -22,6 +22,14 @@
 #define STRx(s) #s
 #define STR(s) STRx(s)
 
+#ifdef __COUNTER__
+#define ANONYMOUS_VARIABLE(str)	\
+	TOKEN_PASTE(str, __COUNTER__)
+#else
+#define ANONYMOUS_VARIABLE(str)	\
+	TOKEN_PASTE(str, __LINE__)
+#endif
+
 #define exforward(x) std::forward<decltype((x))>((x))
 
 namespace Yupei

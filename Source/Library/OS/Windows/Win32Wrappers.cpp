@@ -1,15 +1,17 @@
+#include "WinDef.hpp"
 #include "Win32Wrappers.hpp"
-#include "HandleWrappers.hpp"
+#include "NativeHandles.hpp"
 #include <Windows.h>
+#include <WinSock2.h>
 
 namespace Yupei
 {
-    int CloseHandleWrapper(NativeWindowHandle handle) noexcept
+    /*int CloseHandleWrapper(NativeHandle handle) noexcept
     {
         return ::CloseHandle(handle);
     }
 
-	NativeWindowHandle LocalFreeWrapper(NativeWindowHandle handle) noexcept
+	NativeHandle LocalFreeWrapper(NativeHandle handle) noexcept
 	{
 		return ::LocalFree(handle);
 	}
@@ -17,11 +19,16 @@ namespace Yupei
 	int FreeLibraryWrapper(void* moduleHandle) noexcept
 	{
 		return ::FreeLibrary(static_cast<HMODULE>(moduleHandle));
-	}
+	}*/
 
 	std::uint32_t GetLastErrorWrapper() noexcept
 	{
 		return static_cast<std::uint32_t>(::GetLastError());
+	}
+
+	std::uint32_t WSAGetLastErrorWrapper() noexcept
+	{
+		return static_cast<std::uint32_t>(::WSAGetLastError());
 	}
 
 	utf16_string ErrCodeToMessage(std::uint32_t errCode)

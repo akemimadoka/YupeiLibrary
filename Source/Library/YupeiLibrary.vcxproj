@@ -115,6 +115,7 @@
     <ClCompile Include="Hash\HashHelpers.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
     <ClCompile Include="OS\Windows\Console.cpp" />
+    <ClCompile Include="OS\Windows\NativeHandles.cpp" />
     <ClCompile Include="OS\Windows\Win32Exception.cpp" />
     <ClCompile Include="OS\Windows\Win32Wrappers.cpp" />
     <ClCompile Include="String.cpp" />
@@ -123,7 +124,7 @@
   <ItemGroup>
     <ClInclude Include="Algorithm\ForEach.hpp" />
     <ClInclude Include="Assert.hpp" />
-    <ClInclude Include="Auto.hpp" />
+    <ClInclude Include="Scope.hpp" />
     <ClInclude Include="CharTraitsHelpers.hpp" />
     <ClInclude Include="CLib\RawMemory.h" />
     <ClInclude Include="Comparators.hpp" />
@@ -152,7 +153,7 @@
     <ClInclude Include="Mutex.hpp" />
     <ClInclude Include="Numeric.hpp" />
     <ClInclude Include="OS\Windows\Console.hpp" />
-    <ClInclude Include="OS\Windows\HandleWrappers.hpp" />
+    <ClInclude Include="OS\Windows\NativeHandles.hpp" />
     <ClInclude Include="OS\Windows\Win32Exception.hpp" />
     <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />
     <ClInclude Include="OS\Windows\WinDef.hpp" />
