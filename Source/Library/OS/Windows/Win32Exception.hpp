@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <system_error>
 #include "WinDef.hpp"

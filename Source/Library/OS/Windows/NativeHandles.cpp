@@ -1,4 +1,4 @@
-#include "NativeHandles.hpp"
+﻿#include "NativeHandles.hpp"
 #include "WinDef.hpp"
 #include <type_traits>		
 #include <Windows.h>

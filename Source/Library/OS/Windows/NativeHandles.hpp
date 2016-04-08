@@ -1,19 +1,19 @@
-#pragma once
+﻿#pragma once
 
 #include "..\..\HandleWrapper.hpp"
 #include "Win32Wrappers.hpp"
 
 namespace Yupei
 {
-    struct FileHandleCloser
-    {
-        using HandleType = NativeHandle;
+	struct FileHandleCloser
+	{
+		using HandleType = NativeHandle;
 		static const NativeHandle InvalidHandle;
 
 		void operator()(NativeHandle handle) noexcept;
-    };
+	};
 
-    using FileHandle = HandleWrapper<FileHandleCloser>;
+	using FileHandle = HandleWrapper<FileHandleCloser>;
 
 	struct LocalMemoryHandleCloser
 	{

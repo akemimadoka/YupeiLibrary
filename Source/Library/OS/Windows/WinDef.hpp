@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <cstdint>
 
@@ -15,10 +15,10 @@ struct HINSTANCE__;
 
 namespace Yupei
 {
-    //https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
+	//https://msdn.microsoft.com/en-us/library/windows/desktop/aa383751(v=vs.85).aspx
 
-    using NativeHandle = void*;   
-    static constexpr auto InvalidNativeHandleValue = static_cast<std::intptr_t>(-1);
+	using NativeHandle = void*;
+	static constexpr auto InvalidNativeHandleValue = static_cast<std::intptr_t>(-1);
 
 	using DWord = unsigned long;
 
@@ -30,5 +30,5 @@ namespace Yupei
 		return reinterpret_cast<NativeHandle>(InvalidNativeHandleValue);
 	}
 
-    //TODO: undef GetMessage stuff.
+	//TODO: undef GetMessage stuff.
 }
