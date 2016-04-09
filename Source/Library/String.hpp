@@ -226,7 +226,18 @@ namespace Yupei
 
 		void pop_back(size_type n = 1) noexcept
 		{
-			IncrementSize(limits_max_v<size_type> +n - 1);
+			if (IsBig())
+			{
+				const auto oldSize = GetBigSize();
+				assert(oldSize >= n);
+				SetBigSize(oldSize - n);
+			}
+			else
+			{
+				const auto oldSize = GetSmallSize();
+				assert(oldSize >= n);
+				SetSmallSize(oldSize - n);
+			}
 		}
 
 		void append(value_type c)
@@ -401,6 +412,18 @@ namespace Yupei
 			for (auto& c : *this)
 				if (c == oldChar)
 					c = newChar;
+		}
+
+		void resize(size_type newCap)
+		{
+			const auto oldSize = size();
+			if (newCap < oldSize)
+				pop_back(oldSize - newCap);
+			else if (newCap > oldSize)
+			{
+				reserve(newCap);
+				SetSize(newCap);
+			}
 		}
 
 		void reserve(size_type newCap)

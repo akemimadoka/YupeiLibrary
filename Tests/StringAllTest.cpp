@@ -220,3 +220,22 @@ TEST_CASE(Utf8EncoderTest)
 	const auto u8Str2 = to_utf8(u16Str.to_string_view());
 	TEST_ASSERT(std::equal(std::begin(u8Str), std::end(u8Str) - 1, begin(u8Str2), end(u8Str2)));
 }
+
+TEST_CASE(StringResizeTest)
+{
+	using namespace Yupei;
+	utf8_string str;
+	for (int i = 0; i < 1000; ++i)
+		str.push_back('a');
+
+	str.resize(50);
+
+	TEST_ASSERT(str.size() == 50);
+
+	for (auto c : str)
+		TEST_ASSERT(c == 'a');
+
+	str.resize(20000);
+
+	TEST_ASSERT(str.size() == 20000);
+}
