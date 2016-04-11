@@ -1,5 +1,6 @@
 ﻿#include "NativeHandles.hpp"
 #include "WinDef.hpp"
+#include "Win32Exception.hpp"
 #include <type_traits>		
 #include <Windows.h>
 #include <WinSock2.h>
@@ -29,5 +30,12 @@ namespace Yupei
 	void SocketCloser::operator()(HandleType handle) noexcept
 	{
 		(void)::closesocket(static_cast<::SOCKET>(handle));
+	}
+
+	void WsaEventCloser::operator()(HandleType handle) noexcept
+	{
+		static_assert(std::is_same<HandleType, WSAEVENT>::value, "HandleType should be the same with WSAEVENT");
+		if (::WSACloseEvent(handle) == FALSE)
+			THROW_WINSOCK_EXCEPTION;	//terminate();
 	}
 }

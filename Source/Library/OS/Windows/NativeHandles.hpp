@@ -44,4 +44,14 @@ namespace Yupei
 	};
 
 	using Socket = HandleWrapper<SocketCloser>;
+
+	struct WsaEventCloser
+	{
+		using HandleType = NativeHandle;
+		static constexpr HandleType InvalidHandle = {};
+
+		void operator()(HandleType handle) noexcept;
+	};
+
+	using WsaEvent = HandleWrapper<WsaEventCloser>;
 }
