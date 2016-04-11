@@ -28,7 +28,7 @@ namespace Yupei
             other.handle_ = InvalidHandle();
         }
 
-        HandleType& operator=(HandleWrapper&& other) noexcept
+		HandleWrapper& operator=(HandleWrapper&& other) noexcept
         {
             HandleWrapper {std::move(other)}.swap(*this);
             return *this;
@@ -76,7 +76,7 @@ namespace Yupei
 				Closer()(handle_);
 		}
 
-		static constexpr HandleType InvalidHandle() noexcept
+		static /*constexpr */HandleType InvalidHandle() noexcept
 		{
 			return Closer::InvalidHandle;
 		}
