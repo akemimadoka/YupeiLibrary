@@ -63,9 +63,17 @@ namespace Yupei
 			if (old != InvalidHandle()) Closer()(old);
 		}
 
+		HandleType Release() noexcept
+		{
+			const auto oldHandle = Get();
+			handle_ = InvalidHandle();
+			return oldHandle;
+		}
+
 		~HandleWrapper()
 		{
-			Closer()(handle_);
+			if(handle_ != InvalidHandle())
+				Closer()(handle_);
 		}
 
 		static constexpr HandleType InvalidHandle() noexcept
