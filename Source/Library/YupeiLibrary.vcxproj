@@ -114,7 +114,6 @@
     <ClCompile Include="Hash\Hash.cpp" />
     <ClCompile Include="Hash\HashHelpers.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
-    <ClCompile Include="OS\Windows\Console.cpp" />
     <ClCompile Include="OS\Windows\NativeHandles.cpp" />
     <ClCompile Include="OS\Windows\Win32Exception.cpp" />
     <ClCompile Include="OS\Windows\Win32Wrappers.cpp" />
@@ -152,7 +151,6 @@
     <ClInclude Include="MinMax.hpp" />
     <ClInclude Include="Mutex.hpp" />
     <ClInclude Include="Numeric.hpp" />
-    <ClInclude Include="OS\Windows\Console.hpp" />
     <ClInclude Include="OS\Windows\NativeHandles.hpp" />
     <ClInclude Include="OS\Windows\Win32Exception.hpp" />
     <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />

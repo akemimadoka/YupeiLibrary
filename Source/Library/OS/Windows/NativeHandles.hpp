@@ -54,4 +54,15 @@ namespace Yupei
 	};
 
 	using WsaEvent = HandleWrapper<WsaEventCloser>;
+
+	struct RegKeyCloser
+	{
+		using HandleType = KeyHandle;
+		//MSDN 没有提到非法值。暂定为 nullptr。
+		static constexpr HandleType InvalidHandle = {};
+
+		void operator()(HandleType handle) noexcept;
+	};
+
+	using RegKeyHandle = HandleWrapper<RegKeyCloser>;
 }

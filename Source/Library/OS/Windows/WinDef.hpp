@@ -16,6 +16,7 @@
 
 //Win32 Stuff
 struct HINSTANCE__;
+struct HKEY__;
 
 namespace Yupei
 {
@@ -27,6 +28,7 @@ namespace Yupei
 	using DWord = unsigned long;
 
 	using InstanceHandle = ::HINSTANCE__*;
+	using KeyHandle = ::HKEY__*;
 	using ModuleHandle = InstanceHandle;
 
 	inline NativeHandle GetInvalidNativeHandle() noexcept

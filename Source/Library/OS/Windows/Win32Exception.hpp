@@ -6,6 +6,7 @@
 
 namespace Yupei
 {
+	//TODO: 应该添加行号等详细信息。
 	class Win32Exception : public std::system_error
 	{
 		utf8_string errStr_;

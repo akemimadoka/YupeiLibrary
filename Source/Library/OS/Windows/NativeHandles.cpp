@@ -38,4 +38,10 @@ namespace Yupei
 		if (::WSACloseEvent(handle) == FALSE)
 			THROW_WINSOCK_EXCEPTION;	//terminate();
 	}
+
+	void RegKeyCloser::operator()(HandleType handle) noexcept
+	{
+		static_assert(std::is_same<HandleType, ::HKEY>::value, "HandleType should be the same with HKEY");
+		(void)::RegCloseKey(handle);
+	}
 }
