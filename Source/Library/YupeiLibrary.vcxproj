@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClInclude Include="Algorithm\ForEach.hpp" />
     <ClInclude Include="Assert.hpp" />
+    <ClInclude Include="Containers\RedBlackTree.hpp" />
     <ClInclude Include="Scope.hpp" />
     <ClInclude Include="CharTraitsHelpers.hpp" />
     <ClInclude Include="CLib\RawMemory.h" />
@@ -136,7 +137,6 @@
     <ClInclude Include="Containers\Vector.hpp" />
     <ClInclude Include="Containers\_HashTable.hpp" />
     <ClInclude Include="Extensions.hpp" />
-    <ClInclude Include="Functional.hpp" />
     <ClInclude Include="HandleWrapper.hpp" />
     <ClInclude Include="Hash\Crc32.hpp" />
     <ClInclude Include="Hash\Fnv32.hpp" />
@@ -144,7 +144,6 @@
     <ClInclude Include="Hash\Hash.hpp" />
     <ClInclude Include="Hash\HashHelpers.hpp" />
     <ClInclude Include="HelperMacros.hpp" />
-    <ClInclude Include="Invoke.hpp" />
     <ClInclude Include="Iterator.hpp" />
     <ClInclude Include="Limits.hpp" />
     <ClInclude Include="MemoryResource\MemoryResource.hpp" />

@@ -54,6 +54,9 @@
     <ClCompile Include="OS\Windows\NativeHandlesAllTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Containers\Sequences\Array\ArrayAllTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h">

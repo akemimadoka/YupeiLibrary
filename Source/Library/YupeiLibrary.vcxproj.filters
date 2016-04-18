@@ -65,9 +65,6 @@
     <ClInclude Include="Extensions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functional.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HelperMacros.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -146,9 +143,6 @@
     <ClInclude Include="Hash\HashHelpers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Invoke.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Algorithm\ForEach.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -198,6 +192,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OS\Windows\NativeHandles.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Containers\RedBlackTree.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

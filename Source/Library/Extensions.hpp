@@ -1,5 +1,8 @@
 #pragma once
 
+#include <utility>
+#include <memory>
+
 #define DISABLECOPY(TYPE) \
 	TYPE(const TYPE&) = delete;\
 	TYPE& operator=(const TYPE&) = delete;
@@ -35,5 +38,11 @@
 namespace Yupei
 {
     using byte = unsigned char;
+
+	template<typename T, typename DeleteFn, typename... ParamsT>
+	std::unique_ptr<T, DeleteFn> make_unique_del(DeleteFn&& fn, ParamsT&&... params)
+	{
+		return std::unique_ptr<T, DeleteFn>{new T(std::forward<ParamsT>(params)...), std::forward<DeleteFn>(fn)};
+	}
 }
 	

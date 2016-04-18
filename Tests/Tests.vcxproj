@@ -113,6 +113,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Algorithms\SearchersAllTest.cpp" />
+    <ClCompile Include="Containers\Sequences\Array\ArrayAllTest.cpp" />
     <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp" />
     <ClCompile Include="Containers\Sequences\List\ListAllTest.cpp" />
     <ClCompile Include="Containers\Sequences\Vector\VectorAllTest.cpp" />
