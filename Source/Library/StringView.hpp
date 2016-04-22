@@ -14,10 +14,10 @@
 namespace Yupei
 {
     enum class string_type
-    {        
+    {
         utf8,
         utf16,
-        utf32,  
+        utf32,
         wide
     };
 
@@ -70,19 +70,19 @@ namespace Yupei
         static constexpr size_type npos = static_cast<size_type>(-1);
 
         CXX14_CONSTEXPR basic_string_view(const_pointer str, size_type len) noexcept
-            :data_{str}, size_{len}
+            :data_ { str }, size_ { len }
         {}
 
         CXX14_CONSTEXPR basic_string_view(const_iterator start, const_iterator last) noexcept
-            :data_{start}, size_{static_cast<size_type>(last - start)}
+            : data_ { start }, size_ { static_cast<size_type>(last - start) }
         {}
 
         basic_string_view(const_pointer str) noexcept
-            :basic_string_view{str, Internal::StrLen(str)}
+            : basic_string_view { str, Internal::StrLen(str) }
         {}
 
         CXX14_CONSTEXPR basic_string_view() noexcept
-            :basic_string_view{{}, {}}
+            : basic_string_view { {}, {} }
         {}
 
         CXX14_CONSTEXPR basic_string_view(const basic_string_view&) noexcept = default;
@@ -130,7 +130,7 @@ namespace Yupei
 
         CXX14_CONSTEXPR const_reference at(size_type pos) const
         {
-            if (pos >= size()) throw std::out_of_range {"pos >= size()!"};
+            if (pos >= size()) throw std::out_of_range { "pos >= size()!" };
             return data_[pos];
         }
 
@@ -174,22 +174,22 @@ namespace Yupei
         basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
         {
             if (pos > size()) throw std::out_of_range("pos > size()!");
-            return {data_ + pos, min(n, size_ - pos)};
+            return { data_ + pos, min(n, size_ - pos) };
         }
 
         int compare(basic_string_view str) const noexcept
         {
-			const auto lSize = size();
-			const auto rSize = str.size();
-			const auto rlen = std::min(lSize, rSize);
-			const auto res = Internal::StrCmp(cbegin(), str.cbegin(), rlen);
-			if (res != 0) return res;
-			else
-			{
-				if (lSize < rSize) return -1;
-				else if (lSize == rSize) return 0;
-				else return 1;
-			}
+            const auto lSize = size();
+            const auto rSize = str.size();
+            const auto rlen = std::min(lSize, rSize);
+            const auto res = Internal::StrCmp(cbegin(), str.cbegin(), rlen);
+            if (res != 0) return res;
+            else
+            {
+                if (lSize < rSize) return -1;
+                else if (lSize == rSize) return 0;
+                else return 1;
+            }
         }
 
         size_type find(const basic_string_view& pattern, size_type pos = {}) const
@@ -227,7 +227,7 @@ namespace Yupei
                     if (p == c)
                         return res;
             }
-			return npos;
+            return npos;
         }
 
         CXX14_CONSTEXPR size_type find_first_of(const_pointer s, size_type pos) const noexcept
@@ -323,10 +323,10 @@ namespace Yupei
         return !(lhs < rhs);
     }
 
-	using u8string_view = basic_string_view<string_type::utf8>;
-	using wstring_view = basic_string_view<string_type::wide>;
-	using u16string_view = basic_string_view<string_type::utf16>;
-	using u32string_view = basic_string_view<string_type::utf32>;
+    using u8string_view = basic_string_view<string_type::utf8>;
+    using wstring_view = basic_string_view<string_type::wide>;
+    using u16string_view = basic_string_view<string_type::utf16>;
+    using u32string_view = basic_string_view<string_type::utf32>;
 
     namespace Literals
     {
@@ -352,5 +352,5 @@ namespace Yupei
                 return { str, len };
             }
         }
-    }  
+    }
 }
