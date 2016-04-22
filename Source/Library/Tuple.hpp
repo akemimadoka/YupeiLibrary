@@ -1,14 +1,11 @@
 ﻿#pragma once
 
 #include "TypeTraits.hpp"
-#include "Utility.hpp"
+#include <utility>
 
 namespace Yupei
 {
 	//http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4387.html
-
-	template<typename T1, typename T2>
-	struct pair;
 
 	template<typename... Args>
 	class tuple;
@@ -634,22 +631,9 @@ namespace Yupei
 	}
 
 	template<class... Args>
-	inline /*constexpr */tuple<Args&&...> forward_as_tuple(Args&&... t) noexcept
-	{
-		tuple<Args&&...> t2(std::forward<Args>(t)...);
-		return t2;
+	inline constexpr tuple<Args&&...> forward_as_tuple(Args&&... t) noexcept
+	{	
+		return tuple<Args&&...>(std::forward<Args>(t)...);
 	}
-
-	template<typename T1, typename T2>
-	template<typename TupleType1, typename TupleType2, std::size_t... Indexes1, std::size_t... Indexes2>
-	inline pair<T1, T2>::pair(TupleType1 t1, TupleType2 t2, std::index_sequence<Indexes1...>, std::index_sequence<Indexes2...>)
-		:first(get<Indexes1>(std::move(t1))...), second(get<Indexes2>(std::move(t2))...)
-	{}
-
-	template<typename T1, typename T2>
-	template<typename... Args1, typename... Args2>
-	inline pair<T1, T2>::pair(piecewise_construct_t, tuple<Args1...> val1, tuple<Args2...> val2)
-		: pair(std::move(val1), std::move(val2), std::make_index_sequence<sizeof...(Args1)>{}, std::make_index_sequence<sizeof...(Args2)>{})
-	{}
 }
 

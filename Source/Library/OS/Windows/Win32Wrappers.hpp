@@ -10,5 +10,5 @@ namespace Yupei
 	 extern int FreeLibraryWrapper(void* moduleHandle) noexcept;*/
 	extern std::uint32_t GetLastErrorWrapper() noexcept;
 	extern std::uint32_t WSAGetLastErrorWrapper() noexcept;
-	extern utf16_string ErrCodeToMessage(std::uint32_t errCode);
+	extern u16string ErrCodeToMessage(std::uint32_t errCode);
 }

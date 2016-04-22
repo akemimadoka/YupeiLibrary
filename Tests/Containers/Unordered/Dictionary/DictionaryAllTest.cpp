@@ -12,12 +12,13 @@
 #include <Containers\Dictionary.hpp>
 #include <UnitTest.hpp>
 #include <string>
+#include <utility>
 
 using namespace Yupei;
 
 TEST_CASE(DictionaryClear)
 {
-    pair<int, std::string> a[] = {
+    std::pair<int, std::string> a[] = {
         {1, "one"},
         {2, "two"},
         {3, "three"},
@@ -79,7 +80,7 @@ TEST_CASE(DictionaryTryEmplace)
 {
     { // pair<iterator, bool> try_emplace(const key_type& k, Args&&... args);
         typedef Yupei::dictionary<int, Moveable> M;
-        typedef Yupei::pair<M::iterator, bool> R;
+        typedef std::pair<M::iterator, bool> R;
         M m;
         R r;
         for (int i = 0; i < 20; i += 2)
@@ -122,7 +123,7 @@ TEST_CASE(DictionaryTryEmplace)
 
     {  // pair<iterator, bool> try_emplace(key_type&& k, Args&&... args);
         typedef Yupei::dictionary<Moveable, Moveable> M;
-        typedef Yupei::pair<M::iterator, bool> R;
+        typedef std::pair<M::iterator, bool> R;
         M m;
         R r;
         for (int i = 0; i < 20; i += 2)
@@ -153,7 +154,7 @@ TEST_CASE(DictionaryTryEmplace)
 TEST_CASE(DictionaryErase)
 {
     typedef Yupei::dictionary<int, std::string> C;
-    typedef Yupei::pair<int, std::string> P;
+    typedef std::pair<int, std::string> P;
     P a[] =
     {
         P(1, "one"),
@@ -175,7 +176,7 @@ TEST_CASE(DictionaryErase)
 TEST_CASE(DictionaryEraseKey)
 {
     typedef Yupei::dictionary<int, std::string> C;
-    typedef Yupei::pair<int, std::string> P;
+    typedef std::pair<int, std::string> P;
     P a[] =
     {
         P(1, "one"),
@@ -234,7 +235,7 @@ TEST_CASE(DictionaryEraseOrAssign)
 {
     { // pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
         typedef Yupei::dictionary<int, Moveable> M;
-        typedef Yupei::pair<M::iterator, bool> R;
+        typedef std::pair<M::iterator, bool> R;
         M m;
         R r;
         for (int i = 0; i < 20; i += 2)
@@ -278,7 +279,7 @@ TEST_CASE(DictionaryEraseOrAssign)
     }
     { // pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj);
         typedef Yupei::dictionary<Moveable, Moveable> M;
-        typedef Yupei::pair<M::iterator, bool> R;
+        typedef std::pair<M::iterator, bool> R;
         M m;
         R r;
         for (int i = 0; i < 20; i += 2)

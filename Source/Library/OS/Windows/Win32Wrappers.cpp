@@ -31,7 +31,7 @@ namespace Yupei
 		return static_cast<std::uint32_t>(::WSAGetLastError());
 	}
 
-	utf16_string ErrCodeToMessage(std::uint32_t errCode)
+	u16string ErrCodeToMessage(std::uint32_t errCode)
 	{
 		const auto systemLocale = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
 		LocalMemoryHandle localMemory;

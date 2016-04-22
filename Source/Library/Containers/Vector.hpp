@@ -463,13 +463,13 @@ namespace Yupei
 
         reference operator[](size_type n) noexcept
         {
-            YPASSERT(n >= size(), "Out of Range!");
+            YPASSERT(n < size(), "Out of Range!");
             return storage_[n];
         }
 
         const_reference operator[](size_type n) const
         {
-            YPASSERT(n >= size(), "Out of Range!");
+            YPASSERT(n < size(), "Out of Range!");
             return storage_[n];
         }
 

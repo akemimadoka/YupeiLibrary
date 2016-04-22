@@ -1,17 +1,17 @@
 ﻿#pragma once
 
 #include "..\Hash\Hash.hpp"
-#include "..\Comparators.hpp"
 #include "..\Iterator.hpp"
-#include "..\SmartPointers\UniquePtr.hpp"
 #include "..\MemoryResource\MemoryResource.hpp"
 #include "..\Assert.hpp"
-#include "..\Utility.hpp"
 #include "..\Hash\HashHelpers.hpp"
 #include "..\ConstructDestruct.hpp"
 #include "..\Algorithm\ForEach.hpp"
 #include <cstdint>
+#include <utility>
+#include <functional>
 #include <algorithm>
+#include <tuple>
 
 namespace Yupei
 {
@@ -257,13 +257,13 @@ namespace Yupei
         };
     }
 
-    template<typename KeyT, typename ValueT, typename HashFun = hash<>, typename KeyEqualT = equal_to<KeyT>>
+    template<typename KeyT, typename ValueT, typename HashFun = hash<>, typename KeyEqualT = std::equal_to<KeyT>>
     class dictionary : KeyEqualT, HashFun
     {
     public:
         using key_type = KeyT;
         using mapped_type = ValueT;
-        using value_type = Yupei::pair<key_type, mapped_type>;
+        using value_type = std::pair<key_type, mapped_type>;
         using size_type = std::size_t;
         using allocator_type = polymorphic_allocator<value_type>;
         using key_equal = KeyEqualT;
@@ -296,7 +296,7 @@ namespace Yupei
             value_type KeyValue_;
         };
         using EntryAllocator = polymorphic_allocator<Entry>;
-        using EntryPtrTuple = tuple<Entry*>;
+        using EntryPtrTuple = std::tuple<Entry*>;
 
 #ifdef _DEBUG
         Entry* dEntries;
@@ -566,36 +566,36 @@ namespace Yupei
             return try_emplace(std::move(key)).first->second;
         }
 
-        pair<iterator, bool> insert(const value_type& value)
+        std::pair<iterator, bool> insert(const value_type& value)
         {
             return Insert(true, value.first, value.second);
         }
      
-        pair<iterator, bool> insert(value_type&& value)
+        std::pair<iterator, bool> insert(value_type&& value)
         {
             return Insert(true, std::move(value.first), std::move(value.second));
         }
 
         template<typename M>
-        pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj)
+        std::pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj)
         {
             return Insert(false, k, std::forward<M>(obj));
         }
 
         template<typename M>
-        pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj)
+        std::pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj)
         {
             return Insert(false, std::move(k), std::forward<M>(obj));
         }
 
         template<typename... Args>
-        pair<iterator, bool> try_emplace(const key_type& k, Args&&... args)
+        std::pair<iterator, bool> try_emplace(const key_type& k, Args&&... args)
         {
             return Insert(true, k, std::forward<Args>(args)...);
         }
 
         template<typename... Args>
-        pair<iterator, bool> try_emplace(key_type&& k, Args&&... args)
+        std::pair<iterator, bool> try_emplace(key_type&& k, Args&&... args)
         {
             return Insert(true, std::move(k), std::forward<Args>(args)...);
         }
@@ -636,6 +636,8 @@ namespace Yupei
                 :allocator_{alloc}
             {}
 
+            DEFAULTCOPY(BucketDeleter)
+
             void operator()(size_type* p) noexcept
             {
                 allocator_.deallocate(p, 1);
@@ -651,6 +653,8 @@ namespace Yupei
             EntryDeleter(const allocator_type& alloc) noexcept
                 : allocator_{alloc}
             {}
+
+            DEFAULTCOPY(EntryDeleter)
 
             void operator()(Entry* p) noexcept
             {
@@ -669,10 +673,14 @@ namespace Yupei
         polymorphic_allocator<Entry> allocator_;
         const EntryDeleter entryDeleter_ {allocator_};
         const BucketDeleter bucketDeleter_ {allocator_};
-        using EntryPtr = unique_ptr<Entry[], EntryDeleter>;
-        using BucketPtr = unique_ptr<size_type[], BucketDeleter>;
-        EntryPtr entries_ {nullptr, entryDeleter_};
-        BucketPtr buckets_ {nullptr, bucketDeleter_};
+        using EntryPtr = std::unique_ptr<Entry[], EntryDeleter>;
+        using BucketPtr = std::unique_ptr<size_type[], BucketDeleter>;
+        //这里编译不过是因为 LWG#2520。
+        /*EntryPtr entries_ {nullptr, entryDeleter_};
+        BucketPtr buckets_ {nullptr, bucketDeleter_};*/
+        //暂时的 workaround。
+        EntryPtr entries_ { (Entry*)0, entryDeleter_ };
+        BucketPtr buckets_ { (size_type*)0, bucketDeleter_ };
         
 
         void Initialize(size_type capacity)
@@ -701,7 +709,7 @@ namespace Yupei
         }
 
         template<typename K, typename... Args>
-        pair<iterator, bool> Insert(bool addOnly, K&& key, Args&&... args)
+        std::pair<iterator, bool> Insert(bool addOnly, K&& key, Args&&... args)
         {          
             if (!buckets_) Initialize({});
             auto hashCode = hash_function()(key);
@@ -715,8 +723,8 @@ namespace Yupei
                 }
                                          
             const auto index = GetAvaliableEntry(hashCode, targetBucket);
-            ConstructEntry(entries_[index], piecewise_construct, Yupei::forward_as_tuple(std::forward<K>(key)),
-                Yupei::forward_as_tuple(std::forward<Args>(args)...));
+            ConstructEntry(entries_[index], std::piecewise_construct, std::forward_as_tuple(std::forward<K>(key)),
+                std::forward_as_tuple(std::forward<Args>(args)...));
             auto& entry = entries_[index];
             entry.NextEntryIndex_ = buckets_[targetBucket];
             entry.HashCode_ = hashCode;
@@ -727,14 +735,14 @@ namespace Yupei
         template<typename... Args>
         void ConstructEntry(Entry& entry, Args&&... args)
         {
-            YPASSERT(entry.HashCode_ == -1, "Construct on existing value.");
+            YPASSERT(entry.HashCode_ == kNothing, "Construct on existing value.");
             Yupei::construct(std::addressof(entry.KeyValue_), std::forward<Args>(args)...);
         }
 
         size_type GetAvaliableEntry(size_type hashCode, size_type& targetBucket) noexcept
         {
             size_type index;
-            if (freeCount_ > 0)
+            if (freeCount_ != 0)
             {
                 index = freeList_;
                 --freeCount_;
@@ -771,6 +779,10 @@ namespace Yupei
                     entry2.HashCode_ = entry1.HashCode_;
                     destroy(std::addressof(entry1));
                 });
+
+            std::for_each(ne + count_, ne + newSize, [](Entry& entry2) {
+                entry2.HashCode_ = kNothing;
+            });
 
             bucketCount_ = newSize;
             for_each_i(ne, ne + count_, [&](size_type i, Entry& entry) {

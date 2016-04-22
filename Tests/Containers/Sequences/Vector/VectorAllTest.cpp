@@ -37,7 +37,7 @@ TEST_CASE(VectorInsertIterValue)
         Yupei::vector<int>::iterator i = v.insert(v.cbegin() + 10, 1);
         TEST_ASSERT(v.size() == sz + 1);
         TEST_ASSERT(i == v.begin() + 10);
-        int j;
+        std::size_t j;
         for (j = 0; j < 10; ++j)
             TEST_ASSERT(v[j] == 0);
         TEST_ASSERT(v[j] == 1);

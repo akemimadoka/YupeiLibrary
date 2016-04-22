@@ -1,6 +1,8 @@
 #pragma once
 
 #include <utility>  //for std::forward
+#include <type_traits>
+#include "Ranges\Xrange.hpp"
 
 namespace Yupei
 {
@@ -19,13 +21,13 @@ namespace Yupei
 	namespace Internal
 	{
 		template<typename ObjectT>
-		void DestroyNImp(ObjectT* ptr, std::size_t count, std::true_type)
+		void DestroyNImp(ObjectT* ptr, std::size_t count, std::true_type) noexcept
 		{
 			;//no-op
 		}
 
 		template<typename ObjectT>
-		void DestroyNImp(ObjectT* ptr, std::size_t count, std::false_type)
+		void DestroyNImp(ObjectT* ptr, std::size_t count, std::false_type) noexcept
 		{
 			for (std::size_t i{};i < count;++i)
 				Yupei::destroy(ptr + i);
@@ -33,16 +35,16 @@ namespace Yupei
 	}
 
 	template<typename ObjectT>
-	void destroy_n(ObjectT* ptr, std::size_t count)
+	void destroy_n(ObjectT* ptr, std::size_t count) noexcept
 	{
 		Internal::DestroyNImp(ptr, count, std::is_trivially_destructible<ObjectT>());
 	}
 
-	template<typename ObjectT,typename... ParamT>
-	ObjectT* construct_n(ObjectT* ptr, std::size_t count,ParamT&&... param)
+	template<typename ObjectT,typename... ParamsT>
+	ObjectT* construct_n(ObjectT* ptr, std::size_t count, ParamsT&&... param) noexcept(std::is_nothrow_constructible<ObjectT, ParamsT&&...>::value)
 	{
-		for (std::size_t i{};i < count;++i)
-			Yupei::construct(ptr + i, std::forward<ParamT>(param)...);
+		for(auto i : xrange(count))
+			(void)Yupei::construct(ptr + i, std::forward<ParamsT>(param)...);
         return ptr + count;
 	}
 }

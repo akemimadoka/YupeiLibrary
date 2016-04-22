@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140_clang_3_7</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -80,6 +80,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -112,6 +114,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Algorithms\SplitAllTest.cpp" />
     <ClCompile Include="Algorithms\SearchersAllTest.cpp" />
     <ClCompile Include="Containers\Sequences\Array\ArrayAllTest.cpp" />
     <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp" />
@@ -124,7 +127,6 @@
     <ClCompile Include="OS\Windows\Win32ExceptionAllTest.cpp" />
     <ClCompile Include="ScopeAllTest.cpp" />
     <ClCompile Include="StringAllTest.cpp" />
-    <ClCompile Include="TupleAllTest.cpp" />
     <ClCompile Include="TypeTraitsAllTest.cpp" />
   </ItemGroup>
   <ItemGroup>

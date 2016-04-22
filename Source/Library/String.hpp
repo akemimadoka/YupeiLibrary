@@ -125,13 +125,13 @@ namespace Yupei
 			if (IsBig())
 			{
 				const auto str = storage_.big_.ptr_;
-				str[storage_.big_.size_] = {};
+				str[GetBigSize()] = {};
 				return str;
 			}
 			else
 			{
 				const auto str = storage_.small_.data_;
-				str[storage_.small_.size_] = {};
+				str[GetSmallSize()] = {};
 				return str;
 			}
 		}
@@ -336,7 +336,7 @@ namespace Yupei
 			vector<iterator> replacements;
 			//TODO: 小字符串应该使用 default searcher。
 			const auto searcher = make_boyer_moore_searcher(begin(oldString), end(oldString));
-			pair<iterator, iterator> result;
+			std::pair<iterator, iterator> result;
 			const auto strBegin = begin(*this);
 			const auto strEnd = end(*this);
 			auto searchBegin = strBegin;
@@ -678,10 +678,10 @@ namespace Yupei
 	extern template class basic_string<string_type::utf16>;
 	extern template class basic_string<string_type::utf32>;*/
 
-	using wide_string = basic_string<string_type::wide>;
-	using utf8_string = basic_string<string_type::utf8>;
-	using utf16_string = basic_string<string_type::utf16>;
-	using utf32_string = basic_string<string_type::utf32>;
+	using wstring = basic_string<string_type::wide>;
+	using u8string = basic_string<string_type::utf8>;
+	using u16string = basic_string<string_type::utf16>;
+	using u32string = basic_string<string_type::utf32>;
 
 	template<typename IteratorT>
 	class string_reader
@@ -968,14 +968,14 @@ namespace Yupei
 		}
 	}
 
-	utf8_string to_utf8(const wide_string::view_type& wide);
-	utf8_string to_utf8(const utf16_string::view_type& utf16);
-	utf8_string to_utf8(const utf32_string::view_type& utf32);
+	u8string to_utf8(const wstring::view_type& wide);
+	u8string to_utf8(const u16string::view_type& utf16);
+	u8string to_utf8(const u32string::view_type& utf32);
 
-	utf16_string to_utf16(const utf8_string::view_type& utf8);
-	utf16_string to_utf16(const utf32_string::view_type& utf32);
+	u16string to_utf16(const u8string::view_type& utf8);
+	u16string to_utf16(const u32string::view_type& utf32);
 
-	utf32_string to_utf32(const utf8_string::view_type& utf8);
-	utf32_string to_utf32(const utf16_string::view_type& utf16);
-	utf32_string to_utf32(const wide_string::view_type& wide);
+	u32string to_utf32(const u8string::view_type& utf8);
+	u32string to_utf32(const u16string::view_type& utf16);
+	u32string to_utf32(const wstring::view_type& wide);
 }

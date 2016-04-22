@@ -65,7 +65,10 @@ namespace Yupei
         template<typename T>
         using PointerOp = typename T::pointer;
 
+		template<typename T>
+		using ConstPointerOp = typename T::const_pointer;
     }
+
     template<typename T>
     using iterator_category_t = typename Internal::IteratorCategoryImp<std::remove_cv_t<T>>::type;
 
@@ -80,6 +83,9 @@ namespace Yupei
 
     template<typename T>
     using pointer_t = deteced_or_t<value_type_t<T>*, Internal::PointerOp, T>;
+
+	template<typename T>
+	using const_pointer_t = deteced_or_t<const value_type_t<T>*, Internal::ConstPointerOp, T>;
 
     template<typename IteratorT, typename = void>
     struct is_iterator : std::false_type {};

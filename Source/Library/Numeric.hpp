@@ -1,7 +1,6 @@
 #pragma once
 
-//TODO!
-#include "TypeTraits.h"
+#include <type_traits>
 
 namespace Yupei
 {
@@ -14,10 +13,7 @@ namespace Yupei
 		}
 
 		template<typename M, typename N = M>
-		using common_int_t = std::enable_if_t<
-            std::is_integral<M>::value &&
-            std::is_integral<N>::value,
-            std::common_type_t<M, N>> ;
+		using common_int_t = std::enable_if_t<std::is_integral<M>::value && std::is_integral<N>::value, std::common_type_t<M, N>>;
 	}
 
 	template<typename M,typename N>

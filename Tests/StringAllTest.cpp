@@ -1,15 +1,12 @@
 ﻿#include <UnitTest.hpp>
 #include <String.hpp>
-#include <locale>
-#include <sstream>
 #include <string>
-#include <iostream>
 
 TEST_CASE(StringConstruct)
 {
-    using Yupei::utf8_string;
+    using Yupei::u8string;
 
-    utf8_string str {"hahahahahahahahahahahahahahahah"};
+    u8string str {"hahahahahahahahahahahahahahahah"};
     TEST_ASSERT(str[0] == 'h');
     TEST_ASSERT(str[1] == 'a');
     TEST_ASSERT(str[2] == 'h');
@@ -51,7 +48,7 @@ TEST_CASE(StringConstruct)
 TEST_CASE(StringAppendAndReplace)
 {
     using namespace Yupei;
-    utf8_string str;
+    u8string str;
     for (int i = 0; i < 100; ++i)
         str.append("haha");
     
@@ -80,7 +77,7 @@ TEST_CASE(SmallStringReplace)
     using namespace Yupei;
 
     //测试均在小内存的情况。
-    utf8_string str {"abcba"};
+    u8string str {"abcba"};
 
     str.replace("ab", "abc");
 
@@ -105,7 +102,7 @@ TEST_CASE(SmallStringReplaceToBig)
     using namespace Yupei;
 
     //测试在小内存，replace 完毕后到大内存的情况。
-    utf8_string str {"abcba"};
+    u8string str {"abcba"};
 
     str.replace("ab", "abcdefghi");
 
@@ -135,7 +132,7 @@ TEST_CASE(StringSmallInsert)
 {
     using namespace Yupei;
 
-    utf8_string str {"abefg"};
+    u8string str {"abefg"};
 
     str.insert(2, {"cd"});
 
@@ -148,7 +145,7 @@ TEST_CASE(StringSmallInsert)
 TEST_CASE(StringPushBackTest)
 {
 	using namespace Yupei;
-	utf8_string str;
+	u8string str;
 	for (int i = 0;i < 1000;++i)
 	{
 		str.push_back('v');
@@ -164,7 +161,7 @@ TEST_CASE(StringBigInsert)
 {
     using namespace Yupei;
 
-    utf8_string str;
+    u8string str;
 
     for (int i = 0;i < 100;++i)
         str.append("abcd");
@@ -184,7 +181,7 @@ TEST_CASE(StringRemove)
 {
     using namespace Yupei;
 
-    utf8_string str {"abfcd"};
+    u8string str {"abfcd"};
 
     str.remove(2, 1);
 
@@ -198,7 +195,7 @@ TEST_CASE(Utf32StringTest)
 {
 	using namespace Yupei;
 	const auto& u32Str = U"你好啊，哈哈哈。";	
-	const auto yStr = utf32_string { u32Str };
+	const auto yStr = u32string { u32Str };
 	TEST_ASSERT(std::equal(std::begin(u32Str), std::end(u32Str) - 1, begin(yStr), end(yStr)));
 }
 
@@ -206,7 +203,7 @@ TEST_CASE(Utf32StringTest)
 TEST_CASE(Utf16DecoderTest)
 {
 	using namespace Yupei;
-	const utf16_string u16Str = u"你好啊，哈哈哈。";
+	const u16string u16Str = u"你好啊，哈哈哈。";
 	std::u32string u32Str = U"你好啊，哈哈哈。";
 	const auto u32Str2 = to_utf32(u16Str.to_string_view());
 	TEST_ASSERT(std::equal(begin(u32Str), end(u32Str), begin(u32Str2), end(u32Str2)));
@@ -215,7 +212,7 @@ TEST_CASE(Utf16DecoderTest)
 TEST_CASE(Utf8EncoderTest)
 {
 	using namespace Yupei;
-	const utf16_string u16Str = u"你好啊，哈哈哈。";
+	const u16string u16Str = u"你好啊，哈哈哈。";
 	const auto& u8Str = u8"你好啊，哈哈哈。";
 	const auto u8Str2 = to_utf8(u16Str.to_string_view());
 	TEST_ASSERT(std::equal(std::begin(u8Str), std::end(u8Str) - 1, begin(u8Str2), end(u8Str2)));
@@ -224,7 +221,7 @@ TEST_CASE(Utf8EncoderTest)
 TEST_CASE(StringResizeTest)
 {
 	using namespace Yupei;
-	utf8_string str;
+	u8string str;
 	for (int i = 0; i < 1000; ++i)
 		str.push_back('a');
 

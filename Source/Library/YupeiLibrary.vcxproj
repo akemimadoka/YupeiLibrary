@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140_clang_3_7</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -76,7 +76,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <ExceptionHandling>Enabled</ExceptionHandling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -122,12 +123,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithm\ForEach.hpp" />
+    <ClInclude Include="Algorithm\RepeatN.hpp" />
+    <ClInclude Include="Algorithm\Split.hpp" />
     <ClInclude Include="Assert.hpp" />
     <ClInclude Include="Containers\RedBlackTree.hpp" />
+    <ClInclude Include="Network\IPAddress.hpp" />
     <ClInclude Include="Scope.hpp" />
     <ClInclude Include="CharTraitsHelpers.hpp" />
     <ClInclude Include="CLib\RawMemory.h" />
-    <ClInclude Include="Comparators.hpp" />
     <ClInclude Include="Config.hpp" />
     <ClInclude Include="ConstructDestruct.hpp" />
     <ClInclude Include="Containers\Array.hpp" />
@@ -155,19 +158,16 @@
     <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />
     <ClInclude Include="OS\Windows\WinDef.hpp" />
     <ClInclude Include="Owner.hpp" />
-    <ClInclude Include="Pair.hpp" />
     <ClInclude Include="Ranges\Xrange.hpp" />
     <ClInclude Include="Searchers.hpp" />
     <ClInclude Include="SmartPointers\DefaultDelete.hpp" />
     <ClInclude Include="SmartPointers\SharedPtr.hpp" />
-    <ClInclude Include="SmartPointers\UniquePtr.hpp" />
     <ClInclude Include="StopWatch.hpp" />
     <ClInclude Include="String.hpp" />
     <ClInclude Include="StringView.hpp" />
     <ClInclude Include="Tuple.hpp" />
     <ClInclude Include="TypeTraits.hpp" />
     <ClInclude Include="UnitTest.hpp" />
-    <ClInclude Include="Utility.hpp" />
     <ClInclude Include="Variant.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

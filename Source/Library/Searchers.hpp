@@ -1,12 +1,11 @@
 ﻿#pragma once
 
 #include "Hash\Hash.hpp"
-#include "Comparators.hpp"
 #include "Limits.hpp"
 #include "Containers\Dictionary.hpp"
 #include "Containers\Vector.hpp"
 #include "Ranges\Xrange.hpp"
-#include "Pair.hpp"
+#include <utility>
 #include <cassert>
 #include <iterator>
 #include <algorithm>
@@ -15,7 +14,7 @@ namespace Yupei
 {
     //http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0253r0.pdf
 
-    template<typename ForwardIt1T, typename Pred = equal_to<>>
+    template<typename ForwardIt1T, typename Pred = std::equal_to<>>
     class default_searcher : Pred
     {
     public:
@@ -24,7 +23,7 @@ namespace Yupei
         {}
 
         template<typename ForwardIt2T>
-        pair<ForwardIt2T, ForwardIt2T> 
+        std::pair<ForwardIt2T, ForwardIt2T> 
             operator()(ForwardIt2T first, ForwardIt2T last) const
         {
             if (first == last) return {first, last};
@@ -125,7 +124,7 @@ namespace Yupei
     }
     
     //http://igm.univ-mlv.fr/~lecroq/string/node14.html#SECTION00140
-    template<typename RandomItT, typename Hash = hash<>, typename Pred = equal_to<>>
+    template<typename RandomItT, typename Hash = hash<>, typename Pred = std::equal_to<>>
     class boyer_moore_searcher: private Hash, private Pred
     {
     public:
@@ -146,7 +145,7 @@ namespace Yupei
         }
 
         template<typename RandomIt2T>
-        pair<RandomIt2T, RandomIt2T> operator()(RandomIt2T first, RandomIt2T last) const
+        std::pair<RandomIt2T, RandomIt2T> operator()(RandomIt2T first, RandomIt2T last) const
         {
             assert(first <= last);
             const auto dist = last - first;
@@ -203,7 +202,7 @@ namespace Yupei
         using ValueType = value_type_t<RandomItT>;
         using DifferenceType = std::ptrdiff_t;
         using BadTable = Internal::BMBadSkipTable<ValueType, DifferenceType, Hash, Pred, 
-            (std::is_same<Pred, equal_to<void>>::value || std::is_same<Pred, equal_to<ValueType>>::value) &&
+            (std::is_same<Pred, std::equal_to<void>>::value || std::is_same<Pred, std::equal_to<ValueType>>::value) &&
                 sizeof(ValueType) == 1 && (std::is_integral<ValueType>::value || std::is_enum<ValueType>::value)>;
         
         const RandomItT patStart_, patLast_;
@@ -236,9 +235,8 @@ namespace Yupei
             DifferenceType last;
             for (auto i = lastIndex - 1; i >= 0; --i)
             {
-                const auto& c = suffixTable[i + lastIndex - last];
-                if (i > prev && c < i - prev)
-                    suffixTable[i] = c;
+                if (i > prev && suffixTable[i + lastIndex - last] < i - prev)
+                    suffixTable[i] = suffixTable[i + lastIndex - last];
                 else
                 {
                     if (i < prev)
@@ -253,7 +251,7 @@ namespace Yupei
         }
     };
 
-    template<typename RandomItT, typename Hash = hash<>, typename Pred = equal_to<>>
+    template<typename RandomItT, typename Hash = hash<>, typename Pred = std::equal_to<>>
     boyer_moore_searcher<RandomItT, Hash, Pred> 
         make_boyer_moore_searcher(RandomItT patFirst, RandomItT patLast, Hash hf = {}, Pred pred = {})
     {

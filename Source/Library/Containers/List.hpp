@@ -1,13 +1,12 @@
 ﻿#pragma once
 
-#include "..\SmartPointers\UniquePtr.hpp"
 #include "..\MemoryResource\MemoryResource.hpp"
 #include "..\HelperMacros.hpp"
 #include "..\ConstructDestruct.hpp"
 #include "..\Iterator.hpp"
-#include "..\Utility.hpp"
 #include "..\Assert.hpp"
 #include <algorithm>
+#include <memory>
 #include <initializer_list>
 
 namespace Yupei
@@ -383,7 +382,7 @@ namespace Yupei
         auto MakeNode(Args&&... args)
         {
             const auto deleteFn = [this](NodePointer p) {allocator_.deallocate(p, 1);};
-            unique_ptr<NodeType, decltype(deleteFn)> holder{allocator_.allocate(1),deleteFn};
+            std::unique_ptr<NodeType, decltype(deleteFn)> holder{allocator_.allocate(1),deleteFn};
             Yupei::construct(std::addressof(holder->item_), std::forward<Args>(args)...);
             return holder;
         }

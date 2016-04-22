@@ -52,6 +52,9 @@ namespace Yupei
     }
 
     template<string_type StringT>
+    using char_type_t = typename Internal::CharTTraits<StringT>::Type;
+
+    template<string_type StringT>
     class basic_string_view
     {
     public:
@@ -68,6 +71,10 @@ namespace Yupei
 
         CXX14_CONSTEXPR basic_string_view(const_pointer str, size_type len) noexcept
             :data_{str}, size_{len}
+        {}
+
+        CXX14_CONSTEXPR basic_string_view(const_iterator start, const_iterator last) noexcept
+            :data_{start}, size_{static_cast<size_type>(last - start)}
         {}
 
         basic_string_view(const_pointer str) noexcept
@@ -157,7 +164,6 @@ namespace Yupei
             return sizeToCopy;
         }
 
-        //constexpr ?
         void swap(basic_string_view& s) noexcept
         {
             using std::swap;
@@ -165,36 +171,32 @@ namespace Yupei
             swap(size_, s.size_);
         }
 
-        CXX14_CONSTEXPR basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
+        basic_string_view substr(size_type pos = {}, size_type n = npos) noexcept
         {
             if (pos > size()) throw std::out_of_range("pos > size()!");
             return {data_ + pos, min(n, size_ - pos)};
         }
 
-        CXX14_CONSTEXPR int compare(basic_string_view str) const noexcept
+        int compare(basic_string_view str) const noexcept
         {
-            const auto c = InternalCompare(size(), str.size());
-            if (c != 0)
-            {
-                for (auto cur1 = begin(), cur2 = str.begin(); cur1 != end() && cur2 != end(); ++cur1, ++cur2)
-                {
-                    const auto c1 = *cur1;
-                    const auto c2 = *cur2;
-                    if (c1 != c2)
-                        return InternalCompare(c1, c2);
-                }
-            }
-            else
-                return c;
-            return 0;
+			const auto lSize = size();
+			const auto rSize = str.size();
+			const auto rlen = std::min(lSize, rSize);
+			const auto res = Internal::StrCmp(cbegin(), str.cbegin(), rlen);
+			if (res != 0) return res;
+			else
+			{
+				if (lSize < rSize) return -1;
+				else if (lSize == rSize) return 0;
+				else return 1;
+			}
         }
 
-        //sorry, not constexpr.
         size_type find(const basic_string_view& pattern, size_type pos = {}) const
         {
-            const auto it = make_boyer_moore_searcher(pattern.begin(), pattern.end())(begin() + pos, end());
-            if (it == end()) return npos;
-            return static_cast<size_type>(it - begin());
+            const auto p = make_boyer_moore_searcher(pattern.begin(), pattern.end())(begin() + pos, end());
+            if (p.first == end()) return npos;
+            return static_cast<size_type>(p.first - begin());
         }
 
         size_type find(const_pointer s, size_type pos) const
@@ -225,6 +227,7 @@ namespace Yupei
                     if (p == c)
                         return res;
             }
+			return npos;
         }
 
         CXX14_CONSTEXPR size_type find_first_of(const_pointer s, size_type pos) const noexcept
@@ -240,15 +243,6 @@ namespace Yupei
     private:
         const_pointer data_;
         size_type size_;
-
-        template<typename T, typename U>
-        CXX14_CONSTEXPR int InternalCompare(T&& lhs, U&& rhs)
-        {
-            auto&& bigger = Yupei::max(exforward(lhs), exforward(rhs));
-            if (exforward(bigger) == exforward(lhs)) return 1;
-            else if (exforward(bigger) == exforward(rhs)) return -1;
-            return 0;
-        }
     };
 
     template<string_type StringT>
@@ -293,18 +287,70 @@ namespace Yupei
         return view.size();
     }
 
-    /*basic_string_view<string_type::utf8> operator"" _sv(const char* str) noexcept
+    template<string_type StringT>
+    constexpr bool operator==(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
     {
-        return {str, std::strlen(str)};
+        return std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
-    basic_string_view<string_type::wide> operator"" _sv(const wchar_t* str) noexcept
+    template<string_type StringT>
+    constexpr bool operator!=(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
     {
-        return {str, std::wcslen(str)};
+        return !(lhs == rhs);
     }
 
-    basic_string_view<string_type::utf16> operator"" _sv(const wchar_t* str) noexcept
+    template<string_type StringT>
+    constexpr bool operator<(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
     {
-        return {str, std::wcslen(str)};
-    }*/
+        return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+    }
+
+    template<string_type StringT>
+    constexpr bool operator<=(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
+    {
+        return !(rhs < lhs);
+    }
+
+    template<string_type StringT>
+    constexpr bool operator>(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
+    {
+        return rhs < lhs;
+    }
+
+    template<string_type StringT>
+    constexpr bool operator>=(basic_string_view<StringT> lhs, basic_string_view<StringT> rhs) noexcept
+    {
+        return !(lhs < rhs);
+    }
+
+	using u8string_view = basic_string_view<string_type::utf8>;
+	using wstring_view = basic_string_view<string_type::wide>;
+	using u16string_view = basic_string_view<string_type::utf16>;
+	using u32string_view = basic_string_view<string_type::utf32>;
+
+    namespace Literals
+    {
+        inline namespace StringViewLiterals
+        {
+            inline /*constexpr */u8string_view operator"" _u8v(const char* str, std::size_t len) noexcept
+            {
+                return { str, len };
+            }
+
+            inline /*constexpr */wstring_view operator"" _wv(const wchar_t* str, std::size_t len) noexcept
+            {
+                return { str, len };
+            }
+
+            inline /*constexpr */u16string_view operator"" _u16v(const char16_t* str, std::size_t len) noexcept
+            {
+                return { str, len };
+            }
+
+            inline /*constexpr */u32string_view operator"" _u16v(const char32_t* str, std::size_t len) noexcept
+            {
+                return { str, len };
+            }
+        }
+    }  
 }
