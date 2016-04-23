@@ -74,9 +74,6 @@
     <ClInclude Include="Numeric.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Owner.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="StopWatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -99,9 +96,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MemoryResource\MemoryResource.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SmartPointers\DefaultDelete.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SmartPointers\SharedPtr.hpp">

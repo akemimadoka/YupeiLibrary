@@ -157,10 +157,8 @@
     <ClInclude Include="OS\Windows\Win32Exception.hpp" />
     <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />
     <ClInclude Include="OS\Windows\WinDef.hpp" />
-    <ClInclude Include="Owner.hpp" />
     <ClInclude Include="Ranges\Xrange.hpp" />
     <ClInclude Include="Searchers.hpp" />
-    <ClInclude Include="SmartPointers\DefaultDelete.hpp" />
     <ClInclude Include="SmartPointers\SharedPtr.hpp" />
     <ClInclude Include="StopWatch.hpp" />
     <ClInclude Include="String.hpp" />

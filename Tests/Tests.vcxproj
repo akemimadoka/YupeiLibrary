@@ -123,7 +123,7 @@
     <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp" />
     <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MinMaxTests.cpp" />
+    <ClCompile Include="MinMaxTest.cpp" />
     <ClCompile Include="OS\Windows\NativeHandlesTest.cpp" />
     <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp" />
     <ClCompile Include="ScopeTest.cpp" />
