@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140_Clang_3_7</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -111,23 +111,24 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Algorithms\SplitAllTest.cpp" />
-    <ClCompile Include="Algorithms\SearchersAllTest.cpp" />
-    <ClCompile Include="Containers\Sequences\Array\ArrayAllTest.cpp" />
-    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp" />
-    <ClCompile Include="Containers\Sequences\List\ListAllTest.cpp" />
-    <ClCompile Include="Containers\Sequences\Vector\VectorAllTest.cpp" />
-    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp" />
+    <ClCompile Include="Algorithms\SplitTest.cpp" />
+    <ClCompile Include="Algorithms\SearchersTest.cpp" />
+    <ClCompile Include="Containers\Sequences\Array\ArrayTest.cpp" />
+    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListTests.cpp" />
+    <ClCompile Include="Containers\Sequences\List\ListTest.cpp" />
+    <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp" />
+    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MinMaxAllTests.cpp" />
-    <ClCompile Include="OS\Windows\NativeHandlesAllTest.cpp" />
-    <ClCompile Include="OS\Windows\Win32ExceptionAllTest.cpp" />
-    <ClCompile Include="ScopeAllTest.cpp" />
-    <ClCompile Include="StringAllTest.cpp" />
-    <ClCompile Include="TypeTraitsAllTest.cpp" />
+    <ClCompile Include="MinMaxTests.cpp" />
+    <ClCompile Include="OS\Windows\NativeHandlesTest.cpp" />
+    <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp" />
+    <ClCompile Include="ScopeTest.cpp" />
+    <ClCompile Include="StringTest.cpp" />
+    <ClCompile Include="TypeTraitsTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h" />
@@ -138,7 +139,7 @@
     <ClInclude Include="utilities\variant\shapes.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Source\Library\YupeiLibrary.vcxproj">
+    <ProjectReference Include="..\Source\YupeiLibrary.vcxproj">
       <Project>{2a77a2f0-5b90-494f-b890-6ce55407b5aa}</Project>
     </ProjectReference>
   </ItemGroup>

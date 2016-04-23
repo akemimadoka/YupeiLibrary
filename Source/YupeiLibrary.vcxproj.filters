@@ -80,9 +80,6 @@
     <ClInclude Include="StopWatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tuple.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TypeTraits.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140_Clang_3_7</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -165,7 +165,6 @@
     <ClInclude Include="StopWatch.hpp" />
     <ClInclude Include="String.hpp" />
     <ClInclude Include="StringView.hpp" />
-    <ClInclude Include="Tuple.hpp" />
     <ClInclude Include="TypeTraits.hpp" />
     <ClInclude Include="UnitTest.hpp" />
     <ClInclude Include="Variant.hpp" />

@@ -1,6 +1,0 @@
-cmake_minimum_required(VERSION 3.0)
-project(YupeiLibrary)
-set( LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Lib")
-set( CMAKE_CXX_COMPILER "clang" )
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++1z" )
-add_library(YupeiLibrary MemoryResource/MemoryResource.cpp)

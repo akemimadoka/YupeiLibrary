@@ -15,46 +15,46 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListAllTests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Containers\Sequences\List\ListAllTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Containers\Sequences\Vector\VectorAllTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryAllTest.cpp">
+    <ClCompile Include="TypeTraitsTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithms\SearchersAllTest.cpp">
+    <ClCompile Include="StringTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MinMaxAllTests.cpp">
+    <ClCompile Include="ScopeTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StringAllTest.cpp">
+    <ClCompile Include="MinMaxTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TypeTraitsAllTest.cpp">
+    <ClCompile Include="Algorithms\SearchersTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ScopeAllTest.cpp">
+    <ClCompile Include="Algorithms\SplitTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OS\Windows\Win32ExceptionAllTest.cpp">
+    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OS\Windows\NativeHandlesAllTest.cpp">
+    <ClCompile Include="Containers\Sequences\Array\ArrayTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Sequences\Array\ArrayAllTest.cpp">
+    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithms\SplitAllTest.cpp">
+    <ClCompile Include="Containers\Sequences\List\ListTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\NativeHandlesTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
