@@ -68,9 +68,9 @@ public:
     bool moved() const { return int_ == -1; }
 
     template<typename HashCode>
-    friend HashCode hash_value(HashCode hashCode, const Moveable& m)
+    friend void hash_value(HashCode& hashCode, const Moveable& m)
     {
-        return hash_combine(std::move(hashCode), m.int_, m.double_);
+        hash_combine(hashCode, m.int_, m.double_);
     }
 };
 

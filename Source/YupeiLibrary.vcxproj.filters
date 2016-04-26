@@ -185,5 +185,11 @@
     <ClInclude Include="Algorithm\Split.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Coordinate.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ArrayView.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

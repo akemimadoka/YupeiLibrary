@@ -1,3 +1,7 @@
+#include <Config.hpp>
+
+#ifdef HAS_COROUTINE
+
 #include <Algorithm\Split.hpp>
 #include <UnitTest.hpp>
 #include <algorithm>
@@ -29,3 +33,5 @@ TEST_CASE(SplitStringTest)
     auto g4 = split(str4.to_string_view(), ",.", 3);
     TEST_ASSERT(*g4.begin() == ""_u8v);
 }
+
+#endif

@@ -12,8 +12,8 @@ namespace Yupei
         using result_type = std::uint64_t;
 
         fnv64() noexcept = default;
-        DISABLECOPY(fnv64)
-        DEFAULTMOVE(fnv64)
+		DISABLECOPY(fnv64)
+		DISABLEMOVE(fnv64)
 
         void update(const byte* data, std::size_t dataSize) noexcept;
         result_type finalize() noexcept;

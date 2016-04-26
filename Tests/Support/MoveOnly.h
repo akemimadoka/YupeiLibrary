@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <Hash\Hash.hpp>
 
 class MoveOnly
 {
@@ -23,6 +24,13 @@ class MoveOnly
 
     int data_;
 public:
+
+	template<typename HashCode>
+	friend void hash_value(HashCode& hashCode, const MoveOnly& m) noexcept
+	{
+		Yupei::hash_combine(hashCode, m.data_);
+	}
+
     MoveOnly(int data = 1) : data_(data) {}
     MoveOnly(MoveOnly&& x)
         : data_(x.data_) {x.data_ = 0;}
@@ -35,16 +43,6 @@ public:
     bool operator< (const MoveOnly& x) const {return data_ <  x.data_;}
 };
 
-namespace std {
-
-template <>
-struct hash<MoveOnly>
-    : public std::unary_function<MoveOnly, std::size_t>
-{
-    std::size_t operator()(const MoveOnly& x) const {return x.get();}
-};
-
-}
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 

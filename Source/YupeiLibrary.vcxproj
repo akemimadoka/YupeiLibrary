@@ -105,6 +105,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -125,8 +127,10 @@
     <ClInclude Include="Algorithm\ForEach.hpp" />
     <ClInclude Include="Algorithm\RepeatN.hpp" />
     <ClInclude Include="Algorithm\Split.hpp" />
+    <ClInclude Include="ArrayView.hpp" />
     <ClInclude Include="Assert.hpp" />
     <ClInclude Include="Containers\RedBlackTree.hpp" />
+    <ClInclude Include="Coordinate.hpp" />
     <ClInclude Include="Network\IPAddress.hpp" />
     <ClInclude Include="Scope.hpp" />
     <ClInclude Include="CharTraitsHelpers.hpp" />

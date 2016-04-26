@@ -57,6 +57,12 @@
     <ClCompile Include="MinMaxTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CoordinateTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ArrayViewTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h">

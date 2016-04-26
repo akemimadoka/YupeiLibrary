@@ -2,9 +2,8 @@
 
 namespace Yupei
 {
-    hash_code hash_combine_range(hash_code h, const unsigned char* hashStart, const unsigned char* hashEnd) noexcept
-    {
-        h.update(hashStart, static_cast<std::size_t>(hashEnd - hashStart));
-        return h;
-    }
+	void hash_combine_range(hash_code& h, const byte* start, const byte* last) noexcept
+	{
+		h.update(start, static_cast<std::size_t>(last - start));
+	}
 }

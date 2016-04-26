@@ -14,4 +14,14 @@
 //#endif
 
 //一个文件也有 bug...
-#define HAS_COROUTINE
+#if defined(_RESUMABLE_FUNCTIONS_SUPPORTED)
+#define HAS_COROUTINE 1
+#endif
+
+#if defined(_MSC_VER)
+#define YPMSVC 1
+#endif
+
+#if defined(YPMSVC) && defined(_DEBUG)
+#define YPDEBUG 1
+#endif

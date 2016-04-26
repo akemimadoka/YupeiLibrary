@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Config.hpp"
 #include "StringView.hpp"
 #include "MemoryResource\MemoryResource.hpp"
 #include "Ranges\Xrange.hpp"
@@ -9,6 +10,11 @@
 #include <algorithm>
 #include <utility>
 #include <cstdint>
+
+#if defined(YPMSVC)
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
 
 namespace Yupei
 {
@@ -979,3 +985,7 @@ namespace Yupei
 	u32string to_utf32(const u16string::view_type& utf16);
 	u32string to_utf32(const wstring::view_type& wide);
 }
+
+#if defined(YPMSVC)
+#pragma warning(pop)
+#endif

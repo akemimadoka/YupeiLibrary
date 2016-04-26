@@ -112,16 +112,19 @@
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Algorithms\SplitTest.cpp" />
     <ClCompile Include="Algorithms\SearchersTest.cpp" />
+    <ClCompile Include="ArrayViewTest.cpp" />
     <ClCompile Include="Containers\Sequences\Array\ArrayTest.cpp" />
     <ClCompile Include="Containers\Sequences\ForwardList\ForwardListTests.cpp" />
     <ClCompile Include="Containers\Sequences\List\ListTest.cpp" />
     <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp" />
     <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp" />
+    <ClCompile Include="CoordinateTest.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MinMaxTest.cpp" />
     <ClCompile Include="OS\Windows\NativeHandlesTest.cpp" />
