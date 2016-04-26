@@ -8,20 +8,20 @@
 
 namespace Yupei
 {
-	class fnv32
-	{
-	public:
-		using result_type = std::uint32_t;
+    class fnv32
+    {
+    public:
+        using result_type = std::uint32_t;
 
-		fnv32() noexcept = default;
-		DISABLECOPY(fnv32)
-		DISABLEMOVE(fnv32)
+        fnv32() noexcept = default;
+        DISABLECOPY(fnv32)
+        DISABLEMOVE(fnv32)
 
-		void update(const byte* data, std::size_t dataSize) noexcept;
-		result_type finalize() noexcept;
+        void update(const byte* data, std::size_t dataSize) noexcept;
+        result_type finalize() noexcept;
 
-	private:
-		bool inited_ = {};
-		result_type fnv32Reg_;
-	};
+    private:
+        bool inited_ = {};
+        result_type fnv32Reg_;
+    };
 }
