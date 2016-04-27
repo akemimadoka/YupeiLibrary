@@ -70,7 +70,7 @@ namespace Yupei
             using UnsignedKey = std::make_unsigned_t<key_type>;
 
         public:
-            BMBadSkipTable(size_type n, value_type defaultValue, Hash hf, Pred pred) noexcept
+            BMBadSkipTable(size_type, value_type defaultValue, Hash, Pred) noexcept
             {
                 std::fill_n(table_, limits_max_v<UnsignedKey>, defaultValue);
             }
@@ -232,7 +232,7 @@ namespace Yupei
             vector<DifferenceType> suffixTable(static_cast<std::size_t>(patLen_));
             suffixTable[lastIndex] = patLen_;
             auto prev = lastIndex;
-            DifferenceType last;
+			DifferenceType last = {};
             for (auto i = lastIndex - 1; i >= 0; --i)
             {
                 if (i > prev && suffixTable[i + lastIndex - last] < i - prev)

@@ -1,13 +1,15 @@
-#pragma once
+﻿#pragma once
 
+#include "..\Assert.hpp"
+#include "..\Scope.hpp"
+#include "..\Iterator.hpp"
 #include "..\TypeTraits.hpp"
-#include "..\MemoryResource\MemoryResource.hpp"
 #include "..\HelperMacros.hpp"
 #include "..\ConstructDestruct.hpp"
-#include "..\Iterator.hpp"
-#include "..\Assert.hpp"
+#include "..\MemoryResource\MemoryResource.hpp"
 #include <algorithm>
 #include <stdexcept> //for std::out_of_range
+#include <memory>
 
 namespace Yupei
 {
@@ -19,7 +21,7 @@ namespace Yupei
         template<typename T>
         class vector_iterator
         {
-        private:
+        public:
             using MyType = vector_iterator<T>;
             using difference_type = std::ptrdiff_t;
             using iterator_category = std::random_access_iterator_tag;
@@ -42,8 +44,8 @@ namespace Yupei
             ContainerType* container_;
 
             vector_iterator(T* p, ContainerType* container)
-                :current_{p},
-                container_{container}
+                :current_ { p },
+                container_ { container }
             {}
 
         public:
@@ -51,10 +53,9 @@ namespace Yupei
             using pointer = value_type*;
             using reference = value_type&;
 
-
             constexpr vector_iterator() noexcept
-                :current_{},
-                container_{}
+                :current_ {},
+                container_ {}
             {}
 
             MyType& operator += (difference_type n) noexcept;
@@ -158,7 +159,7 @@ namespace Yupei
         template<typename T>
         class vector_const_iterator
         {
-        private:
+        public:
             using MyType = vector_const_iterator<T>;
 
             template<typename U>
@@ -176,8 +177,8 @@ namespace Yupei
             const ContainerType* container_;
 
             vector_const_iterator(T* p, const ContainerType* container)
-                :current_{p},
-                container_{container}
+                :current_ { p },
+                container_ { container }
             {}
 
         public:
@@ -188,13 +189,13 @@ namespace Yupei
             using reference = const value_type&;
 
             constexpr vector_const_iterator() noexcept
-                :current_{},
-                container_{}
+                :current_ {},
+                container_ {}
             {}
 
             vector_const_iterator(const vector_iterator<T>& it)
-                :current_{it.current_},
-                container_{it.container_}
+                :current_ { it.current_ },
+                container_ { it.container_ }
             {}
 
 
@@ -293,18 +294,15 @@ namespace Yupei
             {
                 return current_ != it.current_;
             }
-
         };
     }
-
 
     template<typename ElementT>
     class vector
     {
     public:
-
         CONTAINER_DEFINE(ElementT)
-        using allocator_type = polymorphic_allocator<value_type>;
+            using allocator_type = polymorphic_allocator<value_type>;
 
 #ifdef _DEBUG
         using iterator = Internal::vector_iterator<ElementT>;
@@ -315,37 +313,36 @@ namespace Yupei
 #endif // DEBUG
 
         vector() noexcept
-            :storage_{}, size_{}, capacity_{}
+            :storage_ {}, size_ {}, capacity_ {}
         {}
 
         vector(size_type n, memory_resource_ptr resource = {})
-            :vector{n, {}, resource}
-        {
-        }
+            :vector { n, {}, resource }
+        {}
 
         vector(size_type n, const value_type& v, memory_resource_ptr resource = {})
-            :vector{resource}
+            :vector { resource }
         {
             Reserve(n);
-            for (size_type i{}; i < n; ++i)
-                AddElementAtLast(v);
+            Yupei::construct_n(storage_, n, v);
+            size_ = n;
         }
 
         explicit vector(memory_resource_ptr resource)
-            :storage_{}, size_{}, capacity_{}, allocator_{resource}
+            :storage_ {}, size_ {}, capacity_ {}, allocator_ { resource }
         {}
 
-        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>{}>>
-        vector(InputItT first, InputItT last, memory_resource_ptr pmr = {})
-            :vector{pmr}
-        {           
+        template<typename InputItT, typename = std::enable_if_t < is_input_iterator<InputItT>{} >>
+            vector(InputItT first, InputItT last, memory_resource_ptr pmr = {})
+            : vector { pmr }
+        {
             std::for_each(first, last, [&](const value_type_t<InputItT>& v) {
                 push_back(v);
             });
         }
 
         vector(std::initializer_list<value_type> il)
-            :vector{il.begin(), il.end()}
+            :vector { il.begin(), il.end() }
         {}
 
         vector(const vector& other)
@@ -354,14 +351,14 @@ namespace Yupei
             append(other.begin(), other.end());
         }
 
-        vector& operator = (const vector& other)
+        vector& operator=(const vector& other)
         {
             if (this != &other)
                 vector(other).swap(*this);
             return *this;
         }
 
-        vector& operator = (vector&& other) noexcept
+        vector& operator=(vector&& other) noexcept
         {
             if (this != &other)
                 vector(std::move(other)).swap(*this);
@@ -369,9 +366,9 @@ namespace Yupei
         }
 
         vector(vector&& v) noexcept
-            :storage_{v.storage_},
-            size_{v.size_},
-            capacity_{v.capacity_}
+            :storage_ { v.storage_ },
+            size_ { v.size_ },
+            capacity_ { v.capacity_ }
         {
             v.storage_ = {};
             v.size_ = {};
@@ -419,12 +416,12 @@ namespace Yupei
             return size_type(-1) / sizeof(value_type);
         }
 
-        value_type* data() noexcept
+        pointer data() noexcept
         {
             return storage_;
         }
 
-        const value_type* data() const noexcept
+        const_pointer data() const noexcept
         {
             return storage_;
         }
@@ -453,9 +450,8 @@ namespace Yupei
             else if (count > nowSize)
             {
                 Reserve(count);
-                const auto delta = count - nowSize;
-                for (size_type i{};i < delta;++i)
-                    AddElementAtLast();
+                const auto prevEnd = storage_ + nowSize;
+                Yupei::construct_n(prevEnd, count - nowSize);
             }
             size_ = count;
         }
@@ -533,8 +529,7 @@ namespace Yupei
 
         void pop_back(size_type n = 1) noexcept
         {
-            for (size_type i = 0; i < n; ++i)
-                Yupei::destroy(storage_ + size_ - i);
+            Yupei::destroy_n(storage_ + size_ - n, n);
             size_ -= n;
         }
 
@@ -561,8 +556,7 @@ namespace Yupei
         template<typename IteratorT>
         void append(IteratorT first, IteratorT last)
         {
-            const auto couldGetDistance = std::is_base_of<std::forward_iterator_tag, IteratorT>::value;
-            if (couldGetDistance)
+            if (std::is_base_of<std::forward_iterator_tag, IteratorT>::value)
             {
                 const auto dist = std::distance(first, last);
                 ReserveMore(dist);
@@ -580,15 +574,11 @@ namespace Yupei
 
         iterator erase(const_iterator first, const_iterator last)
         {
-            const auto eraseStartOffset = first - cbegin();
-            const auto eraseCount = last - first;
-            const auto eraseStart = storage_ + eraseStartOffset;
-            Yupei::destroy_n(eraseStart, eraseCount);
-            auto prevEnd = cend();
-            std::move(last, prevEnd, eraseStart);
-            Yupei::destroy(prevEnd.current_ - 1);
-            size_ -= eraseCount;
-            return MakeIterator(storage_ + eraseStartOffset);         
+            const auto numToErase = last - first;
+            Yupei::destroy_n(std::addressof(*first), numToErase);
+            std::move(last, end(), first);
+            size_ -= numToErase;
+            return last;
         }
 
         iterator erase(const_iterator pos)
@@ -602,55 +592,41 @@ namespace Yupei
         {
             const auto newSize = size() + n;
             const auto insertionOffset = pos - cbegin();
+            pointer des {};
+            ReserveMore(n);
+            //因为 reserveMore 可能会重新分配内存，故要将依赖指针的操作放在后面。
+            const auto prevEnd = storage_ + size();
             const auto insertionPoint = begin() + insertionOffset;
-            pointer des{};
             if (pos == cend())
             {
-                ReserveMore(n);
-                const auto lastPos = storage_ + size();
-                for (size_type i{};i < n;++i)
-                    AddElementAtLast(std::forward<ParamsT>(params)...);
-                des = lastPos;
-            }
-            else if (newSize > capacity())
-            {                
-                const auto elementsToAlloc = CalcNewSize(newSize);
-                const auto newStorage = allocator_.allocate(elementsToAlloc);
-                des = NoOverlapMove(storage_, insertionOffset, newStorage);
-                const auto cur = Yupei::construct_n(des, n, std::forward<ParamsT>(params)...);
-                NoOverlapMove(Unwrap(insertionPoint), size() - insertionOffset, cur);            
-                allocator_.deallocate(storage_, capacity());
-                capacity_ = elementsToAlloc;
-                storage_ = newStorage;
-                size_ += n;
+                Yupei::construct_n(prevEnd, n, std::forward<ParamsT>(params)...);
+                des = prevEnd;
             }
             else
             {
-                auto prevEnd = storage_ + size();
-                OverlappedMove(Unwrap(insertionPoint), n, Unwrap(insertionPoint + n));
-                for (size_type i{}; i < n; ++i)
-                    Yupei::construct(Unwrap(insertionPoint + i), std::forward<ParamsT>(params)...);
-                des = Unwrap(insertionPoint);
-                size_ += n;
+                std::move_backward(insertionPoint, end(), prevEnd + n);
+                des = storage_ + insertionOffset;
+                Yupei::construct_n(des, n, std::forward<ParamsT>(params)...);
             }
+            size_ = newSize;
             return MakeIterator(des);
         }
 
         iterator MakeIterator(pointer p) noexcept
         {
 #ifdef _DEBUG
-            return {p, this};
+            return { p, this };
 #else
-            return {p};
+            return { p };
 #endif // _DEBUG
         }
 
         const_iterator MakeIterator(pointer p) const noexcept
         {
 #ifdef _DEBUG
-            return {p, this};
+            return { p, this };
 #else
-            return {p};
+            return { p };
 #endif // _DEBUG
         }
 
@@ -667,11 +643,11 @@ namespace Yupei
         void Reserve(size_type newCapacity)
         {
             const auto elementsToAlloc = CalcNewSize(newCapacity);
-            const auto newMem = allocator_.allocate(elementsToAlloc);
-            NoOverlapMove(storage_, size_, newMem);
+            const auto newStorage = allocator_.allocate(elementsToAlloc);
+            std::move(storage_, storage_ + size_, newStorage);
             allocator_.deallocate(storage_, capacity_);
             capacity_ = elementsToAlloc;
-            storage_ = newMem;
+            storage_ = newStorage;
         }
 
         size_type CalcNewSize(size_type newCapacity) const noexcept
@@ -690,66 +666,7 @@ namespace Yupei
         void AddElementAtLast(ParamsT&&... params)
         {
             Yupei::construct(storage_ + size_, std::forward<ParamsT>(params)...);
-            size_ += 1;
-        }
-
-        static pointer MoveImp(pointer src, size_type size, pointer des, std::false_type, std::true_type)
-        {
-            return static_cast<pointer>(memcpy(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type))) + size;
-        }
-
-        static pointer MoveImp(pointer src, size_type size, pointer des, std::true_type, std::true_type)
-        {
-            return static_cast<pointer>(memmove(static_cast<void*>(des), static_cast<const void*>(src), size * sizeof(value_type))) + size;
-        }
-
-        template<bool B>
-        static pointer MoveImp(pointer src, size_type size, pointer des, bool_constant<B>, std::false_type)
-        {
-            for (size_type i = {}; i < size; ++i, ++des, ++src)
-            {
-                Yupei::construct(des, std::move(*src));
-                Yupei::destroy(src);
-            }
-            return des;
-        }
-
-        template<bool B>
-        static pointer Move(pointer src, size_type size, pointer des, bool_constant<B> isOverlap)
-        {
-            return MoveImp(src, size, des, isOverlap, std::is_pod<value_type>());
-        }
-
-        static pointer NoOverlapMove(pointer src, size_type size, pointer des)
-        {
-            return Move(src, size, des, std::false_type{});
-        }
-
-        static pointer OverlappedMove(pointer src, size_type size, pointer des)
-        {
-            return Move(src, size, des, std::true_type{});
-        }
-
-#ifdef _DEBUG
-        static pointer Unwrap(iterator it) noexcept
-        {
-            return it.current_;
-        }
-
-        static const_pointer Unwrap(const_iterator it) noexcept
-        {
-            return it.current_;
-        }       
-#endif // _DEBUG
-
-        static pointer Unwrap(pointer p) noexcept
-        {
-            return p;
-        }
-
-        static const_pointer Unwrap(const_pointer p) noexcept
-        {
-            return p;
+            ++size_;
         }
 
         pointer storage_;
@@ -757,7 +674,7 @@ namespace Yupei
         size_type capacity_;
         polymorphic_allocator<ElementT> allocator_;
     };
-   
+
     namespace Internal
     {
         template<typename T>
@@ -797,40 +714,13 @@ namespace Yupei
         }
     }
 
-    template<typename ElementT>
-    inline decltype(auto) begin(const vector<ElementT>& v) noexcept
-    {
-        return v.begin();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) end(const vector<ElementT>& v) noexcept
-    {
-        return v.end();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) begin(vector<ElementT>& v) noexcept
-    {
-        return v.begin();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) end(vector<ElementT>& v) noexcept
-    {
-        return v.end();
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) cbegin(const vector<ElementT>& v) noexcept
-    {
-        return begin(v);
-    }
-
-    template<typename ElementT>
-    inline decltype(auto) cend(const vector<ElementT>& v) noexcept
-    {
-        return end(v);
-    }
-
+    using std::begin;
+    using std::end;
+    using std::cbegin;
+    using std::cend;
+    using std::rbegin;
+    using std::rend;
+    using std::empty;
+    using std::data;
+    using std::size;
 }

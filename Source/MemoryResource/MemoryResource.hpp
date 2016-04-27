@@ -223,7 +223,7 @@ namespace Yupei
                 cursor_ = {};
             }
 
-            void Deallocate(void* ptr) noexcept
+            void Deallocate(void*) noexcept
             {
                 //no-op
             }
@@ -269,7 +269,7 @@ namespace Yupei
 
             void* Allocate(size_type size, size_type alignment = alignof(std::max_align_t));
 
-            void Deallocate(void* ptr) noexcept
+            void Deallocate(void*) noexcept
             {
                 //no-op
             }

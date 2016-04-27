@@ -9,7 +9,7 @@
 #define YPASSERT(expr, msg) assert(expr && msg)
 
 #if defined(YPDEBUG)
-#define DoWhenDebug(...) [&](){__VA_ARGS__;}()
+#define DoWhenDebug(Func) Func()
 #elif
 #define DoWhenDebug
 #endif

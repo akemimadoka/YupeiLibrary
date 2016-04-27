@@ -102,7 +102,7 @@ namespace Yupei
     }
 
     template<typename HashCode>
-    inline void hash_combine(HashCode& code) noexcept
+    inline void hash_combine(HashCode&) noexcept
     {}
 
     template<typename HashCode = hash_code>

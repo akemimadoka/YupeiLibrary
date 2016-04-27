@@ -40,9 +40,24 @@ namespace Yupei
     using byte = unsigned char;
 
 	template<typename T, typename DeleteFn, typename... ParamsT>
-	std::unique_ptr<T, DeleteFn> make_unique_del(DeleteFn&& fn, ParamsT&&... params)
+	std::unique_ptr<T, DeleteFn> make_unique(DeleteFn&& fn, ParamsT&&... params)
 	{
 		return std::unique_ptr<T, DeleteFn>{new T(std::forward<ParamsT>(params)...), std::forward<DeleteFn>(fn)};
 	}
-}
 	
+	template<typename T, typename Allocator>
+	auto raw_allocate_unique(Allocator& allocator)
+	{
+		const auto deleteFn = [&](T* ptr) {allocator.deallocate(ptr, 1);};
+		const auto p = std::unique_ptr<T, decltype(deleteFn)> { allocator.allocate(1), deleteFn };
+		return p;
+	}
+
+	template<typename T, typename Allocator, typename... ParamsT>
+	auto allocate_unique(Allocator& allocator, ParamsT&&... params)
+	{
+		const auto p = raw_allocate_unique(allocator);
+		Yupei::construct(p.get(), std::forward<ParamsT>(params)...);
+		return p;
+	}
+}

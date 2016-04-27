@@ -21,7 +21,7 @@ namespace Yupei
     namespace Internal
     {
         template<typename ObjectT>
-        void DestroyNImp(ObjectT* ptr, std::size_t count, std::true_type) noexcept
+        void DestroyNImp(ObjectT*, std::size_t, std::true_type) noexcept
         {
             ;//no-op
         }
@@ -48,5 +48,3 @@ namespace Yupei
         return ptr + count;
     }
 }
-
-

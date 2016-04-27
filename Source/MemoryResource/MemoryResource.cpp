@@ -49,12 +49,12 @@ namespace Yupei
 	{
 	public:
 		[[noreturn]]
-		void* do_allocate(size_type bytes, size_type alignment) override
+		void* do_allocate(size_type, size_type) override
 		{
 			throw std::bad_alloc();
 		}
 
-		void do_deallocate(void* p, size_type bytes, size_type alignment) noexcept override
+		void do_deallocate(void*, size_type, size_type) noexcept override
 		{
 			//no-op
 		}
@@ -168,7 +168,8 @@ namespace Yupei
 			if (currentChunkSize_ > maxBlocks_) currentChunkSize_ = maxBlocks_;
 		}
 
-		void* Pool::Allocate(size_type bytes, size_type alignment)
+		//FIXME
+		void* Pool::Allocate(size_type/* bytes*/, size_type/* alignment*/)
 		{
 			if (chunkBegin_ == chunkEnd_)
 			{

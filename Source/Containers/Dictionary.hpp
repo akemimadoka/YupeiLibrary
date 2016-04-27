@@ -322,8 +322,10 @@ namespace Yupei
             hasher {hash},
             allocator_ {pmr}
         {
+			auto newBucket = bucket;
             if (std::is_base_of<std::random_access_iterator_tag, iterator_category_t<InputItT>>::value)
-                Initialize(static_cast<size_type>(last - first));
+                newBucket = std::max(bucket, static_cast<size_type>(last - first));
+			Initialize(newBucket);
             std::for_each(first, last, [this](const value_type& v) {
                 try_emplace(v.first, v.second);
             });

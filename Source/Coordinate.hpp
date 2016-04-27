@@ -5,6 +5,7 @@
 #include "TypeTraits.hpp"
 #include "Assert.hpp"
 #include <array>
+#include <iterator>
 #include <cstddef>
 #include <initializer_list>
 #include <algorithm>
@@ -162,7 +163,7 @@ namespace Yupei
     class bounds
     {
     public:
-        static constexpr std::size_t rank = Rank;
+        static constexpr std::ptrdiff_t rank = Rank;
         CONTAINER_DEFINE(std::ptrdiff_t)
         using iterator = bounds_iterator<rank>;
         using const_iterator = iterator;
@@ -181,9 +182,9 @@ namespace Yupei
             std::copy(il.begin(), il.end(), bounds_.begin());
         }
 
-        constexpr size_type size() const noexcept
-        {
-            return std::accumulate(bounds_.begin(), bounds_.end(), static_cast<size_type>(1), std::multiplies<>{});
+		CXX14_CONSTEXPR size_type size() const noexcept
+		{
+			return static_cast<size_type>(std::accumulate(bounds_.begin(), bounds_.end(), static_cast<std::ptrdiff_t>(1), std::multiplies<>{}));
         }
 
         CXX14_CONSTEXPR bool contains(const index<rank>& idx) const noexcept
@@ -225,14 +226,16 @@ namespace Yupei
             return *this;
         }
 
-        constexpr bounds operator+(const bounds& rhs) const noexcept
+        constexpr bounds operator+(const index<Rank>& rhs) const noexcept
         {
             return bounds<rank>{*this} += rhs;
         }
 
-        constexpr bounds operator-(const bounds& rhs) const noexcept
+        CXX14_CONSTEXPR bounds operator-(const index<Rank>& rhs) const noexcept
         {
-            return bounds<rank>{*this} -= rhs;
+			bounds<rank>tmp { *this };
+			tmp -= rhs;
+			return tmp;
         }
 
         CXX14_CONSTEXPR bounds& operator*=(value_type v) noexcept
@@ -429,6 +432,14 @@ namespace Yupei
         it.SetOffTheEnd();
         return it;
     }
+
+    using std::begin;
+    using std::end;
+    using std::cbegin;
+    using std::cend;
+    using std::rbegin;
+    using std::rend;
+    using std::size;
 
     template<std::ptrdiff_t Rank>
     bool operator==(const bounds_iterator<Rank>& lhs, const bounds_iterator<Rank>& rhs) noexcept
