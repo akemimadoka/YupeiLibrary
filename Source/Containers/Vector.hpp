@@ -302,7 +302,7 @@ namespace Yupei
     {
     public:
         CONTAINER_DEFINE(ElementT)
-            using allocator_type = polymorphic_allocator<value_type>;
+        using allocator_type = polymorphic_allocator<value_type>;
 
 #ifdef _DEBUG
         using iterator = Internal::vector_iterator<ElementT>;
