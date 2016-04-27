@@ -20,14 +20,14 @@ namespace Yupei
             return GetFirstElement(a[0]);
         }
 
-		template<typename T, std::ptrdiff_t Rank>
-		CXX14_CONSTEXPR T& ViewAccess(T* ptr, index<Rank> idx, index<Rank> stride) noexcept
-		{
-			std::ptrdiff_t offset = {};
-			for (std::ptrdiff_t i = 0; i < Rank; ++i)
-				offset += idx[i] * stride[i];
-			return ptr[offset];
-		}
+        template<typename T, std::ptrdiff_t Rank>
+        CXX14_CONSTEXPR T& ViewAccess(T* ptr, index<Rank> idx, index<Rank> stride) noexcept
+        {
+            std::ptrdiff_t offset = {};
+            for (std::ptrdiff_t i = 0; i < Rank; ++i)
+                offset += idx[i] * stride[i];
+            return ptr[offset];
+        }
     }
 
     template<typename, std::ptrdiff_t = 1>
@@ -136,7 +136,7 @@ namespace Yupei
         CXX14_CONSTEXPR reference operator[](const index_type& idx) const
         {
             assert(bounds().contains(idx));
-			return Internal::ViewAccess(data(), idx, stride());
+            return Internal::ViewAccess(data(), idx, stride());
         }
 
         //[2][2][3] operator[1] -> [2][3]
@@ -232,7 +232,7 @@ namespace Yupei
 
         constexpr size_type size() const noexcept
         {
-			return size_;
+            return size_;
         }
 
         constexpr pointer data() const noexcept
@@ -267,7 +267,7 @@ namespace Yupei
 
         CXX14_CONSTEXPR reference operator[](const index_type& idx) const noexcept
         {
-			return Internal::ViewAccess(data(), idx, stride());
+            return Internal::ViewAccess(data(), idx, stride());
         }
 
         CXX14_CONSTEXPR strided_array_view<T, rank - 1> operator[](std::ptrdiff_t slice) const noexcept
@@ -302,9 +302,9 @@ namespace Yupei
 
     private:
         pointer ptr_;
-		size_type size_;
+        size_type size_;
         index_type stride_;
-        bounds_type bounds_;     
+        bounds_type bounds_;
     };
 
     template<typename T, std::ptrdiff_t Rank>
