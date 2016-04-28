@@ -191,5 +191,8 @@
     <ClInclude Include="ArrayView.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Span.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

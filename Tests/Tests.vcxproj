@@ -131,6 +131,7 @@
     <ClCompile Include="OS\Windows\NativeHandlesTest.cpp" />
     <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp" />
     <ClCompile Include="ScopeTest.cpp" />
+    <ClCompile Include="SpanTest.cpp" />
     <ClCompile Include="StringTest.cpp" />
     <ClCompile Include="TypeTraitsTest.cpp" />
   </ItemGroup>

@@ -165,6 +165,7 @@
     <ClInclude Include="Ranges\Xrange.hpp" />
     <ClInclude Include="Searchers.hpp" />
     <ClInclude Include="SmartPointers\SharedPtr.hpp" />
+    <ClInclude Include="Span.hpp" />
     <ClInclude Include="StopWatch.hpp" />
     <ClInclude Include="String.hpp" />
     <ClInclude Include="StringView.hpp" />

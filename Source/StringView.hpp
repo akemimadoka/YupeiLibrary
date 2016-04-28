@@ -9,6 +9,7 @@
 #include <cstring>
 #include <algorithm>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 namespace Yupei
@@ -54,6 +55,9 @@ namespace Yupei
     template<string_type StringT>
     using char_type_t = typename Internal::CharTTraits<StringT>::Type;
 
+    template<string_type>
+    class basic_string;
+
     template<string_type StringT>
     class basic_string_view
     {
@@ -76,6 +80,8 @@ namespace Yupei
         CXX14_CONSTEXPR basic_string_view(const_iterator start, const_iterator last) noexcept
             : data_ { start }, size_ { static_cast<size_type>(last - start) }
         {}
+
+        basic_string_view(const basic_string<StringT>& str);
 
         basic_string_view(const_pointer str) noexcept
             : basic_string_view { str, Internal::StrLen(str) }

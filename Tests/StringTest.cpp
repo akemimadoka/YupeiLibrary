@@ -205,7 +205,7 @@ TEST_CASE(Utf16DecoderTest)
 	using namespace Yupei;
 	const u16string u16Str = u"你好啊，哈哈哈。";
 	std::u32string u32Str = U"你好啊，哈哈哈。";
-	const auto u32Str2 = to_utf32(u16Str.to_string_view());
+	const auto u32Str2 = to_utf32(u16Str);
 	TEST_ASSERT(std::equal(begin(u32Str), end(u32Str), begin(u32Str2), end(u32Str2)));
 }
 
@@ -214,7 +214,7 @@ TEST_CASE(Utf8EncoderTest)
 	using namespace Yupei;
 	const u16string u16Str = u"你好啊，哈哈哈。";
 	const auto& u8Str = u8"你好啊，哈哈哈。";
-	const auto u8Str2 = to_utf8(u16Str.to_string_view());
+	const auto u8Str2 = to_utf8(u16Str);
 	TEST_ASSERT(std::equal(std::begin(u8Str), std::end(u8Str) - 1, begin(u8Str2), end(u8Str2)));
 }
 

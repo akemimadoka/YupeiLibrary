@@ -100,14 +100,6 @@ namespace Yupei
             return GetSize();
         }
 
-        view_type to_string_view() const noexcept
-        {
-            if (IsBig())
-                return { storage_.big_.ptr_, GetBigSize() };
-            else
-                return { storage_.small_.data_, GetSmallSize() };
-        }
-
         size_type capacity() const noexcept
         {
             return GetCapacity();
@@ -121,6 +113,14 @@ namespace Yupei
         const_pointer data() const & noexcept
         {
             return c_str();
+        }
+
+        view_type view() const noexcept
+        {
+            if (IsBig())
+                return { storage_.big_.ptr_, GetBigSize() };
+            else
+                return { storage_.small_.data_, GetSmallSize() };
         }
 
         pointer data() && noexcept = delete;
@@ -153,7 +153,7 @@ namespace Yupei
             else
             {
                 const auto str = storage_.small_.data_;
-                const_cast<reference>(str[storage_.small_.size_]) = {};
+                const_cast<reference>(str[GetSmallSize()]) = {};
                 return str;
             }
         }
@@ -283,8 +283,8 @@ namespace Yupei
         }
 
         void append(const basic_string& value)
-        {
-            append(value.to_string_view());
+        {         
+            append(value.view());
         }
 
         size_type max_size() const noexcept
@@ -294,7 +294,7 @@ namespace Yupei
 
         void append(const basic_string& value, size_type startIndex, size_type count)
         {
-            append(value.to_string_view().substr(startIndex, count));
+            append(value.substr(startIndex, count));
         }
 
         //将 count 个 value 插入到 index 之前。
@@ -472,7 +472,7 @@ namespace Yupei
             const auto sizeToEnsure = curSize + delta;
             const auto curCap = capacity();
             if (sizeToEnsure < curSize) throw std::bad_array_new_length();
-            if (sizeToEnsure <= curCap) return GetEnd();
+            if (sizeToEnsure < curCap) return GetEnd();
             return MakeRoom(sizeToEnsure, curSize, curSize);
         }
 
@@ -679,6 +679,12 @@ namespace Yupei
         return str.size();
     }
 
+    template<string_type StringT>
+    basic_string_view<StringT>::basic_string_view(const basic_string<StringT>& str)
+        :data_{str.data()},
+        size_{str.size()}
+    {}
+
     /*extern template class basic_string<string_type::wide>;
     extern template class basic_string<string_type::utf8>;
     extern template class basic_string<string_type::utf16>;
@@ -719,7 +725,6 @@ namespace Yupei
     {
         return string_reader<iterator_t<StringT>>{begin(str), end(str)};
     }
-
 
     template<typename ReaderT>
     class utf8_decoder
