@@ -39,6 +39,13 @@ namespace Yupei
 {
     using byte = unsigned char;
 
+    template<typename ExceptionType, typename... ParamsT>
+    inline void Try(bool b, ParamsT&&... params)
+    {
+        if (!b)
+            throw ExceptionType { std::forward<ParamsT>(params)... };
+    }
+
     template<typename T, typename DeleteFn, typename... ParamsT>
     std::unique_ptr<T, DeleteFn> make_unique(DeleteFn&& fn, ParamsT&&... params)
     {
@@ -48,7 +55,7 @@ namespace Yupei
     template<typename T, typename Allocator>
     auto raw_allocate_unique(Allocator& allocator)
     {
-        const auto deleteFn = [&](T* ptr) {allocator.deallocate(ptr, 1);};
+        const auto deleteFn = [&](T* ptr) noexcept {allocator.deallocate(ptr, 1);};
         const auto p = std::unique_ptr<T, decltype(deleteFn)> { allocator.allocate(1), deleteFn };
         return p;
     }

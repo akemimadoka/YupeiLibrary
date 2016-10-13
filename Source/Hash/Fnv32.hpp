@@ -2,7 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
-#include "..\Extensions.hpp"
+#include "../Extensions.hpp"
 
 //Thanks to https://github.com/lhmouse/MCF/tree/master/MCF/Streams.
 

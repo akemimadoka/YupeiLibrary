@@ -1,19 +1,19 @@
 ﻿#pragma once
 
-#include "..\Config.hpp"
+#include "../Config.hpp"
 
 #if defined(HAS_COROUTINE)
 
-#include "..\String.hpp"
-#include "..\Span.hpp"
-#include <experimental\resumable>
-#include <experimental\generator>
+#include <experimental/resumable>
+#include <experimental/generator>
+#include <string_view>
+#include <span.h>
 
 namespace Yupei
 {
-    template<string_type CharT, std::ptrdiff_t Extent>
-    std::experimental::generator<basic_string_view<CharT>> split(basic_string_view<CharT> str,
-        cspan<char_type_t<CharT>, Extent> separators)
+    template<typename CharT, std::ptrdiff_t Extent>
+    std::experimental::generator<std::basic_string_view<CharT>> split(std::basic_string_view<CharT> str,
+        gsl::span<CharT, Extent> separators)
     {
         auto start = cbegin(str);
         auto last = start;

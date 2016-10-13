@@ -18,52 +18,34 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TypeTraitsTest.cpp">
+    <ClCompile Include="Utilities\Encoding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StringTest.cpp">
+    <ClCompile Include="Containers\Sequences\Array\Array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ScopeTest.cpp">
+    <ClCompile Include="Containers\Unordered\Dictionary\Dictionary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithms\SearchersTest.cpp">
+    <ClCompile Include="OS\Windows\NativeHandles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Algorithms\SplitTest.cpp">
+    <ClCompile Include="Algorithms\Searchers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp">
+    <ClCompile Include="Algorithms\Split.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Sequences\Array\ArrayTest.cpp">
+    <ClCompile Include="Containers\Sequences\Vector\Vector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListTests.cpp">
+    <ClCompile Include="OS\Windows\Win32Exception.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Sequences\List\ListTest.cpp">
+    <ClCompile Include="Utilities\MinMax.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OS\Windows\NativeHandlesTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MinMaxTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CoordinateTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ArrayViewTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SpanTest.cpp">
+    <ClCompile Include="Utilities\Scope.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,8 +65,8 @@
     <ClInclude Include="support\MoveOnly.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utilities\variant\shapes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

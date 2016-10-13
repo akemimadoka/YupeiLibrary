@@ -3,9 +3,6 @@
 #include "Win32Exception.hpp"
 #include <type_traits>		
 #include <Windows.h>
-#include <WinSock2.h>
-
-#pragma comment(lib, "Ws2_32.lib")
 
 namespace Yupei
 {
@@ -23,24 +20,12 @@ namespace Yupei
 		(void)::LocalFree(handle);
 	}
 
-	void DllHandleCloser::operator()(ModuleHandle handle) noexcept
+	void NativeModuleHandleCloser::operator()(NativeModuleHandle handle) noexcept
 	{
-		static_assert(std::is_same<ModuleHandle, ::HMODULE>::value, "ModuleHandle should be the same with HMODULE");
+		static_assert(std::is_same<NativeModuleHandle, ::HMODULE>::value, "ModuleHandle should be the same with HMODULE");
 		(void)::FreeLibrary(handle);
 	}
-
-	void SocketCloser::operator()(HandleType handle) noexcept
-	{
-		(void)::closesocket(static_cast<::SOCKET>(handle));
-	}
-
-	void WsaEventCloser::operator()(HandleType handle) noexcept
-	{
-		static_assert(std::is_same<HandleType, WSAEVENT>::value, "HandleType should be the same with WSAEVENT");
-		if (::WSACloseEvent(handle) == FALSE)
-			THROW_WINSOCK_EXCEPTION;	//terminate();
-	}
-
+	
 	void RegKeyCloser::operator()(HandleType handle) noexcept
 	{
 		static_assert(std::is_same<HandleType, ::HKEY>::value, "HandleType should be the same with HKEY");

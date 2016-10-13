@@ -34,7 +34,7 @@ namespace Yupei
                 auto word = *reinterpret_cast<const std::uintptr_t*>(data);
                 i -= 1;
                 data += sizeof(std::uintptr_t);
-                for (unsigned i = 0; i < sizeof(std::uintptr_t); ++i)
+                for (unsigned j = 0; j < sizeof(std::uintptr_t); ++j)
                 {
                     Dofnv32Byte(word & 0xFF);
                     word >>= 8;

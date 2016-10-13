@@ -199,7 +199,7 @@ namespace Yupei
             return static_cast<const Pred&>(*this);
         }
 
-        using ValueType = value_type_t<RandomItT>;
+        using ValueType = iterator_value_type_t<RandomItT>;
         using DifferenceType = std::ptrdiff_t;
         using BadTable = Internal::BMBadSkipTable<ValueType, DifferenceType, Hash, Pred, 
             (std::is_same<Pred, std::equal_to<void>>::value || std::is_same<Pred, std::equal_to<ValueType>>::value) &&

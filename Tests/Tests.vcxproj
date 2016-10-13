@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\Source\packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props" Condition="Exists('..\Source\packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -21,7 +22,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{CB13BF68-DD83-4D8B-BB2A-5BF9D9DA00B2}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -64,14 +65,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)Support;$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Support;$(ProjectDir)3rd;$(SolutionDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir);$(ProjectDir)Support;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)Support;$(SolutionDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Support;$(ProjectDir)3rd;$(SolutionDir);$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir)Support;$(ProjectDir)3rd;$(SolutionDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -80,7 +84,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/await /std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -111,29 +115,30 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/await /std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <WarningLevel>Level4</WarningLevel>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Algorithms\SplitTest.cpp" />
-    <ClCompile Include="Algorithms\SearchersTest.cpp" />
-    <ClCompile Include="ArrayViewTest.cpp" />
-    <ClCompile Include="Containers\Sequences\Array\ArrayTest.cpp" />
-    <ClCompile Include="Containers\Sequences\ForwardList\ForwardListTests.cpp" />
-    <ClCompile Include="Containers\Sequences\List\ListTest.cpp" />
-    <ClCompile Include="Containers\Sequences\Vector\VectorTest.cpp" />
-    <ClCompile Include="Containers\Unordered\Dictionary\DictionaryTest.cpp" />
-    <ClCompile Include="CoordinateTest.cpp" />
+    <ClCompile Include="Algorithms\Split.cpp" />
+    <ClCompile Include="Algorithms\Searchers.cpp" />
+    <ClCompile Include="Containers\Sequences\Array\Array.cpp" />
+    <ClCompile Include="Containers\Sequences\Vector\Vector.cpp" />
+    <ClCompile Include="Containers\Unordered\Dictionary\Dictionary.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MinMaxTest.cpp" />
-    <ClCompile Include="OS\Windows\NativeHandlesTest.cpp" />
-    <ClCompile Include="OS\Windows\Win32ExceptionTest.cpp" />
-    <ClCompile Include="ScopeTest.cpp" />
-    <ClCompile Include="SpanTest.cpp" />
-    <ClCompile Include="StringTest.cpp" />
-    <ClCompile Include="TypeTraitsTest.cpp" />
+    <ClCompile Include="OS\Windows\NativeHandles.cpp" />
+    <ClCompile Include="OS\Windows\Win32Exception.cpp" />
+    <ClCompile Include="Utilities\Encoding.cpp" />
+    <ClCompile Include="Utilities\MinMax.cpp" />
+    <ClCompile Include="Utilities\Scope.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="containers\Copyable.h" />
@@ -141,14 +146,24 @@
     <ClInclude Include="containers\NotConstructible.h" />
     <ClInclude Include="support\DefaultOnly.h" />
     <ClInclude Include="support\MoveOnly.h" />
-    <ClInclude Include="utilities\variant\shapes.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Source\YupeiLibrary.vcxproj">
       <Project>{2a77a2f0-5b90-494f-b890-6ce55407b5aa}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\Source\packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets" Condition="Exists('..\Source\packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\Source\packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\Source\packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets'))" />
+    <Error Condition="!Exists('..\Source\packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props')" Text="$([System.String]::Format('$(ErrorText)', '..\Source\packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props'))" />
+  </Target>
 </Project>

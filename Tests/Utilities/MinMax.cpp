@@ -1,10 +1,10 @@
 #include <MinMax.hpp>
-#include <UnitTest.hpp>
+#include <catch.hpp>
 #include <string>
 
-TEST_CASE(MinTest)
+TEST_CASE("Min")
 {
     std::string str2("lalala");
     auto&& str = Yupei::min("haha", str2);    
-    TEST_ASSERT(str == "haha");   
+    CHECK(str == "haha");   
 }

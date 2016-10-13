@@ -128,12 +128,6 @@ namespace Yupei
             :resource_{other.resource_}
         {}
 
-        polymorphic_allocator& operator=(const polymorphic_allocator& other) noexcept
-        {
-            resource_.reset(other.resource());
-            return *this;
-        }
-
         value_type* allocate(size_type n)
         {
             return static_cast<value_type*>(resource_->allocate(n * sizeof(value_type), alignof(value_type)));

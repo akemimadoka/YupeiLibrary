@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "..\Extensions.hpp"
+#include "../Extensions.hpp"
 #include <cstdint>
 #include <cstddef>
 

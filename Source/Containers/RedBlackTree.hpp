@@ -4,9 +4,9 @@
 #include <memory>
 #include <utility>
 #include <tuple>
-#include "..\MemoryResource\MemoryResource.hpp"
-#include "..\ConstructDestruct.hpp"
-#include "..\Extensions.hpp"
+#include "../MemoryResource/MemoryResource.hpp"
+#include "../ConstructDestruct.hpp"
+#include "../Extensions.hpp"
 
 namespace Yupei
 {
@@ -429,7 +429,7 @@ namespace Yupei
 
 			static void DeallocateNode(TreeNode* node) noexcept
 			{
-				Yupei::destroy(std::addressof(node->Value_));
+				Yupei::destroy_at(std::addressof(node->Value_));
 				allocator_.deallocate(node, 1);
 			}
 

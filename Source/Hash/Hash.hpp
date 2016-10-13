@@ -1,8 +1,8 @@
 ﻿#pragma once
 
-#include "..\TypeTraits.hpp"
-#include "..\Extensions.hpp"
-#include "..\Iterator.hpp"
+#include "../Meta.hpp"
+#include "../Extensions.hpp"
+#include "../Iterator.hpp"
 #include "fnv32.hpp"
 #include "fnv64.hpp"
 #include <utility>
@@ -24,19 +24,19 @@ namespace Yupei
     struct is_uniquely_represented<bool> : std::false_type {};
 
     template<typename T>
-    struct is_uniquely_represented<T, std::enable_if_t<disjunction<std::is_integral<T>, std::is_pointer<T>, std::is_array<T>>::value>>
+    struct is_uniquely_represented<T, std::enable_if_t<std::disjunction<std::is_integral<T>, std::is_pointer<T>, std::is_array<T>>::value>>
         : std::true_type {};
 
     namespace Internal
     {
         template<typename... Ts>
-        struct all_uniquely_represented : conjunction<is_uniquely_represented<Ts>...> {};
+        struct all_uniquely_represented : std::conjunction<is_uniquely_represented<Ts>...> {};
     }
 
     namespace Internal
     {
         template<typename InputItT>
-        struct CouldBeHashedAsBytes : bool_constant<is_contiguous_iterator<InputItT>::value && is_uniquely_represented<value_type_t<InputItT>>::value> {};
+        struct CouldBeHashedAsBytes : std::bool_constant<is_contiguous_iterator<InputItT>::value && is_uniquely_represented<iterator_value_type_t<InputItT>>::value> {};
 
         template <typename InputIterator>
         inline void HashCombineRangeImp(hash_code& code, InputIterator start, InputIterator last, std::true_type) noexcept
@@ -116,5 +116,4 @@ namespace Yupei
             return hashCode.finalize();
         }
     };
-
 }

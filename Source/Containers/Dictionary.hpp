@@ -1,12 +1,12 @@
 ﻿#pragma once
 
-#include "..\Hash\Hash.hpp"
-#include "..\Iterator.hpp"
-#include "..\MemoryResource\MemoryResource.hpp"
-#include "..\Assert.hpp"
-#include "..\Hash\HashHelpers.hpp"
-#include "..\ConstructDestruct.hpp"
-#include "..\Algorithm\ForEach.hpp"
+#include "../Hash/Hash.hpp"
+#include "../Iterator.hpp"
+#include "../MemoryResource/MemoryResource.hpp"
+#include "../Assert.hpp"
+#include "../Hash/HashHelpers.hpp"
+#include "../ConstructDestruct.hpp"
+#include "../Algorithm/ForEach.hpp"
 #include <cstdint>
 #include <utility>
 #include <functional>
@@ -35,7 +35,7 @@ namespace Yupei
 
         public:
             using difference_type = std::ptrdiff_t;
-            using value_type = value_type_t<DictionaryT>;
+            using value_type = typename DictionaryT::value_type;
             using iterator_category = std::forward_iterator_tag;
             using pointer = value_type*;
             using reference = value_type&;
@@ -53,13 +53,13 @@ namespace Yupei
                 return tmp;
             }
 
-            value_type& operator*() noexcept
+            value_type& operator*() const noexcept
             {
                 YPASSERT(index_ != size_t(-1), "Deref a null iterator!");
                 return dict_->entries_[index_].KeyValue_;
             }
 
-            pointer operator->() noexcept
+            pointer operator->() const noexcept
             {
                 return std::addressof(this->operator*());
             }
@@ -92,7 +92,7 @@ namespace Yupei
           
         public:
             using difference_type = std::ptrdiff_t;
-            using value_type = value_type_t<DictionaryT>;
+            using value_type = typename DictionaryT::value_type;
             using iterator_category = std::forward_iterator_tag;
             using pointer = const value_type*;
             using reference = const value_type&;
@@ -152,7 +152,7 @@ namespace Yupei
 
         public:
             using difference_type = std::ptrdiff_t;
-            using value_type = value_type_t<DictionaryT>;
+            using value_type = typename DictionaryT::value_type;
             using iterator_category = std::forward_iterator_tag;
             using pointer = value_type*;
             using reference = value_type&;
@@ -208,7 +208,7 @@ namespace Yupei
 
         public:
             using difference_type = std::ptrdiff_t;
-            using value_type = value_type_t<DictionaryT>;
+            using value_type = typename DictionaryT::value_type;
             using iterator_category = std::forward_iterator_tag;
             using pointer = const value_type*;
             using reference = const value_type&;
@@ -258,103 +258,117 @@ namespace Yupei
     }
 
     template<typename KeyT, typename ValueT, typename HashFun = hash<>, typename KeyEqualT = std::equal_to<KeyT>>
-    class dictionary : KeyEqualT, HashFun
-    {
-    public:
-        using key_type = KeyT;
-        using mapped_type = ValueT;
-        using value_type = std::pair<key_type, mapped_type>;
-        using size_type = std::size_t;
-        using allocator_type = polymorphic_allocator<value_type>;
-        using key_equal = KeyEqualT;
-        using hasher = HashFun;
-        using iterator = Internal::DictionaryIterator<dictionary>;
-        using const_iterator = Internal::DictionaryConstIterator<dictionary>;
-        using local_iterator = Internal::DictionaryLocalIterator<dictionary>;
-        using const_local_iterator = Internal::DictionaryConstLocalIterator<dictionary>;
+	class dictionary : KeyEqualT, HashFun
+	{
+	public:
+		using key_type = KeyT;
+		using mapped_type = ValueT;
+		using value_type = std::pair<key_type, mapped_type>;
+		using size_type = std::size_t;
+		using allocator_type = polymorphic_allocator<value_type>;
+		using key_equal = KeyEqualT;
+		using hasher = HashFun;
+		using iterator = Internal::DictionaryIterator<dictionary>;
+		using const_iterator = Internal::DictionaryConstIterator<dictionary>;
+		using local_iterator = Internal::DictionaryLocalIterator<dictionary>;
+		using const_local_iterator = Internal::DictionaryConstLocalIterator<dictionary>;
 
-    private:
-        template<typename>
-        friend class Internal::DictionaryIterator;
+	private:
+		template<typename>
+		friend class Internal::DictionaryIterator;
 
-        template<typename>
-        friend class Internal::DictionaryConstIterator;
+		template<typename>
+		friend class Internal::DictionaryConstIterator;
 
-        template<typename>
-        friend class Internal::DictionaryLocalIterator;
+		template<typename>
+		friend class Internal::DictionaryLocalIterator;
 
-        template<typename>
-        friend class Internal::DictionaryConstLocalIterator;
+		template<typename>
+		friend class Internal::DictionaryConstLocalIterator;
 
-        static constexpr size_type kNothing = static_cast<size_type>(-1);
-        using SizeAllocator = polymorphic_allocator<size_type>;
-       
-        struct Entry
-        {
-            size_type HashCode_ = kNothing;
-            size_type NextEntryIndex_;
-            value_type KeyValue_;
-        };
-        using EntryAllocator = polymorphic_allocator<Entry>;
-        using EntryPtrTuple = std::tuple<Entry*>;
+		static constexpr size_type kNothing = static_cast<size_type>(-1);
+		using SizeAllocator = polymorphic_allocator<size_type>;
+
+		struct Entry
+		{
+			size_type HashCode_ = kNothing;
+			size_type NextEntryIndex_;
+			value_type KeyValue_;
+		};
+		using EntryAllocator = polymorphic_allocator<Entry>;
+		using EntryPtrTuple = std::tuple<Entry*>;
 
 #ifdef _DEBUG
-        Entry* dEntries;
+		Entry* dEntries;
 #endif // _DEBUG
 
+	public:
+		dictionary()
+			:dictionary { 0 }
+		{}
 
-    public:
-        dictionary()
-            :dictionary{0}
-        {}
+		explicit dictionary(size_type bucketCount, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
+			:key_equal { keyEqual },
+			hasher { hash },
+			allocator_ { pmr }
+		{
+			Initialize(bucketCount);
+		}
 
-        explicit dictionary(size_type bucketCount, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
-            :key_equal {keyEqual}, 
-            hasher{hash},            
-            allocator_{pmr}
-        {
-            Initialize(bucketCount);
-        }
-
-        template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
-        dictionary(InputItT first, InputItT last, size_type bucket = {}, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
-            :key_equal {keyEqual},
-            hasher {hash},
-            allocator_ {pmr}
-        {
+		template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
+		dictionary(InputItT first, InputItT last, size_type bucket = {}, hasher hash = {}, key_equal keyEqual = {}, memory_resource_ptr pmr = {})
+			:key_equal { keyEqual },
+			hasher { hash },
+			allocator_ { pmr }
+		{
 			auto newBucket = bucket;
-            if (std::is_base_of<std::random_access_iterator_tag, iterator_category_t<InputItT>>::value)
-                newBucket = std::max(bucket, static_cast<size_type>(last - first));
+			if (std::is_base_of<std::random_access_iterator_tag, iterator_category_t<InputItT>>::value)
+				newBucket = std::max(bucket, static_cast<size_type>(last - first));
 			Initialize(newBucket);
-            std::for_each(first, last, [this](const value_type& v) {
-                try_emplace(v.first, v.second);
-            });
-        }
+			insert(first, last);
+		}
 
-        dictionary(const dictionary& other)
-            :key_equal{other.key_eq()},
-            hasher{other.hash_function()}
-        {
-            Initialize(other.bucketCount_);
-            for (const auto& v : other)
-                insert(v);
-        }
+		dictionary(const dictionary& other)
+			:key_equal { other.key_eq() },
+			hasher { other.hash_function() }
+		{
+			Initialize(other.bucketCount_);
+			insert(other.cbegin(), other.cend());
+		}
 
-        dictionary(dictionary&& other) noexcept
-            :key_equal{other.key_eq()},
-            hasher{other.hash_function()},
-            freeList_{other.freeList_},
-            freeCount_{other.freeCount_},
-            count_{other.count_},
-            bucketCount_{other.bucketCount_},
-            entries_{std::move(other.entries_)},
-            buckets_{std::move(other.buckets_)}
-        {
-            other.freeList_ = kNothing;
-            other.freeCount_ = {};
-            other.count_ = {};
-            other.bucketCount_ = {};
-        }
+		dictionary(dictionary&& other) noexcept
+			:key_equal { other.key_eq() },
+			hasher { other.hash_function() },
+			freeList_ { other.freeList_ },
+			freeCount_ { other.freeCount_ },
+			count_ { other.count_ },
+			bucketCount_ { other.bucketCount_ },
+			entries_ { std::move(other.entries_) },
+			buckets_ { std::move(other.buckets_) }
+		{
+			other.freeList_ = kNothing;
+			other.freeCount_ = {};
+			other.count_ = {};
+			other.bucketCount_ = {};
+		}
+
+		dictionary(std::initializer_list<value_type> init, size_type bucketCount = {}, hasher hash = {},
+			key_equal keyEqual = {}, memory_resource_ptr mrp = {})
+			: dictionary(init.begin(), init.end(), bucketCount, hash, keyEqual, mrp)
+		{			
+		}
+
+		dictionary(std::initializer_list<value_type> init, size_type bucketCount, 
+			memory_resource_ptr mrp = {})
+			: dictionary(init.begin(), init.end(), bucketCount, {}, {}, mrp)
+		{
+		}
+
+		dictionary(std::initializer_list<value_type> init, size_type bucketCount, hasher hash,
+			memory_resource_ptr mrp = {})
+			: dictionary(init.begin(), init.end(), bucketCount, hash, {}, mrp)
+		{
+		}
 
         dictionary& operator=(const dictionary& other)
         {
@@ -420,13 +434,11 @@ namespace Yupei
             return 1.f;
         }
 
-        //WARNING: This is not O(1).
         iterator begin() noexcept
         {            
             return {this, FindFirstNonEmptyEntry()};
         }
 
-        //WARNING: This is not O(1).
         const_iterator begin() const noexcept
         {
             return {this, FindFirstNonEmptyEntry()};
@@ -501,7 +513,7 @@ namespace Yupei
             entry.NextEntryIndex_ = freeList_;
             freeList_ = index;
             ++freeCount_;
-            destroy(std::addressof(entry.KeyValue_));
+            destroy_at(std::addressof(entry.KeyValue_));
             return {this, ret.index_};
         }
 
@@ -526,7 +538,7 @@ namespace Yupei
                         entry.NextEntryIndex_ = freeList_;
                         freeList_ = i;
                         ++freeCount_;
-                        destroy(std::addressof(entry.KeyValue_));
+                        destroy_at(std::addressof(entry.KeyValue_));
                         return true;
                     }
                 }
@@ -578,6 +590,14 @@ namespace Yupei
             return Insert(true, std::move(value.first), std::move(value.second));
         }
 
+		template<typename InputItT, typename = std::enable_if_t<is_input_iterator<InputItT>::value>>
+		void insert(InputItT start, InputItT last)
+		{
+			std::for_each(start, last, [this](const auto& v) {
+				insert(v);
+			});
+		}
+
         template<typename M>
         std::pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj)
         {
@@ -606,7 +626,7 @@ namespace Yupei
         {
             const auto entries = entries_.get();
             std::for_each(entries, entries + count_, [](Entry& entry) {
-                destroy(std::addressof(entry.KeyValue_));
+                destroy_at(std::addressof(entry.KeyValue_));
                 entry.HashCode_ = kNothing;
             });
             count_ = {};
@@ -688,7 +708,7 @@ namespace Yupei
         void Initialize(size_type capacity)
         {
             const auto newSize = Internal::HashHelpers::GetPrime(capacity);
-            buckets_ .reset(GetSizeTypeAllocator().allocate(newSize));
+            buckets_.reset(GetSizeTypeAllocator().allocate(newSize));
             entries_.reset(allocator_.allocate(newSize));
             const auto buckets = buckets_.get();
             const auto entries = entries_.get();
@@ -779,7 +799,7 @@ namespace Yupei
                     if (entry1.HashCode_ != kNothing)
                         construct(std::addressof(entry2.KeyValue_), std::move(entry1.KeyValue_));                    
                     entry2.HashCode_ = entry1.HashCode_;
-                    destroy(std::addressof(entry1));
+                    destroy_at(std::addressof(entry1));
                 });
 
             std::for_each(ne + count_, ne + newSize, [](Entry& entry2) {
@@ -797,8 +817,8 @@ namespace Yupei
                 }
             });
 
-            buckets_ = std::move(newBuckets);
-            entries_ = std::move(newEntries);
+			buckets_.reset(newBuckets.release());
+            entries_.reset(newEntries.release());
             
 #ifdef _DEBUG
             dEntries = entries_.get();

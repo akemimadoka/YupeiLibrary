@@ -42,7 +42,6 @@ namespace std {
 
 template <>
 struct hash<Emplaceable>
-    : public std::unary_function<Emplaceable, std::size_t>
 {
     std::size_t operator()(const Emplaceable& x) const {return x.get();}
 };

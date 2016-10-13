@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props" Condition="Exists('packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -21,7 +22,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2A77A2F0-5B90-494F-B890-6CE55407B5AA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -40,7 +41,7 @@
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
@@ -65,6 +66,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Lib\$(Platform)\$(Configuration)\</OutDir>
+    <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -78,6 +80,8 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <ExceptionHandling>Sync</ExceptionHandling>
       <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>/std:c++latest /Debug %(AdditionalOptions)</AdditionalOptions>
+      <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -106,8 +110,14 @@
     <ClCompile>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
-      <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/await /std:c++latest %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -119,20 +129,27 @@
     <ClCompile Include="Hash\HashHelpers.cpp" />
     <ClCompile Include="MemoryResource\MemoryResource.cpp" />
     <ClCompile Include="OS\Windows\NativeHandles.cpp" />
+    <ClCompile Include="OS\Windows\NtFunctions.cpp" />
     <ClCompile Include="OS\Windows\Win32Exception.cpp" />
+    <ClCompile Include="OS\Windows\Win32IPAddressParser.cpp" />
     <ClCompile Include="OS\Windows\Win32Wrappers.cpp" />
-    <ClCompile Include="String.cpp" />
-    <ClCompile Include="UnitTest.cpp" />
+    <ClCompile Include="OS\Windows\WinSock.cpp" />
+    <ClCompile Include="Encoding.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Algorithm\ForEach.hpp" />
     <ClInclude Include="Algorithm\RepeatN.hpp" />
     <ClInclude Include="Algorithm\Split.hpp" />
-    <ClInclude Include="ArrayView.hpp" />
     <ClInclude Include="Assert.hpp" />
     <ClInclude Include="Containers\RedBlackTree.hpp" />
-    <ClInclude Include="Coordinate.hpp" />
+    <ClInclude Include="Meta.hpp" />
+    <ClInclude Include="Network\Basis.hpp" />
     <ClInclude Include="Network\IPAddress.hpp" />
+    <ClInclude Include="ObserverHandle.hpp" />
+    <ClInclude Include="OS\IPAddressParser.hpp" />
+    <ClInclude Include="OS\Windows\NtFunctions.hpp" />
+    <ClInclude Include="OS\Windows\Win32IPAddressParser.hpp" />
+    <ClInclude Include="OS\Windows\WinSock.hpp" />
     <ClInclude Include="Scope.hpp" />
     <ClInclude Include="CharTraitsHelpers.hpp" />
     <ClInclude Include="CLib\RawMemory.h" />
@@ -140,8 +157,6 @@
     <ClInclude Include="ConstructDestruct.hpp" />
     <ClInclude Include="Containers\Array.hpp" />
     <ClInclude Include="Containers\Dictionary.hpp" />
-    <ClInclude Include="Containers\ForwardList.hpp" />
-    <ClInclude Include="Containers\List.hpp" />
     <ClInclude Include="Containers\Vector.hpp" />
     <ClInclude Include="Containers\_HashTable.hpp" />
     <ClInclude Include="Extensions.hpp" />
@@ -157,23 +172,30 @@
     <ClInclude Include="MemoryResource\MemoryResource.hpp" />
     <ClInclude Include="MinMax.hpp" />
     <ClInclude Include="Mutex.hpp" />
-    <ClInclude Include="Numeric.hpp" />
     <ClInclude Include="OS\Windows\NativeHandles.hpp" />
     <ClInclude Include="OS\Windows\Win32Exception.hpp" />
     <ClInclude Include="OS\Windows\Win32Wrappers.hpp" />
     <ClInclude Include="OS\Windows\WinDef.hpp" />
     <ClInclude Include="Ranges\Xrange.hpp" />
     <ClInclude Include="Searchers.hpp" />
-    <ClInclude Include="SmartPointers\SharedPtr.hpp" />
-    <ClInclude Include="Span.hpp" />
     <ClInclude Include="StopWatch.hpp" />
-    <ClInclude Include="String.hpp" />
-    <ClInclude Include="StringView.hpp" />
-    <ClInclude Include="TypeTraits.hpp" />
-    <ClInclude Include="UnitTest.hpp" />
-    <ClInclude Include="Variant.hpp" />
+    <ClInclude Include="Encoding.hpp" />
+    <ClInclude Include="TypeAlias.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\fmt.greedy.3.0.0.1\build\native\fmt.greedy.targets" Condition="Exists('packages\fmt.greedy.3.0.0.1\build\native\fmt.greedy.targets')" />
+    <Import Project="packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets" Condition="Exists('packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\fmt.greedy.3.0.0.1\build\native\fmt.greedy.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\fmt.greedy.3.0.0.1\build\native\fmt.greedy.targets'))" />
+    <Error Condition="!Exists('packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Gsl.0.1.2.1\build\native\Microsoft.Gsl.targets'))" />
+    <Error Condition="!Exists('packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\VisualCppTools.14.0.24611-Pre\build\native\VisualCppTools.props'))" />
+  </Target>
 </Project>

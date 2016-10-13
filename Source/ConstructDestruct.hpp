@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Ranges\Xrange.hpp"
+#include "Ranges/Xrange.hpp"
 #include <utility>  //for std::forward
 #include <type_traits>
 
@@ -13,7 +13,7 @@ namespace Yupei
     }
 
     template<typename ObjectT>
-    void destroy(const ObjectT* ptr) noexcept
+    void destroy_at(ObjectT* ptr) noexcept
     {
         ptr->~ObjectT();
     }
@@ -30,7 +30,7 @@ namespace Yupei
         void DestroyNImp(ObjectT* ptr, std::size_t count, std::false_type) noexcept
         {
             for (std::size_t i {};i < count;++i)
-                Yupei::destroy(ptr + i);
+                Yupei::destroy_at(ptr + i);
         }
     }
 

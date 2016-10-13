@@ -1,8 +1,7 @@
 #pragma once
 
-#include "TypeTraits.hpp"
+#include "Meta.hpp"
 #include "Extensions.hpp"
-#include "Config.hpp"
 #include <functional>
 
 namespace Yupei
@@ -24,7 +23,7 @@ namespace Yupei
     }
 
     template<typename T, typename... Args>
-    CXX14_CONSTEXPR decltype(auto) min(T&& lhs, Args&&... args)
+    constexpr decltype(auto) min(T&& lhs, Args&&... args)
     {
         auto&& prevMin = Yupei::min(exforward(args)...);
         return std::less<>{}(exforward(lhs), exforward(prevMin)) ? Internal::MinForward(exforward(lhs)) : Internal::MinForward(exforward(prevMin));
@@ -37,7 +36,7 @@ namespace Yupei
     }
 
     template<typename T, typename... Args>
-	CXX14_CONSTEXPR decltype(auto) max(T&& lhs, Args&&... args)
+	constexpr decltype(auto) max(T&& lhs, Args&&... args)
     {
         auto&& prevMax = Yupei::max(exforward(args)...);
         return std::greater<>{}(exforward(lhs), exforward(prevMax)) ? Internal::MinForward(exforward(lhs)) : Internal::MinForward(exforward(prevMax));

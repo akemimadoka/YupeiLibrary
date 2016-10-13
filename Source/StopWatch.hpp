@@ -7,18 +7,17 @@ namespace Yupei
 	class StopWatch
 	{
 	public:
-		void Start()
+		void Start() noexcept
 		{
-			startTime = std::chrono::high_resolution_clock::now();
+			startTime_ = std::chrono::high_resolution_clock::now();
 		}
 
-		//nano second_obj
-		auto Stop()
+		auto Stop() noexcept
 		{
-			auto endTime = std::chrono::high_resolution_clock::now();
-			return (endTime - startTime).count();
+			return (std::chrono::high_resolution_clock::now() - startTime_).count();
 		}
+
 	private:
-		std::chrono::high_resolution_clock::time_point startTime;
+		std::chrono::high_resolution_clock::time_point startTime_;
 	};
 }

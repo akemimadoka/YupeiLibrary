@@ -1,12 +1,12 @@
 ﻿#pragma once
 
-#include "..\Assert.hpp"
-#include "..\Scope.hpp"
-#include "..\Iterator.hpp"
-#include "..\TypeTraits.hpp"
-#include "..\HelperMacros.hpp"
-#include "..\ConstructDestruct.hpp"
-#include "..\MemoryResource\MemoryResource.hpp"
+#include "../Assert.hpp"
+#include "../Scope.hpp"
+#include "../Iterator.hpp"
+#include "../Meta.hpp"
+#include "../HelperMacros.hpp"
+#include "../ConstructDestruct.hpp"
+#include "../MemoryResource/MemoryResource.hpp"
 #include <algorithm>
 #include <stdexcept> //for std::out_of_range
 #include <memory>
@@ -336,7 +336,7 @@ namespace Yupei
             vector(InputItT first, InputItT last, memory_resource_ptr pmr = {})
             : vector { pmr }
         {
-            std::for_each(first, last, [&](const value_type_t<InputItT>& v) {
+            std::for_each(first, last, [&](const iterator_value_type_t<InputItT>& v) {
                 push_back(v);
             });
         }
@@ -560,13 +560,13 @@ namespace Yupei
             {
                 const auto dist = std::distance(first, last);
                 ReserveMore(dist);
-                std::for_each(first, last, [this](const value_type_t<IteratorT>& v) {
+                std::for_each(first, last, [this](const iterator_value_type_t<IteratorT>& v) {
                     AddElementAtLast(v);
                 });
             }
             else
             {
-                std::for_each(first, last, [this](const value_type_t<IteratorT>& v) {
+                std::for_each(first, last, [this](const iterator_value_type_t<IteratorT>& v) {
                     push_back(v);
                 });
             }

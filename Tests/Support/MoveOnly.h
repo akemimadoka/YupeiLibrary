@@ -14,7 +14,7 @@
 
 #include <cstddef>
 #include <functional>
-#include <Hash\Hash.hpp>
+#include <Hash/Hash.hpp>
 
 class MoveOnly
 {

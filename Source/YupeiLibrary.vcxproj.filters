@@ -33,22 +33,28 @@
     <ClCompile Include="Hash\HashHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UnitTest.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OS\Windows\Win32Wrappers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CharTraitsHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="String.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="OS\Windows\Win32Exception.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="OS\Windows\NativeHandles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\Win32IPAddressParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\NtFunctions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OS\Windows\WinSock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Encoding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,34 +77,16 @@
     <ClInclude Include="Mutex.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Numeric.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="StopWatch.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TypeTraits.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Variant.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Containers\_HashTable.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Containers\ForwardList.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Containers\List.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Containers\Vector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MemoryResource\MemoryResource.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SmartPointers\SharedPtr.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CLib\RawMemory.h">
@@ -126,15 +114,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Containers\Dictionary.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UnitTest.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="String.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StringView.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Searchers.hpp">
@@ -185,14 +164,35 @@
     <ClInclude Include="Algorithm\Split.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Coordinate.hpp">
+    <ClInclude Include="OS\IPAddressParser.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArrayView.hpp">
+    <ClInclude Include="OS\Windows\Win32IPAddressParser.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Span.hpp">
+    <ClInclude Include="OS\Windows\NtFunctions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ObserverHandle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeAlias.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\Basis.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Meta.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OS\Windows\WinSock.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Encoding.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
