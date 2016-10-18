@@ -19,3 +19,7 @@
 #else
 #error "Non-supported platform."
 #endif
+
+#if defined(__EDG__)
+#define _HAS_CXX17 1
+#endif

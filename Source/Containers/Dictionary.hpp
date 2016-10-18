@@ -792,22 +792,26 @@ namespace Yupei
             const auto ne = newEntries.get();
             const auto oldEntries = entries_.get();
             std::fill(nb, nb + newSize, kNothing);
-            
-            for_each_dual(oldEntries, oldEntries + count_, ne, ne + count_,
-                [](Entry& entry1, Entry& entry2) 
-                {
-                    if (entry1.HashCode_ != kNothing)
-                        construct(std::addressof(entry2.KeyValue_), std::move(entry1.KeyValue_));                    
-                    entry2.HashCode_ = entry1.HashCode_;
-                    destroy_at(std::addressof(entry1));
-                });
+
+            for (std::size_t i = 0; i < count_; ++i)
+            {
+                auto& entry1 = oldEntries[i];
+                auto& entry2 = ne[i];
+                if (entry1.HashCode_ != kNothing)
+                    construct(std::addressof(entry2.KeyValue_), std::move(entry1.KeyValue_));
+                entry2.HashCode_ = entry1.HashCode_;
+                destroy_at(std::addressof(entry1));
+            }
 
             std::for_each(ne + count_, ne + newSize, [](Entry& entry2) {
                 entry2.HashCode_ = kNothing;
             });
 
             bucketCount_ = newSize;
-            for_each_i(ne, ne + count_, [&](size_type i, Entry& entry) {
+
+            for (std::size_t i = 0; i < count_; ++i)
+            {
+                auto& entry = ne[i];
                 const auto hashCode = entry.HashCode_;
                 if (hashCode != kNothing)
                 {
@@ -815,7 +819,7 @@ namespace Yupei
                     entry.NextEntryIndex_ = newBuckets[targetBucket];
                     newBuckets[targetBucket] = i;
                 }
-            });
+            }
 
 			buckets_.reset(newBuckets.release());
             entries_.reset(newEntries.release());
