@@ -125,10 +125,7 @@ namespace Yupei
     }
 
     //TODO
-    std::size_t GetUtf16CharsLength(std::string_view inUtf8String)
-    {
-
-    }
+    std::size_t GetUtf16CharsLength(std::string_view inUtf8String);
 
     void GetUtf16String(std::string_view inUtf8String, std::u16string& outUtf16String)
     {
