@@ -1,3 +1,4 @@
-#YupeiLibrary
 
-一个改进版的 C++ 标准库。
+# YupeiLibrary
+
+一个辣鸡版的 C++ 标准库。
